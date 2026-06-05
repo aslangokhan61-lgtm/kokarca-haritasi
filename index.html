@@ -37,6 +37,10 @@
         .btn-cancel { background: #f1f3f5; color: #333; }
         .btn-save { background: #28a745; color: white; }
         .btn:hover { opacity: 0.9; }
+        .popup-actions { margin-top: 10px; display: flex; gap: 5px; justify-content: center; }
+        .popup-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; flex: 1; }
+        .btn-edit { background-color: #ffc107; color: black; font-weight: bold; }
+        .btn-delete { background-color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -44,7 +48,8 @@
     <!-- Modal Form -->
     <div id="tuzakModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Yeni Kayıt Ekle</h3>
+            <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
+            <input type="hidden" id="duzenlenenDocId" value="">
             <div class="form-group">
                 <label>Ad Soyad</label>
                 <input type="text" id="adSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
@@ -74,7 +79,38 @@
             </div>
             <div class="form-group">
                 <label>Köy/Mahalle</label>
-                <input type="text" id="koy" class="form-control" placeholder="Örn: Ortaköy">
+                <select id="koy" class="form-control">
+                    <option value="" disabled selected>Lütfen seçiniz</option>
+                    <option value="Adacami Mahallesi">Adacami Mahallesi</option>
+                    <option value="Asmalıırmak Köyü">Asmalıırmak Köyü</option>
+                    <option value="Aşağı Kiremit Mahallesi">Aşağı Kiremit Mahallesi</option>
+                    <option value="Ballıdere Köyü">Ballıdere Köyü</option>
+                    <option value="Başaran Mahallesi">Başaran Mahallesi</option>
+                    <option value="Başköy Köyü">Başköy Köyü</option>
+                    <option value="Birlik Mahallesi">Birlik Mahallesi</option>
+                    <option value="Bulutlu Köyü">Bulutlu Köyü</option>
+                    <option value="Çamlıca Köyü">Çamlıca Köyü</option>
+                    <option value="Dumankaya Köyü">Dumankaya Köyü</option>
+                    <option value="Eskicami Mahallesi">Eskicami Mahallesi</option>
+                    <option value="Güneli Köyü">Güneli Köyü</option>
+                    <option value="Gürgen Köyü">Gürgen Köyü</option>
+                    <option value="İslahiye Köyü">İslahiye Köyü</option>
+                    <option value="Kıbledağı Köyü">Kıbledağı Köyü</option>
+                    <option value="Kiremit Mahallesi">Kiremit Mahallesi</option>
+                    <option value="Küçükcami Mahallesi">Küçükcami Mahallesi</option>
+                    <option value="Merkez Mahallesi">Merkez Mahallesi</option>
+                    <option value="Ortaköy Köyü">Ortaköy Köyü</option>
+                    <option value="Selamet Mahallesi">Selamet Mahallesi</option>
+                    <option value="Tepebaşı Köyü">Tepebaşı Köyü</option>
+                    <option value="Ulucami Mahallesi">Ulucami Mahallesi</option>
+                    <option value="Yarımada Köyü">Yarımada Köyü</option>
+                    <option value="Yenicami Mahallesi">Yenicami Mahallesi</option>
+                    <option value="Yeniköy Köyü">Yeniköy Köyü</option>
+                    <option value="Yeşilköy Köyü">Yeşilköy Köyü</option>
+                    <option value="Yeşilyurt Köyü">Yeşilyurt Köyü</option>
+                    <option value="Yukarı İslahiye Köyü">Yukarı İslahiye Köyü</option>
+                    <option value="Yüksekköy Köyü">Yüksekköy Köyü</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Tuzak No</label>
@@ -129,31 +165,55 @@
 
 
 
-        // 1. ÖZELLİK: Veritabanındaki eski kayıtları otomatik olarak haritaya çek
+        // Haritadaki iğneleri takip etmek için global nesne
+        var markerListesi = {};
+
+        // 1. ÖZELLİK: Veritabanındaki kayıtları canlı dinle (ekleme, değiştirme, silme)
         db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
             querySnapshot.docChanges().forEach(function(change) {
-                if (change.type === "added") {
-                    var data = change.doc.data();
-                    
+                var data = change.doc.data();
+                var docId = change.doc.id;
+                
+                if (change.type === "added" || change.type === "modified") {
                     var popupIcerik = "";
                     
-                    // Eski kayıtlarda "ad" kısmı aslında köy ismiydi. Bunu düzeltelim.
                     var koyIsmi = data.koy || data.ad || "Bilinmiyor";
                     popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
                     
                     if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
                     
-                    // Ekleyen kişi mantığı
                     if (data.adSoyad) {
                         var ekleyen = data.adSoyad;
                         if (data.unvan) ekleyen += " (" + data.unvan + ")";
                         popupIcerik += "<b>Ekleyen:</b> " + ekleyen + "<br>";
                     } else {
-                        // Eski kayıtsa ekleyen kişiyi "Sistem" olarak gösterelim
                         popupIcerik += "<b>Ekleyen:</b> Sistem (Toplu Kayıt)<br>";
                     }
+
+                    // Düzenle ve Sil butonları eklendi
+                    popupIcerik += "<div class='popup-actions'>";
+                    popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
+                    popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
+                    popupIcerik += "</div>";
                     
-                    L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
+                    if (change.type === "added") {
+                        var marker = L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
+                        markerListesi[docId] = marker;
+                    } else if (change.type === "modified") {
+                        var marker = markerListesi[docId];
+                        if (marker) {
+                            marker.setLatLng([data.lat, data.lng]);
+                            marker.setPopupContent(popupIcerik);
+                        }
+                    }
+                }
+                
+                if (change.type === "removed") {
+                    var marker = markerListesi[docId];
+                    if (marker) {
+                        map.removeLayer(marker);
+                        delete markerListesi[docId];
+                    }
                 }
             });
         });
@@ -161,8 +221,54 @@
         // Seçilen konumu geçici olarak tutacağımız değişken
         var secilenKonum = null;
 
+        // Tuzak Silme Fonksiyonu
+        function tuzakSil(docId) {
+            if (confirm("Bu kaydı haritadan silmek istediğinize emin misiniz?")) {
+                db.collection("tuzaklar").doc(docId).delete().then(function() {
+                    // Firebase onSnapshot otomatik silecek
+                }).catch(function(error) {
+                    alert("Silme hatası: " + error.message);
+                });
+            }
+        }
+
+        // Tuzak Düzenleme Modu
+        function tuzakDuzenle(docId) {
+            var marker = markerListesi[docId];
+            if (!marker) return;
+
+            // Veritabanından mevcut bilgileri çek
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (doc.exists) {
+                    var data = doc.data();
+                    document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum değiştirebilirsiniz)";
+                    document.getElementById('duzenlenenDocId').value = docId;
+                    
+                    document.getElementById('adSoyad').value = data.adSoyad || "";
+                    document.getElementById('unvan').value = data.unvan || "";
+                    document.getElementById('il').value = data.il || "Rize";
+                    document.getElementById('ilce').value = data.ilce || "Güneysu";
+                    document.getElementById('koy').value = data.koy || data.ad || "";
+                    document.getElementById('tuzakNo').value = data.tuzakNo || "";
+
+                    secilenKonum = marker.getLatLng();
+
+                    // Markeri sürüklenebilir yap
+                    marker.dragging.enable();
+                    marker.on('dragend', function(e) {
+                        secilenKonum = e.target.getLatLng();
+                    });
+
+                    document.getElementById('tuzakModal').classList.add('active');
+                    marker.closePopup();
+                }
+            });
+        }
+
         // 2. ÖZELLİK: Haritaya tıklanınca modal formunu aç
         map.on('click', function(e) {
+            document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
+            document.getElementById('duzenlenenDocId').value = "";
             secilenKonum = e.latlng;
             document.getElementById('tuzakModal').classList.add('active');
         });
@@ -170,6 +276,14 @@
         // Formu kapatma fonksiyonu
         function kapatModal() {
             document.getElementById('tuzakModal').classList.remove('active');
+            
+            // Düzenleme modundayken kapatıldıysa iğne sürüklemeyi devredışı bırak
+            var docId = document.getElementById('duzenlenenDocId').value;
+            if (docId && markerListesi[docId]) {
+                markerListesi[docId].dragging.disable();
+                markerListesi[docId].off('dragend');
+            }
+
             // Formu temizle
             document.getElementById('adSoyad').value = "";
             document.getElementById('unvan').value = "";
@@ -177,10 +291,12 @@
             document.getElementById('ilce').value = "Güneysu";
             document.getElementById('koy').value = "";
             document.getElementById('tuzakNo').value = "";
+            document.getElementById('duzenlenenDocId').value = "";
+            
             secilenKonum = null;
         }
 
-        // Veritabanına kaydetme fonksiyonu
+        // Veritabanına kaydetme / güncelleme fonksiyonu
         function kaydet() {
             var adSoyad = document.getElementById('adSoyad').value.trim();
             var unvan = document.getElementById('unvan').value.trim();
@@ -188,6 +304,7 @@
             var ilce = document.getElementById('ilce').value;
             var koy = document.getElementById('koy').value.trim();
             var tuzakNo = document.getElementById('tuzakNo').value.trim();
+            var docId = document.getElementById('duzenlenenDocId').value;
 
             if (adSoyad === "") {
                 alert("Lütfen Ad Soyad alanını doldurunuz.");
@@ -195,24 +312,36 @@
             }
 
             if (secilenKonum) {
-                // Firebase Veritabanına Gönder
-                db.collection("tuzaklar").add({
+                var saveData = {
                     adSoyad: adSoyad,
-                    ad: adSoyad, // Geriye dönük uyumluluk (eski kodların patlamaması için)
+                    ad: koy, // Geriye dönük uyumluluk
                     unvan: unvan,
                     il: il,
                     ilce: ilce,
                     koy: koy,
                     tuzakNo: tuzakNo,
                     lat: secilenKonum.lat,
-                    lng: secilenKonum.lng,
-                    tarih: new Date().toLocaleDateString('tr-TR')
-                }).then(function() {
-                    alert("Harika! Kayıt başarıyla veritabanına eklendi.");
-                    kapatModal();
-                }).catch(function(error) {
-                    alert("Kayıt başarısız oldu. Hata detayı: " + error.message);
-                });
+                    lng: secilenKonum.lng
+                };
+
+                if (docId) {
+                    // Mevcut Kaydı Güncelle
+                    db.collection("tuzaklar").doc(docId).update(saveData).then(function() {
+                        alert("Kayıt başarıyla güncellendi.");
+                        kapatModal();
+                    }).catch(function(error) {
+                        alert("Güncelleme başarısız oldu: " + error.message);
+                    });
+                } else {
+                    // Yeni Kayıt
+                    saveData.tarih = new Date().toLocaleDateString('tr-TR');
+                    db.collection("tuzaklar").add(saveData).then(function() {
+                        alert("Harika! Kayıt başarıyla eklendi.");
+                        kapatModal();
+                    }).catch(function(error) {
+                        alert("Kayıt başarısız oldu: " + error.message);
+                    });
+                }
             }
         }
     </script>
