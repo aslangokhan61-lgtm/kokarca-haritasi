@@ -217,9 +217,25 @@
         var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Harita Katmanları (Sokak ve Uydu)
+        var sokakHaritasi = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
-        }).addTo(map);
+        });
+
+        var uyduHaritasi = L.tileLayer('https://mt0.google.com/vt/lyrs=y&hl=tr&x={x}&y={y}&z={z}', {
+            attribution: '© Google',
+            maxZoom: 20
+        });
+
+        // Varsayılan olarak uydu haritasını aç
+        uyduHaritasi.addTo(map);
+
+        // Kullanıcıya harita tipini seçtiren menü (Sağ üste)
+        var haritaTipleri = {
+            "🛰️ Uydu Görünümü": uyduHaritasi,
+            "🗺️ Sokak Görünümü": sokakHaritasi
+        };
+        L.control.layers(haritaTipleri, null, { position: 'topright' }).addTo(map);
 
         // Konum Bulma Özelliği
         map.locate({setView: true, maxZoom: 16});
