@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kokarca Haritası</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #harita { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="harita"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // SİZİN FIREBASE BİLGİLERİNİZ
+        const firebaseConfig = {
+            apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
+            authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
+            projectId: "kokarca-tuzak-takip-sist-99696",
+            storageBucket: "kokarca-tuzak-takip-sist-99696.firebasestorage.app",
+            messagingSenderId: "125586984500",
+            appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461",
+            measurementId: "G-WXJQ4DJLJX"
+        };
+
+        // Sistemi Başlat
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Haritayı Başlat (Güneysu/Rize)
+        var map = L.map('harita').setView([40.9500, 40.6300], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // 1. ÖZELLİK: Veritabanındaki eski kayıtları otomatik olarak haritaya çek
+        db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
+            querySnapshot.docChanges().forEach(function(change) {
+                if (change.type === "added") {
+                    var data = change.doc.data();
+                    L.marker([data.lat, data.lng]).addTo(map).bindPopup("<b>" + data.ad + "</b><br>Kayıt: " + data.tarih);
+                }
+            });
+        });
+
+        // 2. ÖZELLİK: Haritaya tıklanınca yeni tuzak ekle
+        map.on('click', function(e) {
+            var enlem = e.latlng.lat;
+            var boylam = e.latlng.lng;
+            
+            var isim = prompt("Yeni eklenecek tuzağın adını girin:");
+            
+            if (isim != null && isim != "") {
+                // Firebase Veritabanına Gönder
+                db.collection("tuzaklar").add({
+                    ad: isim,
+                    lat: enlem,
+                    lng: boylam,
+                    tarih: new Date().toLocaleDateString('tr-TR')
+                }).then(function() {
+                    alert("Harika! Tuzak başarıyla veritabanına kaydedildi.");
+                }).catch(function(error) {
+                    alert("Kayıt başarısız oldu. Hata detayı: " + error.message);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
