@@ -533,7 +533,7 @@
                 }
             });
 
-        // Register Service Worker
+        // Register Service Worker and reload on update
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js').then(function(reg) {
@@ -541,6 +541,14 @@
                 }).catch(function(err) {
                     console.error('ServiceWorker kaydı başarısız: ', err);
                 });
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
             });
         }
 
