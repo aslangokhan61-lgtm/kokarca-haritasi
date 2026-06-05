@@ -255,6 +255,52 @@
         .marker-yp-orta  { background: #ea580c; color: #ffffff; }  /* orta    → turuncu */
         .marker-yp-cok   { background: #9333ea; color: #ffffff; }  /* çok     → mor     */
 
+        /* Tarih Filtresi */
+        .tarih-filtre-box {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1.5px solid #bbf7d0;
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .tarih-filtre-row {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .tarih-filtre-row label {
+            font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap;
+        }
+        .tarih-filtre-row input[type="date"] {
+            border: 1.5px solid #d1fae5; border-radius: 8px; padding: 6px 10px;
+            font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--text-dark);
+            background: white; cursor: pointer;
+        }
+        .quick-date-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .quick-date-btn {
+            background: white; border: 1.5px solid #d1fae5; border-radius: 20px;
+            padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--primary);
+            cursor: pointer; font-family: var(--font); transition: all 0.2s;
+        }
+        .quick-date-btn:hover, .quick-date-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+
+        /* Trend Grafik */
+        .trend-grafik-box {
+            background: #f8fafc; border-radius: var(--radius-md); padding: 15px;
+            border: 1.5px solid #f1f5f9; margin-top: 16px; display: none;
+        }
+
+        /* CSV Export Button */
+        .btn-csv {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white; border: none; border-radius: var(--radius-md);
+            padding: 10px 20px; font-family: var(--font); font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-csv:hover { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); }
+
         /* Responsive adjustments to prevent overlap on mobile */
         @media (max-width: 600px) {
             .menu-btn {
@@ -400,6 +446,7 @@
                     <select id="pRol" class="form-control">
                         <option value="Saha Personeli" selected>Saha Personeli</option>
                         <option value="Yönetici">Yönetici (Admin)</option>
+                        <option value="Süper Admin">Süper Admin</option>
                     </select>
                 </div>
                 
@@ -411,6 +458,67 @@
             
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="kapatPersonelModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Records Modal -->
+    <div id="logModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; display:flex; align-items:center; gap:8px;">📜 Sistem Log Kayıtları</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatLogModal()">&times;</span>
+            </div>
+            
+            <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
+                <table class="rapor-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--primary); color: white;">
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Tarih</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Kullanıcı</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">İşlem</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Detay</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTabloGovde">
+                        <!-- Logs will be loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatLogModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users Modal -->
+    <div id="aktifKullanicilarModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; display:flex; align-items:center; gap:8px;">🟢 Sistemdeki Kullanıcılar</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatAktifKullanicilarModal()">&times;</span>
+            </div>
+            
+            <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
+                <table class="rapor-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--primary); color: white;">
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Durum</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Ad Soyad</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Ünvan / İlçe</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Rol</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Son Görülme</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aktifKullaniciTabloGovde">
+                        <!-- Active users loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatAktifKullanicilarModal()">Kapat</button>
             </div>
         </div>
     </div>
@@ -540,14 +648,14 @@
 
     <!-- Report Modal -->
     <div id="raporModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="modal-content" style="max-width: 580px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 id="raporBaslik" style="margin: 0; font-size: 20px; font-weight: 800;">📊 Mahalle / Köy Analizi</h3>
                 <span class="close-btn" style="color: #64748b;" onclick="kapatRapor()">&times;</span>
             </div>
 
             <!-- Analysis Level Selection (Managers only) -->
-            <div id="analizSeviyesiKutusu" style="margin-bottom: 18px; display: none; align-items: center; gap: 8px;">
+            <div id="analizSeviyesiKutusu" style="margin-bottom: 12px; display: none; align-items: center; gap: 8px;">
                 <span style="font-size: 13px; font-weight: 700; color: var(--text-dark);">Analiz Seviyesi:</span>
                 <select id="analizSeviyesi" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px; display: inline-block; height: auto;" onchange="raporGoster(true)">
                     <option value="Köy" selected>Köy / Mahalle</option>
@@ -556,15 +664,33 @@
                 </select>
             </div>
 
+            <!-- Date Filter (Managers only) -->
+            <div id="tarihFiltreKutusu" class="tarih-filtre-box">
+                <div class="tarih-filtre-row">
+                    <label>📅 BAŞLANGIÇ</label>
+                    <input type="date" id="baslangicTarihi" onchange="raporGoster(true)">
+                    <label>BİTİŞ</label>
+                    <input type="date" id="bitisTarihi" onchange="raporGoster(true)">
+                    <button class="quick-date-btn" onclick="tarihFiltreSifirla()" style="color:#ef4444; border-color:#fecaca;">✕ Sıfırla</button>
+                </div>
+                <div class="quick-date-btns">
+                    <button class="quick-date-btn" id="hizliHafta"  onclick="setHizliTarih('hafta')">Bu Hafta</button>
+                    <button class="quick-date-btn" id="hizliAy"    onclick="setHizliTarih('ay')">Bu Ay</button>
+                    <button class="quick-date-btn" id="hizliSezon" onclick="setHizliTarih('sezon')">Bu Sezon (Nis–Eki)</button>
+                    <button class="quick-date-btn" id="hizliYil"   onclick="setHizliTarih('yil')">Bu Yıl</button>
+                </div>
+            </div>
+
             <!-- Report Tabs -->
             <div class="report-tabs">
                 <button id="tabYapiskan" class="tab-btn active" onclick="setRaporFiltre('Yapışkan')">🟨 Yapışkan</button>
-                <button id="tabHuni" class="tab-btn" onclick="setRaporFiltre('Huni')">🏺 Huni</button>
-                <button id="tabTumu" class="tab-btn" onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
+                <button id="tabHuni"     class="tab-btn"        onclick="setRaporFiltre('Huni')">🏺 Huni</button>
+                <button id="tabTumu"     class="tab-btn"        onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
+                <button id="tabTrend"    class="tab-btn admin-only" style="display:none;" onclick="setRaporFiltre('Trend')">📈 Trend</button>
             </div>
 
             <!-- Dashboard Cards -->
-            <div class="stats-grid">
+            <div class="stats-grid" id="raporStatGrid">
                 <div class="stat-card">
                     <span class="stat-label">Toplam Tuzak</span>
                     <span id="toplamTuzakTxt" class="stat-value">0</span>
@@ -575,8 +701,8 @@
                 </div>
             </div>
 
-            <!-- Scrollable Table Wrap (Moved up and height increased) -->
-            <div style="max-height: 380px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); margin-bottom: 20px;">
+            <!-- Scrollable Table Wrap -->
+            <div id="raporTabloKapsayici" style="max-height: 320px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); margin-bottom: 16px;">
                 <table class="report-table">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
@@ -585,25 +711,35 @@
                             <th style="text-align: center; width: 90px;">Böcek</th>
                         </tr>
                     </thead>
-                    <tbody id="raporTabloGovde">
-                    </tbody>
-                    <tfoot id="raporTabloAyak" style="position: sticky; bottom: 0; z-index: 10;">
-                    </tfoot>
+                    <tbody id="raporTabloGovde"></tbody>
+                    <tfoot id="raporTabloAyak" style="position: sticky; bottom: 0; z-index: 10;"></tfoot>
                 </table>
             </div>
 
-            <!-- Chart Container (Moved down) -->
-            <div style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; border: 1.5px solid #f1f5f9;">
+            <!-- Bar Chart Container -->
+            <div id="bocekGrafikKutusu" style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; border: 1.5px solid #f1f5f9;">
                 <div style="position: relative; height: 200px; width: 100%;">
                     <canvas id="bocekGrafik"></canvas>
                 </div>
             </div>
 
-            <div class="modal-actions" style="margin-top: 24px;">
+            <!-- Trend Chart Container (Managers only) -->
+            <div id="trendGrafikKutusu" class="trend-grafik-box">
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="trendGrafik"></canvas>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 20px; flex-wrap: wrap;">
+                <button id="csvIndirBtn" class="btn-csv" style="display:none;" onclick="csvIndir()">
+                    📥 CSV İndir
+                </button>
                 <button class="btn btn-cancel" onclick="kapatRapor()">Kapat</button>
             </div>
         </div>
     </div>
+
 
     <!-- Map container -->
     <div id="harita"></div>
@@ -721,6 +857,36 @@
         var aktifKullanici = null;
         var tuzakListener = null;
         var aktifFiltreler = { il: "Tümü", ilce: "Tümü", koy: "Tümü" };
+
+        function isAdmin() {
+            return aktifKullanici && (aktifKullanici.rol === "Yönetici" || aktifKullanici.rol === "Süper Admin");
+        }
+
+        function logEkle(islem, detay) {
+            if (!aktifKullanici) return;
+            db.collection("loglar").add({
+                kullanici: aktifKullanici.adSoyad,
+                telefon: aktifKullanici.telefon,
+                rol: aktifKullanici.rol,
+                islem: islem,
+                detay: detay,
+                tarih: firebase.firestore.FieldValue.serverTimestamp(),
+                tarihStr: new Date().toLocaleString('tr-TR')
+            }).catch(function(err) {
+                console.error("Log kaydetme hatası:", err);
+            });
+        }
+
+        function kullaniciAktifliginiGuncelle() {
+            if (!aktifKullanici) return;
+            db.collection("personeller").doc(aktifKullanici.telefon).update({
+                sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
+                sonAktiflikStr: new Date().toLocaleString('tr-TR')
+            }).catch(function(err) {
+                console.error("Aktiflik güncellenemedi:", err);
+            });
+        }
+        setInterval(kullaniciAktifliginiGuncelle, 300000); // Heartbeat every 5 minutes
 
         function markerGosterGizle(docId) {
             var data = tuzakVerileri[docId];
@@ -911,7 +1077,7 @@
                     var docId = change.doc.id;
                     
                     // ROLE-BASED DISTRICT ISOLATION (Only managers can see other districts)
-                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
                         if (markerListesi[docId]) {
                             map.removeLayer(markerListesi[docId]);
                             delete markerListesi[docId];
@@ -934,10 +1100,9 @@
                         
                         var ekleyenStr = "";
                         if (aktifKullanici) {
-                            if (aktifKullanici.rol === "Yönetici") {
+                            if (isAdmin()) {
                                 ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
                                 if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
-                                if (data.telefon) ekleyenStr += " - " + data.telefon;
                             } else if (data.telefon === aktifKullanici.telefon) {
                                 ekleyenStr = data.adSoyad || "Kendi Kaydınız";
                                 if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
@@ -952,10 +1117,9 @@
                         if (data.sonGuncelleyen) {
                             var guncelleyenStr = "";
                             if (aktifKullanici) {
-                                if (aktifKullanici.rol === "Yönetici") {
+                                if (isAdmin()) {
                                     guncelleyenStr = data.sonGuncelleyen;
                                     if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
-                                    if (data.sonGuncelleyenTel) guncelleyenStr += " - " + data.sonGuncelleyenTel;
                                 } else if (data.sonGuncelleyenTel === aktifKullanici.telefon) {
                                     guncelleyenStr = data.sonGuncelleyen;
                                     if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
@@ -1013,105 +1177,148 @@
             document.getElementById('sideMenu').classList.toggle('open');
         }
 
-        // Report Filter (Yapışkan, Huni, Tümü)
+        // Report Filter (Yapışkan, Huni, Tümü, Trend)
         function setRaporFiltre(filtre) {
             seciliRaporFiltre = filtre;
-            var tabs = ["Yapışkan", "Huni", "Tümü"];
-            var elIds = ["tabYapiskan", "tabHuni", "tabTumu"];
-            
+            var tabs  = ["Yapışkan", "Huni", "Tümü", "Trend"];
+            var elIds = ["tabYapiskan", "tabHuni", "tabTumu", "tabTrend"];
             for (var i = 0; i < tabs.length; i++) {
-                if (tabs[i] === filtre) {
-                    document.getElementById(elIds[i]).classList.add("active");
-                } else {
-                    document.getElementById(elIds[i]).classList.remove("active");
-                }
+                var el = document.getElementById(elIds[i]);
+                if (!el) continue;
+                el.classList.toggle("active", tabs[i] === filtre);
             }
-            raporGoster(true);
+
+            // Trend sekmesinde tablo ve bar grafik gizle, trend grafik göster
+            var isTrend = (filtre === "Trend");
+            var tabloEl  = document.getElementById("raporTabloKapsayici");
+            var statEl   = document.getElementById("raporStatGrid");
+            var barEl    = document.getElementById("bocekGrafikKutusu");
+            var trendEl  = document.getElementById("trendGrafikKutusu");
+            if (tabloEl) tabloEl.style.display = isTrend ? "none" : "";
+            if (statEl)  statEl.style.display  = isTrend ? "none" : "";
+            if (barEl)   barEl.style.display   = isTrend ? "none" : "";
+            if (trendEl) trendEl.style.display = isTrend ? "block" : "none";
+
+            if (isTrend) {
+                cizTrendGrafik();
+                document.getElementById('raporModal').classList.add('active');
+            } else {
+                raporGoster(true);
+            }
+        }
+
+        // Tarih string'ini (Güneysu format: "d.m.yyyy") Date objesine çevirir
+        function parseTurkishDate(dateStr) {
+            if (!dateStr) return null;
+            var p = dateStr.split('.');
+            if (p.length < 3) return null;
+            return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
         }
 
         // Show Reports
-        // Show Reports
         function raporGoster(skipToggleMenu) {
-            if (!skipToggleMenu) {
-                toggleMenu();
-            }
+            if (!skipToggleMenu) toggleMenu();
 
+            var isYonetici = isAdmin();
+
+            // Analiz seviyesi (admin only)
             var analizSeviyesi = "Köy";
             var seviyeKutusu = document.getElementById('analizSeviyesiKutusu');
             var seviyeSelect = document.getElementById('analizSeviyesi');
-            
-            if (aktifKullanici && aktifKullanici.rol === "Yönetici") {
+            if (isYonetici) {
                 if (seviyeKutusu) seviyeKutusu.style.display = 'flex';
                 if (seviyeSelect) analizSeviyesi = seviyeSelect.value;
             } else {
                 if (seviyeKutusu) seviyeKutusu.style.display = 'none';
             }
 
+            // Admin-only UI göster
+            var tarihBox = document.getElementById('tarihFiltreKutusu');
+            var trendTab = document.getElementById('tabTrend');
+            var csvBtn   = document.getElementById('csvIndirBtn');
+            if (tarihBox) tarihBox.style.display = isYonetici ? 'block' : 'none';
+            if (trendTab) trendTab.style.display  = isYonetici ? '' : 'none';
+            if (csvBtn)   csvBtn.style.display    = isYonetici ? 'flex' : 'none';
+
+            // Trend sekme aktifse burada dur
+            if (seciliRaporFiltre === "Trend") {
+                document.getElementById('raporModal').classList.add('active');
+                return;
+            }
+
+            // Bar grafik ve tablo görünür
+            var tabloEl = document.getElementById("raporTabloKapsayici");
+            var statEl  = document.getElementById("raporStatGrid");
+            var barEl   = document.getElementById("bocekGrafikKutusu");
+            var trendEl = document.getElementById("trendGrafikKutusu");
+            if (tabloEl) tabloEl.style.display = "";
+            if (statEl)  statEl.style.display  = "";
+            if (barEl)   barEl.style.display   = "";
+            if (trendEl) trendEl.style.display = "none";
+
             // Update Table Header and Modal Title
             var baslikTxt = "📊 Mahalle / Köy Analizi";
             var ilkSutunTxt = "Köy / Mahalle";
-            if (analizSeviyesi === "İlçe") {
-                baslikTxt = "📊 İlçe Analizi";
-                ilkSutunTxt = "İlçe";
-            } else if (analizSeviyesi === "İl") {
-                baslikTxt = "📊 İl Analizi";
-                ilkSutunTxt = "İl";
-            }
-            
+            if (analizSeviyesi === "İlçe") { baslikTxt = "📊 İlçe Analizi"; ilkSutunTxt = "İlçe"; }
+            else if (analizSeviyesi === "İl")  { baslikTxt = "📊 İl Analizi";   ilkSutunTxt = "İl"; }
             document.getElementById('raporBaslik').innerText = baslikTxt;
             document.getElementById('raporTabloIlkSutun').innerText = ilkSutunTxt;
-            
+
+            // Tarih filtresi
+            var baslangic = null, bitis = null;
+            var baslangicEl = document.getElementById('baslangicTarihi');
+            var bitisEl     = document.getElementById('bitisTarihi');
+            if (baslangicEl && baslangicEl.value) baslangic = new Date(baslangicEl.value);
+            if (bitisEl     && bitisEl.value)     bitis     = new Date(bitisEl.value);
+            if (bitis) bitis.setHours(23,59,59,999);
+
             var toplamBocek = 0;
             var toplamTuzak = 0;
-            var istatistik = {};
-            
+            var istatistik  = {};
+
             for (var id in tuzakVerileri) {
                 var data = tuzakVerileri[id];
-                
+
                 // Bölge Filtreleri
-                if (aktifFiltreler.il !== "Tümü" && data.il !== aktifFiltreler.il) continue;
+                if (aktifFiltreler.il   !== "Tümü" && data.il   !== aktifFiltreler.il)   continue;
                 if (aktifFiltreler.ilce !== "Tümü" && data.ilce !== aktifFiltreler.ilce) continue;
-                if (aktifFiltreler.koy !== "Tümü" && data.koy !== aktifFiltreler.koy) continue;
+                if (aktifFiltreler.koy  !== "Tümü" && data.koy  !== aktifFiltreler.koy)  continue;
+
+                // Tarih filtresi
+                if (baslangic || bitis) {
+                    var kayitTarih = parseTurkishDate(data.tarih);
+                    if (!kayitTarih) continue;
+                    if (baslangic && kayitTarih < baslangic) continue;
+                    if (bitis     && kayitTarih > bitis)     continue;
+                }
 
                 var tipVal = data.tuzakTipi || "Huni";
-                
-                if (seciliRaporFiltre !== "Tümü" && tipVal !== seciliRaporFiltre) {
-                    continue;
-                }
+                if (seciliRaporFiltre !== "Tümü" && tipVal !== seciliRaporFiltre) continue;
 
                 var grupAnahtari = "Bilinmiyor";
-                if (analizSeviyesi === "Köy") {
-                    grupAnahtari = data.koy || data.ad || "Bilinmiyor";
-                } else if (analizSeviyesi === "İlçe") {
-                    grupAnahtari = data.ilce || "Bilinmiyor";
-                } else if (analizSeviyesi === "İl") {
-                    grupAnahtari = data.il || "Bilinmiyor";
-                }
+                if      (analizSeviyesi === "Köy")  grupAnahtari = data.koy  || data.ad || "Bilinmiyor";
+                else if (analizSeviyesi === "İlçe") grupAnahtari = data.ilce || "Bilinmiyor";
+                else if (analizSeviyesi === "İl")   grupAnahtari = data.il   || "Bilinmiyor";
 
                 var bocek = parseInt(data.bocekSayisi) || 0;
-                
                 toplamBocek += bocek;
                 toplamTuzak++;
-                
-                if (!istatistik[grupAnahtari]) {
-                    istatistik[grupAnahtari] = { tuzak: 0, bocek: 0 };
-                }
+                if (!istatistik[grupAnahtari]) istatistik[grupAnahtari] = { tuzak: 0, bocek: 0 };
                 istatistik[grupAnahtari].tuzak++;
                 istatistik[grupAnahtari].bocek += bocek;
             }
-            
-            // Convert to array and sort Turkish alphabetically
+
             var raporArray = [];
-            for (var k in istatistik) {
-                raporArray.push({ ad: k, tuzak: istatistik[k].tuzak, bocek: istatistik[k].bocek });
-            }
-            raporArray.sort(function(a, b) {
-                return a.ad.localeCompare(b.ad, 'tr');
-            });
-            
+            for (var k in istatistik) raporArray.push({ ad: k, tuzak: istatistik[k].tuzak, bocek: istatistik[k].bocek });
+            raporArray.sort(function(a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
+
+            // Sonucu sakla (CSV için)
+            window._sonRaporArray    = raporArray;
+            window._sonAnalizSeviyesi = analizSeviyesi;
+
             document.getElementById('toplamTuzakTxt').innerText = toplamTuzak;
             document.getElementById('toplamBocekTxt').innerText = toplamBocek;
-            
+
             var tbody = document.getElementById('raporTabloGovde');
             tbody.innerHTML = "";
             raporArray.forEach(function(item) {
@@ -1120,84 +1327,193 @@
                 tbody.appendChild(tr);
             });
 
-            // Summary Totals Row at the bottom
             var tfoot = document.getElementById('raporTabloAyak');
             tfoot.innerHTML = "<tr style='font-weight:bold; background-color:#f1f5f9; border-top: 2px solid #e2e8f0;'>" +
                               "<td>TOPLAM</td>" +
                               "<td style='text-align:center;'>" + toplamTuzak + "</td>" +
                               "<td style='text-align:center; color:#ef4444;'>" + toplamBocek + "</td>" +
                               "</tr>";
-            
+
             cizGrafik(raporArray, analizSeviyesi);
             document.getElementById('raporModal').classList.add('active');
         }
 
-        // Draw Chart.js Graph
+        // Draw Bar Chart
         function cizGrafik(raporArray, analizSeviyesi) {
             var ctx = document.getElementById('bocekGrafik').getContext('2d');
-            
-            if (currentChart) {
-                currentChart.destroy();
-            }
-            
-            // Show top 10 most populated areas in graphs
+            if (currentChart) currentChart.destroy();
             var grafikData = [...raporArray].sort(function(a, b) { return b.bocek - a.bocek; }).slice(0, 10);
-            
             var labels = grafikData.map(function(item) { return item.ad; });
             var values = grafikData.map(function(item) { return item.bocek; });
-            
             var grafikBaslik = 'En Çok Kokarca Görülen Mahalleler (İlk 10)';
-            if (analizSeviyesi === "İlçe") {
-                grafikBaslik = 'En Çok Kokarca Görülen İlçeler';
-            } else if (analizSeviyesi === "İl") {
-                grafikBaslik = 'En Çok Kokarca Görülen İller';
-            }
-
+            if (analizSeviyesi === "İlçe") grafikBaslik = 'En Çok Kokarca Görülen İlçeler';
+            if (analizSeviyesi === "İl")   grafikBaslik = 'En Çok Kokarca Görülen İller';
             currentChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Yakalanan Kokarca Sayısı',
-                        data: values,
-                        backgroundColor: 'rgba(46, 125, 50, 0.85)',
-                        borderColor: '#1b5e20',
-                        borderWidth: 1.5,
-                        borderRadius: 6,
-                        barPercentage: 0.6
-                    }]
-                },
+                data: { labels: labels, datasets: [{
+                    label: 'Yakalanan Kokarca Sayısı', data: values,
+                    backgroundColor: 'rgba(46, 125, 50, 0.85)', borderColor: '#1b5e20',
+                    borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6
+                }]},
                 options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        title: {
-                            display: true,
-                            text: grafikBaslik,
-                            font: { family: 'Plus Jakarta Sans', size: 12, weight: '800' },
-                            color: '#1e293b'
-                        }
+                        title: { display: true, text: grafikBaslik,
+                            font: { family: 'Plus Jakarta Sans', size: 12, weight: '800' }, color: '#1e293b' }
                     },
                     scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(0,0,0,0.04)' },
-                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: '#1e293b' }
-                        }
+                        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
+                             ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                        y: { grid: { display: false },
+                             ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: '#1e293b' } }
                     }
                 }
             });
         }
 
-        // Close Report Window
-        function kapatRapor() {
-            document.getElementById('raporModal').classList.remove('active');
+        // Draw Trend Line Chart (group traps by creation date)
+        var currentTrendChart = null;
+        function cizTrendGrafik() {
+            var canvas = document.getElementById('trendGrafik');
+            if (!canvas) return;
+            if (currentTrendChart) currentTrendChart.destroy();
+
+            // Build date → {tuzak, bocek} map
+            var gunluk = {};
+            for (var id in tuzakVerileri) {
+                var data = tuzakVerileri[id];
+                if (aktifFiltreler.il   !== "Tümü" && data.il   !== aktifFiltreler.il)   continue;
+                if (aktifFiltreler.ilce !== "Tümü" && data.ilce !== aktifFiltreler.ilce) continue;
+                if (aktifFiltreler.koy  !== "Tümü" && data.koy  !== aktifFiltreler.koy)  continue;
+                var tarih = data.tarih || data.sonGuncellemeTarihi;
+                if (!tarih) continue;
+                if (!gunluk[tarih]) gunluk[tarih] = { tuzak: 0, bocek: 0 };
+                gunluk[tarih].tuzak++;
+                gunluk[tarih].bocek += parseInt(data.bocekSayisi) || 0;
+            }
+
+            // Sort by date
+            var gunler = Object.keys(gunluk).sort(function(a, b) {
+                var da = parseTurkishDate(a), db_ = parseTurkishDate(b);
+                return (da && db_) ? da - db_ : 0;
+            });
+
+            if (gunler.length === 0) {
+                var ctx0 = canvas.getContext('2d');
+                ctx0.clearRect(0, 0, canvas.width, canvas.height);
+                ctx0.font = "13px 'Plus Jakarta Sans'";
+                ctx0.fillStyle = "#94a3b8";
+                ctx0.fillText("Bu bölge için tarih bazlı veri bulunamadı.", 10, 60);
+                return;
+            }
+
+            var labels = gunler;
+            var bocekData = gunler.map(function(g) { return gunluk[g].bocek; });
+            var tuzakData = gunler.map(function(g) { return gunluk[g].tuzak; });
+
+            currentTrendChart = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Yakalanan Böcek', data: bocekData,
+                            borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.12)',
+                            tension: 0.35, fill: true, pointRadius: 4, pointBackgroundColor: '#ef4444',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Eklenen Tuzak', data: tuzakData,
+                            borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)',
+                            tension: 0.35, fill: false, pointRadius: 3, pointBackgroundColor: '#10b981',
+                            borderWidth: 1.5, borderDash: [4, 3]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top',
+                            labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' } } },
+                        title: { display: true, text: 'Günlük Aktivite Trendı',
+                            font: { family: 'Plus Jakarta Sans', size: 12, weight: '800' }, color: '#1e293b' }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(0,0,0,0.04)' },
+                             ticks: { font: { family: 'Plus Jakarta Sans', size: 9 }, maxRotation: 45 } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' },
+                             ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // Hızlı tarih filtresi
+        function setHizliTarih(mod) {
+            var bugun = new Date();
+            var bas, bit = bugun;
+            if (mod === 'hafta') {
+                bas = new Date(bugun); bas.setDate(bugun.getDate() - 7);
+            } else if (mod === 'ay') {
+                bas = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
+            } else if (mod === 'sezon') {
+                bas = new Date(bugun.getFullYear(), 3, 1);  // 1 Nisan
+                bit = new Date(bugun.getFullYear(), 9, 31); // 31 Ekim
+            } else if (mod === 'yil') {
+                bas = new Date(bugun.getFullYear(), 0, 1);
+            }
+            var fmt = function(d) {
+                return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            };
+            document.getElementById('baslangicTarihi').value = fmt(bas);
+            document.getElementById('bitisTarihi').value     = fmt(bit);
+            // Aktif buton stilini güncelle
+            ['hizliHafta','hizliAy','hizliSezon','hizliYil'].forEach(function(id) {
+                document.getElementById(id).classList.remove('active');
+            });
+            var map_ = {hafta:'hizliHafta', ay:'hizliAy', sezon:'hizliSezon', yil:'hizliYil'};
+            if (map_[mod]) document.getElementById(map_[mod]).classList.add('active');
+            raporGoster(true);
+        }
+
+        function tarihFiltreSifirla() {
+            document.getElementById('baslangicTarihi').value = '';
+            document.getElementById('bitisTarihi').value = '';
+            ['hizliHafta','hizliAy','hizliSezon','hizliYil'].forEach(function(id) {
+                document.getElementById(id).classList.remove('active');
+            });
+            raporGoster(true);
+        }
+
+        // CSV İndir
+        function csvIndir() {
+            var raporArray = window._sonRaporArray || [];
+            var seviye    = window._sonAnalizSeviyesi || 'Köy';
+            var filtre    = seciliRaporFiltre;
+
+            var satirlar = [['\uFEFF' + seviye, 'Tuzak Sayısı', 'Böcek Sayısı']];
+            var toplamT = 0, toplamB = 0;
+            raporArray.forEach(function(r) {
+                satirlar.push([r.ad, r.tuzak, r.bocek]);
+                toplamT += r.tuzak; toplamB += r.bocek;
+            });
+            satirlar.push(['TOPLAM', toplamT, toplamB]);
+
+            var csvIcerik = satirlar.map(function(s) {
+                return s.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\r\n');
+
+            var blob = new Blob([csvIcerik], { type: 'text/csv;charset=utf-8;' });
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            var tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g,'-');
+            a.href     = url;
+            a.download = 'kokarca-rapor-' + filtre + '-' + tarih + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         // Delete Trap (Checks District Access)
@@ -1205,13 +1521,14 @@
             db.collection("tuzaklar").doc(docId).get().then(function(doc) {
                 if (doc.exists) {
                     var data = doc.data();
-                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı silme yetkiniz yok!");
                         return;
                     }
                     if (confirm("Bu kaydı haritadan silmek istediğinize emin misiniz?")) {
                         db.collection("tuzaklar").doc(docId).delete().then(function() {
                             console.log("Kayıt silindi.");
+                            logEkle("Tuzak Silindi", "İlçe: " + (data.ilce || "-") + ", Köy: " + (data.koy || "-") + ", Tip: " + (data.tuzakTipi || "-") + ", No: " + (data.tuzakNo || "-"));
                         }).catch(function(error) {
                             alert("Silme hatası: " + error.message);
                         });
@@ -1229,7 +1546,7 @@
                 if (doc.exists) {
                     var data = doc.data();
                     
-                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı düzenleme yetkiniz yok!");
                         return;
                     }
@@ -1248,7 +1565,7 @@
                     ilceSecildi();
                     
                     // Lock District select for standard personnel
-                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici") {
+                    if (aktifKullanici && !isAdmin()) {
                         ilceSelect.disabled = true;
                     } else {
                         ilceSelect.disabled = false;
@@ -1301,7 +1618,7 @@
             ilceSelect.value = aktifKullanici.ilce;
             ilceSecildi();
             
-            if (aktifKullanici.rol !== "Yönetici") {
+            if (!isAdmin()) {
                 ilceSelect.disabled = true;
             } else {
                 ilceSelect.disabled = false;
@@ -1366,7 +1683,7 @@
                 };
 
                 // Standart kullanıcıların kendi ilçesi dışına kayıt yapması engellenir
-                if (aktifKullanici && aktifKullanici.rol !== "Yönetici") {
+                if (aktifKullanici && !isAdmin()) {
                     saveData.il = "Rize";
                     saveData.ilce = aktifKullanici.ilce;
                 }
@@ -1374,6 +1691,8 @@
                 if (docId) {
                     db.collection("tuzaklar").doc(docId).update(saveData).then(function() {
                         alert("Kayıt başarıyla güncellendi.");
+                        logEkle("Tuzak Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
+                        kullaniciAktifliginiGuncelle();
                         kapatModal();
                     }).catch(function(error) {
                         alert("Güncelleme başarısız oldu: " + error.message);
@@ -1386,6 +1705,8 @@
                     
                     db.collection("tuzaklar").add(saveData).then(function() {
                         alert("Kayıt başarıyla eklendi.");
+                        logEkle("Tuzak Eklendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
+                        kullaniciAktifliginiGuncelle();
                         kapatModal();
                     }).catch(function(error) {
                         alert("Kayıt başarısız oldu: " + error.message);
@@ -1424,8 +1745,9 @@
                         document.getElementById("girisModal").classList.remove("active");
                         guncelleArayuzRolBazli();
                         tuzaklariDinle();
+                        kullaniciAktifliginiGuncelle();
                         
-                        if (aktifKullanici.rol === "Yönetici") {
+                        if (isAdmin()) {
                             personelListesiniDinle();
                         }
                     } else {
@@ -1463,8 +1785,9 @@
                     document.getElementById("girisModal").classList.remove("active");
                     guncelleArayuzRolBazli();
                     tuzaklariDinle();
+                    kullaniciAktifliginiGuncelle();
                     
-                    if (aktifKullanici.rol === "Yönetici") {
+                    if (isAdmin()) {
                         personelListesiniDinle();
                     }
                     
@@ -1486,8 +1809,9 @@
                             document.getElementById("girisModal").classList.remove("active");
                             guncelleArayuzRolBazli();
                             tuzaklariDinle();
+                            kullaniciAktifliginiGuncelle();
                             
-                            if (aktifKullanici.rol === "Yönetici") {
+                            if (isAdmin()) {
                                 personelListesiniDinle();
                             }
                             
@@ -1542,7 +1866,7 @@
             userCard.style.display = "flex";
             
             document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
-            document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (aktifKullanici.rol === "Yönetici" ? "Yönetici" : "Personel") + ")";
+            document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
             
             // Build dynamic side menu
             var sideMenu = document.getElementById("sideMenu");
@@ -1553,7 +1877,7 @@
             header.innerHTML = 'Seçenekler <span class="close-btn" onclick="toggleMenu()">&times;</span>';
             sideMenu.appendChild(header);
             
-            if (aktifKullanici.rol === "Yönetici") {
+            if (isAdmin()) {
                 // Bölge Seçimi Filtreleri
                 var filterHeader = document.createElement("div");
                 filterHeader.style = "padding: 18px 24px 6px 24px; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;";
@@ -1591,23 +1915,23 @@
                 sideMenu.appendChild(modullerHeader);
 
                 // ── Hızlı Erişim Modülleri ──
-                // Modül: Beyza → Rize Tüm İlçeler
-                var itemBeyza = document.createElement("div");
-                itemBeyza.className = "menu-item";
-                itemBeyza.style = "border-left: 3px solid #7c3aed;";
-                itemBeyza.onclick = function() { acBolgeRaporu("Rize", "Tümü", "Beyza FEYİZ"); };
-                itemBeyza.innerHTML = '<span>📌</span> Beyza - Rize Tüm İlçeler';
-                sideMenu.appendChild(itemBeyza);
+                // Modül 1: Rize Tüm İlçeler
+                var itemRize = document.createElement("div");
+                itemRize.className = "menu-item";
+                itemRize.style = "border-left: 3px solid #7c3aed;";
+                itemRize.onclick = function() { acBolgeRaporu("Rize", "Tümü", null); };
+                itemRize.innerHTML = '<span>🗺️</span> Rize Tüm İlçeler';
+                sideMenu.appendChild(itemRize);
 
-                // Modül: Gökhan → Kendi ilçesi
-                var itemBenim = document.createElement("div");
-                itemBenim.className = "menu-item";
-                itemBenim.style = "border-left: 3px solid #0369a1;";
+                // Modül 2: Kendi İlçesi (dinamik)
+                var itemKendi = document.createElement("div");
+                itemKendi.className = "menu-item";
+                itemKendi.style = "border-left: 3px solid #0369a1;";
                 (function(kullanici) {
-                    itemBenim.onclick = function() { acBolgeRaporu("Rize", kullanici.ilce, kullanici.adSoyad); };
-                    itemBenim.innerHTML = '<span>📌</span> ' + kullanici.adSoyad.split(' ')[0] + ' - ' + kullanici.ilce + ' İlçesi';
+                    itemKendi.onclick = function() { acBolgeRaporu("Rize", kullanici.ilce, null); };
+                    itemKendi.innerHTML = '<span>📍</span> Kendi İlçem (' + kullanici.ilce + ')';
                 })(aktifKullanici);
-                sideMenu.appendChild(itemBenim);
+                sideMenu.appendChild(itemKendi);
 
                 // Genel Raporlar (tüm filtre sıfırlı)
                 var item1 = document.createElement("div");
@@ -1636,6 +1960,24 @@
                 item4.onclick = function() { acLokasyonModal(); };
                 item4.innerHTML = '<span>📍</span> Lokasyon Yönetimi';
                 sideMenu.appendChild(item4);
+
+                // Süper Admin Log Kayıtları
+                if (aktifKullanici && aktifKullanici.rol === "Süper Admin") {
+                    var itemLog = document.createElement("div");
+                    itemLog.className = "menu-item";
+                    itemLog.style = "border-left: 3px solid #db2777;";
+                    itemLog.onclick = function() { acLogModal(); };
+                    itemLog.innerHTML = '<span>📜</span> Log Kayıtları';
+                    sideMenu.appendChild(itemLog);
+
+                    // Sistemdekiler (Aktif Kullanıcılar)
+                    var itemAktif = document.createElement("div");
+                    itemAktif.className = "menu-item";
+                    itemAktif.style = "border-left: 3px solid #059669;";
+                    itemAktif.onclick = function() { acAktifKullanicilarModal(); };
+                    itemAktif.innerHTML = '<span>🟢</span> Sistemdekiler';
+                    sideMenu.appendChild(itemAktif);
+                }
 
                 setTimeout(initMenuFilters, 50);
             } else {
@@ -1757,7 +2099,7 @@
         // PERSONEL CRUD PANEL İŞLEVLERİ
 
         function acPersonelModal() {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            if (!isAdmin()) {
                 alert("Bu sayfaya erişim yetkiniz yoktur!");
                 return;
             }
@@ -1782,7 +2124,7 @@
                                "<td>" + pers.unvan + "</td>" +
                                "<td>" + pers.ilce + "</td>" +
                                "<td>" + pers.telefon + "</td>" +
-                               "<td>" + (pers.rol === "Yönetici" ? "Yönetici" : "Personel") + "</td>" +
+                               "<td>" + (pers.rol || "Personel") + "</td>" +
                                "<td style='text-align:center; display:flex; gap:5px; justify-content:center;'>" +
                                "<button class='popup-btn btn-edit' style='padding:4px 8px; flex:none;' onclick='personelDuzenle(\"" + pers.telefon + "\")'>Düzenle</button>" +
                                "<button class='popup-btn btn-delete' style='padding:4px 8px; flex:none;' onclick='personelSil(\"" + pers.telefon + "\")'>Sil</button>" +
@@ -1819,7 +2161,7 @@
         }
 
         function personelDuzenle(tel) {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            if (!isAdmin()) return;
             var pers = personelListesi.find(function(p) { return p.telefon === tel; });
             if (!pers) return;
             
@@ -1843,7 +2185,7 @@
         }
 
         function kaydetPersonel() {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            if (!isAdmin()) return;
             var adSoyad = document.getElementById("pAdSoyad").value.trim();
             var unvan = document.getElementById("pUnvan").value.trim();
             var telefon = document.getElementById("pTelefon").value.trim();
@@ -1868,6 +2210,7 @@
             
             db.collection("personeller").doc(targetTel).set(data).then(function() {
                 alert("Personel bilgileri kaydedildi.");
+                logEkle(duzenlenenTel ? "Personel Güncellendi" : "Personel Eklendi", "Ad: " + data.adSoyad + ", Tel: " + data.telefon + ", Rol: " + data.rol + ", İlçe: " + data.ilce);
                 iptalPersonelFormu();
                 guncellePersonelTablosu();
             }).catch(function(err) {
@@ -1876,7 +2219,7 @@
         }
 
         function personelSil(tel) {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            if (!isAdmin()) return;
             if (aktifKullanici && aktifKullanici.telefon === tel) {
                 alert("Aktif kendi oturumunuzu silemezsiniz!");
                 return;
@@ -1885,6 +2228,7 @@
             if (confirm("Bu personeli silmek istediğinize emin misiniz?")) {
                 db.collection("personeller").doc(tel).delete().then(function() {
                     alert("Personel kaydı silindi.");
+                    logEkle("Personel Silindi", "Tel: " + tel);
                     guncellePersonelTablosu();
                 }).catch(function(err) {
                     alert("Silme hatası: " + err.message);
@@ -1892,10 +2236,119 @@
             }
         }
 
+        // LÖG MODAL İŞLEMLERİ
+        function acLogModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
+                alert("Bu modüle erişim yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            guncelleLogTablosu();
+            document.getElementById("logModal").classList.add("active");
+        }
+
+        function kapatLogModal() {
+            document.getElementById("logModal").classList.remove("active");
+        }
+
+        function guncelleLogTablosu() {
+            var tbody = document.getElementById("logTabloGovde");
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
+            
+            db.collection("loglar")
+              .orderBy("tarih", "desc")
+              .limit(100)
+              .get()
+              .then(function(querySnapshot) {
+                  tbody.innerHTML = "";
+                  if (querySnapshot.empty) {
+                      tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Kayıtlı log bulunamadı.</td></tr>";
+                      return;
+                  }
+                  querySnapshot.forEach(function(doc) {
+                      var log = doc.data();
+                      var tarihStr = log.tarihStr || (log.tarih ? log.tarih.toDate().toLocaleString('tr-TR') : "-");
+                      var tr = document.createElement("tr");
+                      tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
+                      tr.innerHTML = "<td style='padding: 10px; font-size:12px; color: var(--text-muted); white-space:nowrap;'>" + tarihStr + "</td>" +
+                                     "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + log.kullanici + " (" + log.rol + ")</td>" +
+                                     "<td style='padding: 10px; font-size:13px; color: var(--primary); font-weight:700;'>" + log.islem + "</td>" +
+                                     "<td style='padding: 10px; font-size:12px; color: var(--text-dark);'>" + log.detay + "</td>";
+                      tbody.appendChild(tr);
+                  });
+              })
+              .catch(function(err) {
+                  tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
+              });
+        }
+
+        // AKTİF KULLANICILAR (SİSTEMDEKİLER) MODAL İŞLEMLERİ
+        function acAktifKullanicilarModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
+                alert("Bu modüle erişim yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            guncelleAktifKullanicilarTablosu();
+            document.getElementById("aktifKullanicilarModal").classList.add("active");
+        }
+
+        function kapatAktifKullanicilarModal() {
+            document.getElementById("aktifKullanicilarModal").classList.remove("active");
+        }
+
+        function guncelleAktifKullanicilarTablosu() {
+            var tbody = document.getElementById("aktifKullaniciTabloGovde");
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
+            
+            db.collection("personeller").get().then(function(querySnapshot) {
+                tbody.innerHTML = "";
+                var personeller = [];
+                querySnapshot.forEach(function(doc) {
+                    personeller.push(doc.data());
+                });
+                
+                // Sort by last active timestamp descending
+                personeller.sort(function(a, b) {
+                    var tA = a.sonAktiflik ? (a.sonAktiflik.seconds || 0) : 0;
+                    var tB = b.sonAktiflik ? (b.sonAktiflik.seconds || 0) : 0;
+                    return tB - tA;
+                });
+                
+                var simdi = Math.floor(Date.now() / 1000);
+                
+                personeller.forEach(function(pers) {
+                    var sonGorulme = pers.sonAktiflikStr || "-";
+                    var isOnline = false;
+                    if (pers.sonAktiflik && pers.sonAktiflik.seconds) {
+                        // Active in the last 15 minutes (900 seconds)
+                        if (simdi - pers.sonAktiflik.seconds < 900) {
+                            isOnline = true;
+                        }
+                    }
+                    
+                    var durumDot = isOnline ? 
+                        '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span> <span style="font-size:11px; color:#10b981; font-weight:700;">Çevrimiçi</span></span>' : 
+                        '<span style="display:inline-flex; align-items:center; gap:5px;"><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#94a3b8;"></span> <span style="font-size:11px; color:#64748b;">Çevrimdışı</span></span>';
+                    
+                    var tr = document.createElement("tr");
+                    tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
+                    tr.innerHTML = "<td style='padding: 10px; white-space:nowrap;'>" + durumDot + "</td>" +
+                                   "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + pers.adSoyad + "</td>" +
+                                   "<td style='padding: 10px; font-size:12px; color:var(--text-muted);'>" + pers.unvan + " / " + pers.ilce + "</td>" +
+                                   "<td style='padding: 10px; font-size:12px; font-weight:600; color:var(--primary);'>" + (pers.rol || "Personel") + "</td>" +
+                                   "<td style='padding: 10px; font-size:12px; color:var(--text-muted); white-space:nowrap;'>" + sonGorulme + "</td>";
+                    tbody.appendChild(tr);
+                });
+            }).catch(function(err) {
+                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
+            });
+        }
+
         // TOPLU VERİ YÜKLEME MODÜLÜ İŞLEVLERİ
 
         function acTopluYuklemeModal() {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            if (!isAdmin()) {
                 alert("Bu işlem için yetkiniz yoktur!");
                 return;
             }
@@ -1910,7 +2363,7 @@
         }
 
         async function aktarTopluVeriler() {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            if (!isAdmin()) {
                 alert("Bu işlem için yetkiniz yoktur!");
                 return;
             }
@@ -1955,12 +2408,13 @@
                 }
             }
             document.getElementById('topluDurumTxt').innerText = basarili + " adet tuzak veritabanına başarıyla aktarıldı!";
+            logEkle("Toplu Tuzak Yüklendi", basarili + " adet tuzak aktarıldı.");
         }
 
         // ─── LOKASYON YÖNETİMİ FONKSİYONLARI ───────────────────────────────────
 
         function acLokasyonModal() {
-            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            if (!isAdmin()) {
                 alert("Bu işlem için yetkiniz yoktur!");
                 return;
             }
@@ -2055,6 +2509,7 @@
             var docRef = db.collection("ayarlar").doc("lokasyonlar");
             docRef.set(lokasyonDB).then(function() {
                 localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
+                logEkle("Lokasyon Güncellendi", "İl/İlçe/Köy veritabanı güncellendi.");
                 // Refresh form dropdowns
                 ilListesiniDoldur();
                 initMenuFilters();
