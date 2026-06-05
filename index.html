@@ -821,23 +821,35 @@
                         if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
                         
                         var ekleyenStr = "";
-                        if (aktifKullanici && (aktifKullanici.rol === "Yönetici" || data.telefon === aktifKullanici.telefon)) {
-                            ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
-                            if (data.telefon) ekleyenStr += " (" + data.telefon + ")";
-                        } else {
-                            if (data.adSoyad) {
-                                ekleyenStr = "Saha Personeli";
+                        if (aktifKullanici) {
+                            if (aktifKullanici.rol === "Yönetici") {
+                                ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
+                                if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
+                                if (data.telefon) ekleyenStr += " - " + data.telefon;
+                            } else if (data.telefon === aktifKullanici.telefon) {
+                                ekleyenStr = data.adSoyad || "Kendi Kaydınız";
+                                if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
                             } else {
-                                ekleyenStr = "Sistem (Toplu Kayıt)";
+                                ekleyenStr = data.unvan ? "Saha Personeli (" + data.unvan + ")" : "Saha Personeli";
                             }
+                        } else {
+                            ekleyenStr = "Saha Personeli";
                         }
                         popupIcerik += "<b>Ekleyen:</b> " + ekleyenStr + "<br>";
 
                         if (data.sonGuncelleyen) {
                             var guncelleyenStr = "";
-                            if (aktifKullanici && (aktifKullanici.rol === "Yönetici" || data.sonGuncelleyenTel === aktifKullanici.telefon)) {
-                                guncelleyenStr = data.sonGuncelleyen;
-                                if (data.sonGuncelleyenTel) guncelleyenStr += " (" + data.sonGuncelleyenTel + ")";
+                            if (aktifKullanici) {
+                                if (aktifKullanici.rol === "Yönetici") {
+                                    guncelleyenStr = data.sonGuncelleyen;
+                                    if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
+                                    if (data.sonGuncelleyenTel) guncelleyenStr += " - " + data.sonGuncelleyenTel;
+                                } else if (data.sonGuncelleyenTel === aktifKullanici.telefon) {
+                                    guncelleyenStr = data.sonGuncelleyen;
+                                    if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
+                                } else {
+                                    guncelleyenStr = data.sonGuncelleyenUnvan ? "Saha Personeli (" + data.sonGuncelleyenUnvan + ")" : "Saha Personeli";
+                                }
                             } else {
                                 guncelleyenStr = "Saha Personeli";
                             }
@@ -1188,6 +1200,7 @@
                     lng: secilenKonum.lng,
                     sonGuncelleyen: aktifKullanici.adSoyad,
                     sonGuncelleyenTel: aktifKullanici.telefon,
+                    sonGuncelleyenUnvan: aktifKullanici.unvan,
                     sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR')
                 };
 
