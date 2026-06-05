@@ -483,15 +483,25 @@
     <div id="raporModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; font-size: 20px; font-weight: 800;">📊 Mahalle / Köy Analizi</h3>
+                <h3 id="raporBaslik" style="margin: 0; font-size: 20px; font-weight: 800;">📊 Mahalle / Köy Analizi</h3>
                 <span class="close-btn" style="color: #64748b;" onclick="kapatRapor()">&times;</span>
+            </div>
+
+            <!-- Analysis Level Selection (Managers only) -->
+            <div id="analizSeviyesiKutusu" style="margin-bottom: 18px; display: none; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-dark);">Analiz Seviyesi:</span>
+                <select id="analizSeviyesi" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px; display: inline-block; height: auto;" onchange="raporGoster(true)">
+                    <option value="Köy" selected>Köy / Mahalle</option>
+                    <option value="İlçe">İlçe</option>
+                    <option value="İl">İl</option>
+                </select>
             </div>
 
             <!-- Report Tabs -->
             <div class="report-tabs">
-                <button id="tabTumu" class="tab-btn active" onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
+                <button id="tabYapiskan" class="tab-btn active" onclick="setRaporFiltre('Yapışkan')">🟨 Yapışkan</button>
                 <button id="tabHuni" class="tab-btn" onclick="setRaporFiltre('Huni')">🏺 Huni</button>
-                <button id="tabYapiskan" class="tab-btn" onclick="setRaporFiltre('Yapışkan')">🟨 Yapışkan</button>
+                <button id="tabTumu" class="tab-btn" onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
             </div>
 
             <!-- Dashboard Cards -->
@@ -506,19 +516,12 @@
                 </div>
             </div>
 
-            <!-- Chart Container -->
-            <div style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; margin-bottom: 20px; border: 1.5px solid #f1f5f9;">
-                <div style="position: relative; height: 200px; width: 100%;">
-                    <canvas id="bocekGrafik"></canvas>
-                </div>
-            </div>
-
-            <!-- Scrollable Table Wrap -->
-            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md);">
+            <!-- Scrollable Table Wrap (Moved up and height increased) -->
+            <div style="max-height: 380px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); margin-bottom: 20px;">
                 <table class="report-table">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th>Köy / Mahalle</th>
+                            <th id="raporTabloIlkSutun">Köy / Mahalle</th>
                             <th style="text-align: center; width: 90px;">Tuzak</th>
                             <th style="text-align: center; width: 90px;">Böcek</th>
                         </tr>
@@ -528,6 +531,13 @@
                     <tfoot id="raporTabloAyak" style="position: sticky; bottom: 0; z-index: 10;">
                     </tfoot>
                 </table>
+            </div>
+
+            <!-- Chart Container (Moved down) -->
+            <div style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; border: 1.5px solid #f1f5f9;">
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="bocekGrafik"></canvas>
+                </div>
             </div>
 
             <div class="modal-actions" style="margin-top: 24px;">
@@ -988,11 +998,11 @@
             document.getElementById('sideMenu').classList.toggle('open');
         }
 
-        // Report Filter (All, Funnel, Sticky)
+        // Report Filter (Yapışkan, Huni, Tümü)
         function setRaporFiltre(filtre) {
             seciliRaporFiltre = filtre;
-            var tabs = ["Tümü", "Huni", "Yapışkan"];
-            var elIds = ["tabTumu", "tabHuni", "tabYapiskan"];
+            var tabs = ["Yapışkan", "Huni", "Tümü"];
+            var elIds = ["tabYapiskan", "tabHuni", "tabTumu"];
             
             for (var i = 0; i < tabs.length; i++) {
                 if (tabs[i] === filtre) {
@@ -1005,14 +1015,40 @@
         }
 
         // Show Reports
+        // Show Reports
         function raporGoster(skipToggleMenu) {
             if (!skipToggleMenu) {
                 toggleMenu();
             }
+
+            var analizSeviyesi = "Köy";
+            var seviyeKutusu = document.getElementById('analizSeviyesiKutusu');
+            var seviyeSelect = document.getElementById('analizSeviyesi');
+            
+            if (aktifKullanici && aktifKullanici.rol === "Yönetici") {
+                if (seviyeKutusu) seviyeKutusu.style.display = 'flex';
+                if (seviyeSelect) analizSeviyesi = seviyeSelect.value;
+            } else {
+                if (seviyeKutusu) seviyeKutusu.style.display = 'none';
+            }
+
+            // Update Table Header and Modal Title
+            var baslikTxt = "📊 Mahalle / Köy Analizi";
+            var ilkSutunTxt = "Köy / Mahalle";
+            if (analizSeviyesi === "İlçe") {
+                baslikTxt = "📊 İlçe Analizi";
+                ilkSutunTxt = "İlçe";
+            } else if (analizSeviyesi === "İl") {
+                baslikTxt = "📊 İl Analizi";
+                ilkSutunTxt = "İl";
+            }
+            
+            document.getElementById('raporBaslik').innerText = baslikTxt;
+            document.getElementById('raporTabloIlkSutun').innerText = ilkSutunTxt;
             
             var toplamBocek = 0;
             var toplamTuzak = 0;
-            var koyIstatistik = {};
+            var istatistik = {};
             
             for (var id in tuzakVerileri) {
                 var data = tuzakVerileri[id];
@@ -1028,26 +1064,34 @@
                     continue;
                 }
 
-                var koy = data.koy || data.ad || "Bilinmiyor";
+                var grupAnahtari = "Bilinmiyor";
+                if (analizSeviyesi === "Köy") {
+                    grupAnahtari = data.koy || data.ad || "Bilinmiyor";
+                } else if (analizSeviyesi === "İlçe") {
+                    grupAnahtari = data.ilce || "Bilinmiyor";
+                } else if (analizSeviyesi === "İl") {
+                    grupAnahtari = data.il || "Bilinmiyor";
+                }
+
                 var bocek = parseInt(data.bocekSayisi) || 0;
                 
                 toplamBocek += bocek;
                 toplamTuzak++;
                 
-                if (!koyIstatistik[koy]) {
-                    koyIstatistik[koy] = { tuzak: 0, bocek: 0 };
+                if (!istatistik[grupAnahtari]) {
+                    istatistik[grupAnahtari] = { tuzak: 0, bocek: 0 };
                 }
-                koyIstatistik[koy].tuzak++;
-                koyIstatistik[koy].bocek += bocek;
+                istatistik[grupAnahtari].tuzak++;
+                istatistik[grupAnahtari].bocek += bocek;
             }
             
             // Convert to array and sort Turkish alphabetically
             var raporArray = [];
-            for (var k in koyIstatistik) {
-                raporArray.push({ koy: k, tuzak: koyIstatistik[k].tuzak, bocek: koyIstatistik[k].bocek });
+            for (var k in istatistik) {
+                raporArray.push({ ad: k, tuzak: istatistik[k].tuzak, bocek: istatistik[k].bocek });
             }
             raporArray.sort(function(a, b) {
-                return a.koy.localeCompare(b.koy, 'tr');
+                return a.ad.localeCompare(b.ad, 'tr');
             });
             
             document.getElementById('toplamTuzakTxt').innerText = toplamTuzak;
@@ -1057,7 +1101,7 @@
             tbody.innerHTML = "";
             raporArray.forEach(function(item) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = "<td>" + item.koy + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
+                tr.innerHTML = "<td>" + item.ad + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
                 tbody.appendChild(tr);
             });
 
@@ -1069,12 +1113,12 @@
                               "<td style='text-align:center; color:#ef4444;'>" + toplamBocek + "</td>" +
                               "</tr>";
             
-            cizGrafik(raporArray);
+            cizGrafik(raporArray, analizSeviyesi);
             document.getElementById('raporModal').classList.add('active');
         }
 
         // Draw Chart.js Graph
-        function cizGrafik(raporArray) {
+        function cizGrafik(raporArray, analizSeviyesi) {
             var ctx = document.getElementById('bocekGrafik').getContext('2d');
             
             if (currentChart) {
@@ -1084,9 +1128,16 @@
             // Show top 10 most populated areas in graphs
             var grafikData = [...raporArray].sort(function(a, b) { return b.bocek - a.bocek; }).slice(0, 10);
             
-            var labels = grafikData.map(function(item) { return item.koy; });
+            var labels = grafikData.map(function(item) { return item.ad; });
             var values = grafikData.map(function(item) { return item.bocek; });
             
+            var grafikBaslik = 'En Çok Kokarca Görülen Mahalleler (İlk 10)';
+            if (analizSeviyesi === "İlçe") {
+                grafikBaslik = 'En Çok Kokarca Görülen İlçeler';
+            } else if (analizSeviyesi === "İl") {
+                grafikBaslik = 'En Çok Kokarca Görülen İller';
+            }
+
             currentChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -1109,7 +1160,7 @@
                         legend: { display: false },
                         title: {
                             display: true,
-                            text: 'En Çok Kokarca Görülen Mahalleler (İlk 10)',
+                            text: grafikBaslik,
                             font: { family: 'Plus Jakarta Sans', size: 12, weight: '800' },
                             color: '#1e293b'
                         }
@@ -1527,7 +1578,7 @@
                 // Reports
                 var item1 = document.createElement("div");
                 item1.className = "menu-item";
-                item1.onclick = function() { setRaporFiltre('Tümü'); };
+                item1.onclick = function() { setRaporFiltre('Yapışkan'); };
                 item1.innerHTML = '<span>📊</span> Genel Raporlar';
                 sideMenu.appendChild(item1);
                 
@@ -1550,7 +1601,7 @@
                 // Saha personeli için sadece kendi bölge raporu
                 var item1 = document.createElement("div");
                 item1.className = "menu-item";
-                item1.onclick = function() { setRaporFiltre('Tümü'); };
+                item1.onclick = function() { setRaporFiltre('Yapışkan'); };
                 item1.innerHTML = '<span>📊</span> Bölge Raporları';
                 sideMenu.appendChild(item1);
             }
