@@ -15,9 +15,10 @@
     
     <style>
         :root {
-            --primary: #1b5e20;
-            --primary-light: #2e7d32;
-            --primary-dark: #003300;
+            --primary: #008e43;
+            --primary-light: #22c55e;
+            --primary-dark: #004d24;
+            --secondary-blue: #005fa6;
             --text-dark: #1e293b;
             --text-muted: #64748b;
             --bg-glass: rgba(255, 255, 255, 0.9);
@@ -27,7 +28,7 @@
             --radius-md: 10px;
             --font: 'Plus Jakarta Sans', sans-serif;
             
-            --success: #2e7d32;
+            --success: #008e43;
             --warning: #fbc02d;
             --danger: #d32f2f;
         }
@@ -389,20 +390,56 @@
         <button style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);" onclick="oturumKapat()">Çıkış</button>
     </div>
 
-    <!-- Login Modal (Phone Number Only) -->
+    <!-- Login Modal (Username Only) -->
     <div id="girisModal" class="modal-overlay" style="z-index: 100000;">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <span style="font-size: 44px;">🐜</span>
-            <h3 style="margin-top: 15px; margin-bottom: 8px; font-size: 20px; font-weight: 800;">Kokarca Haritası Giriş</h3>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Devam etmek için lütfen telefon numaranızı giriniz</p>
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-top: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <!-- Rizespor Green-Blue Custom Shield Bug Logo (Stink Bug / Kokarca) -->
+            <div style="width: 90px; height: 90px; margin: 0 auto 20px auto; background: radial-gradient(circle, #ffffff 40%, #f0fdf4 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0, 142, 67, 0.2); border: 4px solid var(--primary);">
+                <svg viewBox="0 0 100 100" style="width: 65px; height: 65px;">
+                    <!-- Antennae (Rizespor Mavi) -->
+                    <path d="M44,22 L38,10 L28,7" stroke="var(--secondary-blue)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M56,22 L62,10 L72,7" stroke="var(--secondary-blue)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    
+                    <!-- Legs (Rizespor Mavi) - Short and angled under body -->
+                    <path d="M30,35 L16,30 L10,20" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M70,35 L84,30 L90,20" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M26,50 L12,52 L8,60" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M74,50 L88,52 L92,60" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M28,68 L14,75 L12,85" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M72,68 L86,75 L88,85" stroke="var(--secondary-blue)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                    <!-- Head -->
+                    <path d="M42,26 L58,26 L55,16 L45,16 Z" fill="var(--primary-dark)"/>
+                    <!-- Eyes -->
+                    <circle cx="44" cy="20" r="2" fill="#ffffff"/>
+                    <circle cx="56" cy="20" r="2" fill="#ffffff"/>
+                    
+                    <!-- Broad Shield Body (Rizespor Yeşil) -->
+                    <path d="M42,26 L58,26 L78,36 L72,55 L50,86 L28,55 L22,36 Z" fill="var(--primary)" stroke="var(--primary-dark)" stroke-width="3" stroke-linejoin="round"/>
+                    
+                    <!-- Scutellum - Large central triangle characteristic of stink bugs (Rizespor Mavi) -->
+                    <path d="M36,36 L64,36 L50,72 Z" fill="var(--secondary-blue)" stroke="var(--primary-dark)" stroke-width="2" stroke-linejoin="round"/>
+                    
+                    <!-- White markings/dots on the edge of the shield -->
+                    <circle cx="30" cy="42" r="2" fill="#ffffff"/>
+                    <circle cx="70" cy="42" r="2" fill="#ffffff"/>
+                    <circle cx="34" cy="50" r="2" fill="#ffffff"/>
+                    <circle cx="66" cy="50" r="2" fill="#ffffff"/>
+                    <circle cx="42" cy="62" r="1.5" fill="#ffffff"/>
+                    <circle cx="58" cy="62" r="1.5" fill="#ffffff"/>
+                </svg>
+            </div>
+            
+            <h3 style="margin-top: 15px; margin-bottom: 8px; font-size: 21px; font-weight: 800; color: var(--primary-dark);">Rize Kokarca Tuzak Haritası</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Devam etmek için kullanıcı adınızı giriniz</p>
             
             <div class="form-group" style="text-align: left;">
-                <label>Telefon Numarası</label>
-                <input type="text" id="girisTelefon" class="form-control" style="text-align: center; font-size: 16px; letter-spacing: 1px;" placeholder="+905xxxxxxxxx">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Kullanıcı Adı</label>
+                <input type="text" id="girisKullanici" class="form-control" style="text-align: center; font-size: 15px; font-weight: 600;" placeholder="Örn: gokhan.aslan" onkeydown="if(event.key === 'Enter') girisYap()">
             </div>
             
             <div class="modal-actions" style="margin-top: 24px;">
-                <button class="btn btn-save" style="width: 100%; height: 44px;" onclick="girisYap()">Giriş Yap</button>
+                <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700;" onclick="girisYap()">Giriş Yap</button>
             </div>
         </div>
     </div>
@@ -435,6 +472,7 @@
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
                             <th>Ad Soyad</th>
+                            <th>Kullanıcı Adı</th>
                             <th>Ünvan</th>
                             <th>Sorumlu İlçe</th>
                             <th>Telefon</th>
@@ -454,6 +492,10 @@
                 <div class="form-group">
                     <label>Ad Soyad</label>
                     <input type="text" id="pAdSoyad" class="form-control" placeholder="Ad Soyad">
+                </div>
+                <div class="form-group">
+                    <label>Kullanıcı Adı</label>
+                    <input type="text" id="pKullaniciAdi" class="form-control" placeholder="Örn: gokhan.aslan (Boş bırakılırsa isimden otomatik üretilir)">
                 </div>
                 <div class="form-group">
                     <label>Ünvan</label>
@@ -499,7 +541,7 @@
             </div>
             
             <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
-                <table class="rapor-table" style="width: 100%; border-collapse: collapse;">
+                <table class="report-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: var(--primary); color: white;">
                             <th style="padding: 12px; text-align: left; font-size: 13px;">Tarih</th>
@@ -529,7 +571,7 @@
             </div>
             
             <div style="max-height: 400px; overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
-                <table class="rapor-table" style="width: 100%; border-collapse: collapse;">
+                <table class="report-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: var(--primary); color: white;">
                             <th style="padding: 12px; text-align: left; font-size: 13px;">Durum</th>
@@ -945,13 +987,29 @@
             }
         }
 
-        // Real-Time Personnel Listener - Firestore driven, no hardcoded seed
+        // Real-Time Personnel Listener - Firestore driven with automatic default seeding
         function dinleVeTohumlaPersoneller() {
             db.collection("personeller").limit(1).get().then(function(querySnapshot) {
                 if (querySnapshot.empty) {
-                    console.warn("Personel listesi boş. Lütfen Admin panelinden personel ekleyin.");
+                    console.log("Personel listesi boş. Varsayılan personeller tohumlanıyor...");
+                    var varsayilanlar = [
+                        { adSoyad: "Gökhan ASLAN", kullaniciAdi: "gokhan.aslan", unvan: "Yönetici", ilce: "Güneysu", telefon: "+905555555555", rol: "Süper Admin" },
+                        { adSoyad: "Sursunali AZAKLI", kullaniciAdi: "sursunali.azakli", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905444444444", rol: "Saha Personeli" },
+                        { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905333333333", rol: "Saha Personeli" }
+                    ];
+                    var promises = varsayilanlar.map(function(p) {
+                        return db.collection("personeller").doc(p.kullaniciAdi).set(p);
+                    });
+                    Promise.all(promises).then(function() {
+                        console.log("Varsayılan personeller başarıyla tohumlandı.");
+                        oturumKontrol();
+                    }).catch(function(err) {
+                        console.error("Tohumlama hatası:", err);
+                        oturumKontrol();
+                    });
+                } else {
+                    oturumKontrol();
                 }
-                oturumKontrol();
             }).catch(function(err) {
                 console.warn("Personel kontrol hatası:", err);
                 oturumKontrol();
@@ -1782,6 +1840,11 @@
             if (docId && markerListesi[docId]) {
                 markerListesi[docId].dragging.disable();
                 markerListesi[docId].off('dragend');
+                // Revert position if dragging was cancelled
+                var originalData = tuzakVerileri[docId];
+                if (originalData && originalData.lat !== undefined && originalData.lng !== undefined) {
+                    markerListesi[docId].setLatLng([originalData.lat, originalData.lng]);
+                }
             }
             
             var ilSelect = document.getElementById('il');
@@ -1841,6 +1904,11 @@
                         alert("Kayıt başarıyla güncellendi.");
                         logEkle("Tuzak Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
                         kullaniciAktifliginiGuncelle();
+                        // Update local cache before closing so kapatModal won't revert it
+                        if (tuzakVerileri[docId]) {
+                            tuzakVerileri[docId].lat = saveData.lat;
+                            tuzakVerileri[docId].lng = saveData.lng;
+                        }
                         kapatModal();
                     }).catch(function(error) {
                         alert("Güncelleme başarısız oldu: " + error.message);
@@ -1885,7 +1953,8 @@
             var cached = localStorage.getItem("aktifPersonel");
             if (cached) {
                 var cachedUser = JSON.parse(cached);
-                db.collection("personeller").doc(cachedUser.telefon).get().then(function(doc) {
+                var docId = cachedUser.kullaniciAdi || cachedUser.telefon;
+                db.collection("personeller").doc(docId).get().then(function(doc) {
                     if (doc.exists) {
                         var user = doc.data();
                         aktifKullanici = user;
@@ -1899,9 +1968,37 @@
                             personelListesiniDinle();
                         }
                     } else {
-                        localStorage.removeItem("aktifPersonel");
-                        aktifKullanici = null;
-                        document.getElementById("girisModal").classList.add("active");
+                        // Try fallback querying all personeller
+                        db.collection("personeller").get().then(function(qs) {
+                            var foundUser = null;
+                            qs.forEach(function(d) {
+                                var p = d.data();
+                                if ((p.kullaniciAdi && p.kullaniciAdi === cachedUser.kullaniciAdi) || (p.telefon && p.telefon === cachedUser.telefon)) {
+                                    foundUser = p;
+                                }
+                            });
+                            if (foundUser) {
+                                aktifKullanici = foundUser;
+                                localStorage.setItem("aktifPersonel", JSON.stringify(foundUser));
+                                document.getElementById("girisModal").classList.remove("active");
+                                guncelleArayuzRolBazli();
+                                tuzaklariDinle();
+                                kullaniciAktifliginiGuncelle();
+                                if (isAdmin()) {
+                                    personelListesiniDinle();
+                                }
+                            } else {
+                                localStorage.removeItem("aktifPersonel");
+                                aktifKullanici = null;
+                                document.getElementById("girisModal").classList.add("active");
+                            }
+                        }).catch(function() {
+                            // Offline recovery: assume cached is fine
+                            aktifKullanici = cachedUser;
+                            document.getElementById("girisModal").classList.remove("active");
+                            guncelleArayuzRolBazli();
+                            tuzaklariDinle();
+                        });
                     }
                 }).catch(function(err) {
                     console.warn("Firestore bağlantı hatası, yerel önbellekten oturum açılıyor:", err);
@@ -1916,56 +2013,34 @@
         }
 
         function girisYap() {
-            var telInput = document.getElementById("girisTelefon").value.trim();
-            if (telInput === "") {
-                alert("Lütfen telefon numaranızı giriniz.");
+            var userInput = document.getElementById("girisKullanici").value.trim().toLowerCase();
+            if (userInput === "") {
+                alert("Lütfen kullanıcı adınızı giriniz.");
                 return;
             }
             
-            var temizTel = telInput.replace(/\s+/g, '');
-            
-            db.collection("personeller").doc(temizTel).get().then(function(doc) {
+            // Try fetching by username doc ID directly
+            db.collection("personeller").doc(userInput).get().then(function(doc) {
                 if (doc.exists) {
                     var user = doc.data();
-                    localStorage.setItem("aktifPersonel", JSON.stringify(user));
-                    aktifKullanici = user;
-                    
-                    document.getElementById("girisModal").classList.remove("active");
-                    guncelleArayuzRolBazli();
-                    tuzaklariDinle();
-                    kullaniciAktifliginiGuncelle();
-                    
-                    if (isAdmin()) {
-                        personelListesiniDinle();
-                    }
-                    
-                    alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+                    oturumAc(user);
                 } else {
+                    // Fallback: search all users for matching username or phone number
                     db.collection("personeller").get().then(function(qs) {
                         var foundUser = null;
                         qs.forEach(function(d) {
                             var p = d.data();
-                            if (p.telefon.replace(/\s+/g, '') === temizTel) {
+                            var pKullanici = p.kullaniciAdi ? p.kullaniciAdi.trim().toLowerCase() : '';
+                            var pTel = p.telefon ? p.telefon.replace(/\s+/g, '') : '';
+                            if (pKullanici === userInput || pTel === userInput) {
                                 foundUser = p;
                             }
                         });
                         
                         if (foundUser) {
-                            localStorage.setItem("aktifPersonel", JSON.stringify(foundUser));
-                            aktifKullanici = foundUser;
-                            
-                            document.getElementById("girisModal").classList.remove("active");
-                            guncelleArayuzRolBazli();
-                            tuzaklariDinle();
-                            kullaniciAktifliginiGuncelle();
-                            
-                            if (isAdmin()) {
-                                personelListesiniDinle();
-                            }
-                            
-                            alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+                            oturumAc(foundUser);
                         } else {
-                            alert("Kayıtlı personel bulunamadı! Lütfen telefon numaranızı doğru yazdığınızdan emin olun.");
+                            alert("Kayıtlı personel bulunamadı! Lütfen kullanıcı adınızı doğru yazdığınızdan emin olun.");
                         }
                     }).catch(function(err) {
                         alert("Giriş sırasında hata oluştu: " + err.message);
@@ -1976,6 +2051,22 @@
             });
         }
 
+        function oturumAc(user) {
+            localStorage.setItem("aktifPersonel", JSON.stringify(user));
+            aktifKullanici = user;
+            
+            document.getElementById("girisModal").classList.remove("active");
+            guncelleArayuzRolBazli();
+            tuzaklariDinle();
+            kullaniciAktifliginiGuncelle();
+            
+            if (isAdmin()) {
+                personelListesiniDinle();
+            }
+            
+            alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+        }
+
         function oturumKapat() {
             if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
                 localStorage.removeItem("aktifPersonel");
@@ -1984,7 +2075,7 @@
                 document.getElementById("userProfileCard").style.display = "none";
                 document.getElementById("sideMenu").innerHTML = "";
                 document.getElementById("girisModal").classList.add("active");
-                document.getElementById("girisTelefon").value = "";
+                document.getElementById("girisKullanici").value = "";
                 
                 if (tuzakListener) {
                     tuzakListener();
@@ -2259,6 +2350,10 @@
             document.getElementById("personelModal").classList.add("active");
         }
 
+        function kapatRapor() {
+            document.getElementById("raporModal").classList.remove("active");
+        }
+
         function kapatPersonelModal() {
             document.getElementById("personelModal").classList.remove("active");
         }
@@ -2269,15 +2364,17 @@
             
             var sorted = [...personelListesi].sort(function(a, b) { return a.adSoyad.localeCompare(b.adSoyad, 'tr'); });
             sorted.forEach(function(pers) {
+                var kullaniciStr = pers.kullaniciAdi || "-";
                 var tr = document.createElement("tr");
                 tr.innerHTML = "<td>" + pers.adSoyad + "</td>" +
+                               "<td>" + kullaniciStr + "</td>" +
                                "<td>" + pers.unvan + "</td>" +
                                "<td>" + pers.ilce + "</td>" +
                                "<td>" + pers.telefon + "</td>" +
                                "<td>" + (pers.rol || "Personel") + "</td>" +
                                "<td style='text-align:center; display:flex; gap:5px; justify-content:center;'>" +
-                               "<button class='popup-btn btn-edit' style='padding:4px 8px; flex:none;' onclick='personelDuzenle(\"" + pers.telefon + "\")'>Düzenle</button>" +
-                               "<button class='popup-btn btn-delete' style='padding:4px 8px; flex:none;' onclick='personelSil(\"" + pers.telefon + "\")'>Sil</button>" +
+                               "<button class='popup-btn btn-edit' style='padding:4px 8px; flex:none;' onclick='personelDuzenle(\"" + (pers.kullaniciAdi || pers.telefon) + "\")'>Düzenle</button>" +
+                               "<button class='popup-btn btn-delete' style='padding:4px 8px; flex:none;' onclick='personelSil(\"" + (pers.kullaniciAdi || pers.telefon) + "\")'>Sil</button>" +
                                "</td>";
                 tbody.appendChild(tr);
             });
@@ -2287,6 +2384,7 @@
             document.getElementById("personelFormBaslik").innerText = "Yeni Personel Ekle";
             document.getElementById("duzenlenenPersonelTel").value = "";
             document.getElementById("pAdSoyad").value = "";
+            document.getElementById("pKullaniciAdi").value = "";
             document.getElementById("pUnvan").value = "";
             document.getElementById("pTelefon").value = "";
             document.getElementById("pRol").value = "Saha Personeli";
@@ -2306,21 +2404,23 @@
             document.getElementById("personelEkleDuzenleFormu").style.display = "none";
             document.getElementById("duzenlenenPersonelTel").value = "";
             document.getElementById("pAdSoyad").value = "";
+            document.getElementById("pKullaniciAdi").value = "";
             document.getElementById("pUnvan").value = "";
             document.getElementById("pTelefon").value = "";
         }
 
         function personelDuzenle(tel) {
             if (!isAdmin()) return;
-            var pers = personelListesi.find(function(p) { return p.telefon === tel; });
+            var pers = personelListesi.find(function(p) { return p.telefon === tel || p.kullaniciAdi === tel; });
             if (!pers) return;
             
             document.getElementById("personelFormBaslik").innerText = "Personel Düzenle";
-            document.getElementById("duzenlenenPersonelTel").value = tel;
+            document.getElementById("duzenlenenPersonelTel").value = pers.kullaniciAdi || pers.telefon || tel;
             document.getElementById("pAdSoyad").value = pers.adSoyad;
+            document.getElementById("pKullaniciAdi").value = pers.kullaniciAdi || "";
             document.getElementById("pUnvan").value = pers.unvan;
             document.getElementById("pTelefon").value = pers.telefon;
-            document.getElementById("pTelefon").disabled = true;
+            document.getElementById("pTelefon").disabled = false;
             document.getElementById("pRol").value = pers.rol || "Saha Personeli";
             
             var select = document.getElementById("pIlce");
@@ -2337,30 +2437,43 @@
         function kaydetPersonel() {
             if (!isAdmin()) return;
             var adSoyad = document.getElementById("pAdSoyad").value.trim();
+            var kullaniciAdi = document.getElementById("pKullaniciAdi").value.trim().toLowerCase();
             var unvan = document.getElementById("pUnvan").value.trim();
             var telefon = document.getElementById("pTelefon").value.trim();
             var ilce = document.getElementById("pIlce").value;
             var rol = document.getElementById("pRol").value;
             var duzenlenenTel = document.getElementById("duzenlenenPersonelTel").value;
             
-            if (adSoyad === "" || telefon === "") {
-                alert("Lütfen ad soyad ve telefon numarasını doldurunuz.");
+            if (adSoyad === "") {
+                alert("Lütfen ad soyad alanını doldurunuz.");
                 return;
             }
-            
-            var targetTel = duzenlenenTel || telefon;
+            if (kullaniciAdi === "") {
+                kullaniciAdi = adSoyad.toLowerCase()
+                    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                    .replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '');
+            }
             
             var data = {
                 adSoyad: adSoyad,
+                kullaniciAdi: kullaniciAdi,
                 unvan: unvan || "Saha Personeli",
-                telefon: targetTel,
+                telefon: telefon,
                 ilce: ilce,
                 rol: rol
             };
             
-            db.collection("personeller").doc(targetTel).set(data).then(function() {
+            var silinecekEskiDoc = (duzenlenenTel && duzenlenenTel !== kullaniciAdi) ? duzenlenenTel : null;
+            
+            db.collection("personeller").doc(kullaniciAdi).set(data).then(function() {
+                if (silinecekEskiDoc) {
+                    db.collection("personeller").doc(silinecekEskiDoc).delete().catch(function(e){
+                        console.warn("Eski kullanıcı dokümanı silinemedi:", e);
+                    });
+                }
                 alert("Personel bilgileri kaydedildi.");
-                logEkle(duzenlenenTel ? "Personel Güncellendi" : "Personel Eklendi", "Ad: " + data.adSoyad + ", Tel: " + data.telefon + ", Rol: " + data.rol + ", İlçe: " + data.ilce);
+                logEkle(duzenlenenTel ? "Personel Güncellendi" : "Personel Eklendi", "Ad: " + data.adSoyad + ", Kullanıcı: " + data.kullaniciAdi + ", Rol: " + data.rol + ", İlçe: " + data.ilce);
                 iptalPersonelFormu();
                 guncellePersonelTablosu();
             }).catch(function(err) {
@@ -2370,7 +2483,7 @@
 
         function personelSil(tel) {
             if (!isAdmin()) return;
-            if (aktifKullanici && aktifKullanici.telefon === tel) {
+            if (aktifKullanici && (aktifKullanici.telefon === tel || aktifKullanici.kullaniciAdi === tel)) {
                 alert("Aktif kendi oturumunuzu silemezsiniz!");
                 return;
             }
@@ -2378,7 +2491,7 @@
             if (confirm("Bu personeli silmek istediğinize emin misiniz?")) {
                 db.collection("personeller").doc(tel).delete().then(function() {
                     alert("Personel kaydı silindi.");
-                    logEkle("Personel Silindi", "Tel: " + tel);
+                    logEkle("Personel Silindi", "Kullanıcı: " + tel);
                     guncellePersonelTablosu();
                 }).catch(function(err) {
                     alert("Silme hatası: " + err.message);
@@ -2723,6 +2836,19 @@
                 }
             }
         }
+
+        // Global Escape Key listener to close active modals
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                kapatModal();
+                kapatRapor();
+                kapatPersonelModal();
+                kapatLogModal();
+                kapatAktifKullanicilarModal();
+                kapatTopluYuklemeModal();
+                kapatLokasyonModal();
+            }
+        });
 
     </script>
 
