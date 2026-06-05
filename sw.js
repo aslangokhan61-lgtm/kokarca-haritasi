@@ -1,8 +1,9 @@
-const CACHE_NAME = 'kokarca-haritasi-v10';
+const CACHE_NAME = 'kokarca-haritasi-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './lokasyonlar.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js',
