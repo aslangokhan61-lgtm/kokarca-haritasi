@@ -129,7 +129,7 @@
 
         // Özel Tuzak İkonu Tanımlama
         var tuzakIkonu = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/2805/2805355.png', // Böcek/Tuzak İkonu
+            iconUrl: 'icon.png', // İnternet yerine klasördeki kendi ikonumuzu kullanıyoruz (Kırık resim hatasını çözer)
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32]
@@ -142,12 +142,22 @@
                     var data = change.doc.data();
                     
                     var popupIcerik = "";
-                    if (data.koy) popupIcerik += "<b>Köy:</b> " + data.koy + "<br>";
+                    
+                    // Eski kayıtlarda "ad" kısmı aslında köy ismiydi. Bunu düzeltelim.
+                    var koyIsmi = data.koy || data.ad || "Bilinmiyor";
+                    popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
+                    
                     if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
                     
-                    var ekleyen = data.adSoyad || data.ad || "Bilinmiyor";
-                    if (data.unvan) ekleyen += " (" + data.unvan + ")";
-                    popupIcerik += "<b>Ekleyen:</b> " + ekleyen + "<br>";
+                    // Ekleyen kişi mantığı
+                    if (data.adSoyad) {
+                        var ekleyen = data.adSoyad;
+                        if (data.unvan) ekleyen += " (" + data.unvan + ")";
+                        popupIcerik += "<b>Ekleyen:</b> " + ekleyen + "<br>";
+                    } else {
+                        // Eski kayıtsa ekleyen kişiyi "Sistem" olarak gösterelim
+                        popupIcerik += "<b>Ekleyen:</b> Sistem (Toplu Kayıt)<br>";
+                    }
                     
                     L.marker([data.lat, data.lng], {icon: tuzakIkonu}).addTo(map).bindPopup(popupIcerik);
                 }
