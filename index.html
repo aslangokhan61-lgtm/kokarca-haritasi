@@ -113,56 +113,20 @@
             </div>
             <div class="form-group">
                 <label>İl</label>
-                <select id="il" class="form-control">
-                    <option value="Rize" selected>Rize</option>
-                    <option value="Trabzon">Trabzon</option>
-                    <option value="Artvin">Artvin</option>
-                    <option value="Diğer">Diğer</option>
+                <select id="il" class="form-control" onchange="ilSecildi()">
+                    <option value="" disabled selected>Yükleniyor...</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>İlçe</label>
-                <select id="ilce" class="form-control">
-                    <option value="Güneysu" selected>Güneysu</option>
-                    <option value="Merkez">Merkez</option>
-                    <option value="Çayeli">Çayeli</option>
-                    <option value="Ardeşen">Ardeşen</option>
-                    <option value="Diğer">Diğer</option>
+                <select id="ilce" class="form-control" onchange="ilceSecildi()">
+                    <option value="" disabled selected>Önce İl Seçiniz</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Köy/Mahalle</label>
                 <select id="koy" class="form-control">
-                    <option value="" disabled selected>Lütfen seçiniz</option>
-                    <option value="Adacami Mahallesi">Adacami Mahallesi</option>
-                    <option value="Asmalıırmak Köyü">Asmalıırmak Köyü</option>
-                    <option value="Aşağı Kiremit Mahallesi">Aşağı Kiremit Mahallesi</option>
-                    <option value="Ballıdere Köyü">Ballıdere Köyü</option>
-                    <option value="Başaran Mahallesi">Başaran Mahallesi</option>
-                    <option value="Başköy Köyü">Başköy Köyü</option>
-                    <option value="Birlik Mahallesi">Birlik Mahallesi</option>
-                    <option value="Bulutlu Köyü">Bulutlu Köyü</option>
-                    <option value="Çamlıca Köyü">Çamlıca Köyü</option>
-                    <option value="Dumankaya Köyü">Dumankaya Köyü</option>
-                    <option value="Eskicami Mahallesi">Eskicami Mahallesi</option>
-                    <option value="Güneli Köyü">Güneli Köyü</option>
-                    <option value="Gürgen Köyü">Gürgen Köyü</option>
-                    <option value="İslahiye Köyü">İslahiye Köyü</option>
-                    <option value="Kıbledağı Köyü">Kıbledağı Köyü</option>
-                    <option value="Kiremit Mahallesi">Kiremit Mahallesi</option>
-                    <option value="Küçükcami Mahallesi">Küçükcami Mahallesi</option>
-                    <option value="Merkez Mahallesi">Merkez Mahallesi</option>
-                    <option value="Ortaköy Köyü">Ortaköy Köyü</option>
-                    <option value="Selamet Mahallesi">Selamet Mahallesi</option>
-                    <option value="Tepebaşı Köyü">Tepebaşı Köyü</option>
-                    <option value="Ulucami Mahallesi">Ulucami Mahallesi</option>
-                    <option value="Yarımada Köyü">Yarımada Köyü</option>
-                    <option value="Yenicami Mahallesi">Yenicami Mahallesi</option>
-                    <option value="Yeniköy Köyü">Yeniköy Köyü</option>
-                    <option value="Yeşilköy Köyü">Yeşilköy Köyü</option>
-                    <option value="Yeşilyurt Köyü">Yeşilyurt Köyü</option>
-                    <option value="Yukarı İslahiye Köyü">Yukarı İslahiye Köyü</option>
-                    <option value="Yüksekköy Köyü">Yüksekköy Köyü</option>
+                    <option value="" disabled selected>Önce İlçe Seçiniz</option>
                 </select>
             </div>
             <div class="form-group">
@@ -265,9 +229,92 @@
 
 
 
+        // Akıllı Harita İçin Özel Renkli İğneler
+        var shadowOpt = { shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] };
+        var greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
+        var yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
+        var redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
+
         // Haritadaki iğneleri ve ham veriyi takip etmek için
         var markerListesi = {};
         var tuzakVerileri = {};
+        var lokasyonDB = null;
+
+        // Veritabanından İl/İlçe/Köy Verilerini Çek
+        var varsayilanRize = {
+            "Rize": {
+                "Güneysu": [
+                    "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi",
+                    "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi",
+                    "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi",
+                    "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi", "Yarımada Köyü",
+                    "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü", "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
+                ],
+                "Merkez": [],
+                "Çayeli": [],
+                "Ardeşen": []
+            }
+        };
+
+        function lokasyonlariYukle() {
+            var docRef = db.collection("ayarlar").doc("lokasyonlar");
+            docRef.get().then(function(doc) {
+                if (doc.exists) {
+                    lokasyonDB = doc.data();
+                    ilListesiniDoldur();
+                } else {
+                    // İlk defa çalışıyorsa varsayılan Rize verilerini veritabanına kaydet
+                    docRef.set(varsayilanRize).then(function() {
+                        lokasyonDB = varsayilanRize;
+                        ilListesiniDoldur();
+                    });
+                }
+            }).catch(function(error) {
+                console.log("Lokasyonlar çekilemedi: ", error);
+            });
+        }
+
+        function ilListesiniDoldur() {
+            var ilSelect = document.getElementById("il");
+            ilSelect.innerHTML = '<option value="" disabled selected>Lütfen İl Seçiniz</option>';
+            if (lokasyonDB) {
+                for (var ilAdi in lokasyonDB) {
+                    ilSelect.innerHTML += '<option value="' + ilAdi + '">' + ilAdi + '</option>';
+                }
+            }
+        }
+
+        function ilSecildi() {
+            var ilAdi = document.getElementById("il").value;
+            var ilceSelect = document.getElementById("ilce");
+            var koySelect = document.getElementById("koy");
+            
+            ilceSelect.innerHTML = '<option value="" disabled selected>Lütfen İlçe Seçiniz</option>';
+            koySelect.innerHTML = '<option value="" disabled selected>Önce İlçe Seçiniz</option>';
+            
+            if (lokasyonDB && lokasyonDB[ilAdi]) {
+                for (var ilceAdi in lokasyonDB[ilAdi]) {
+                    ilceSelect.innerHTML += '<option value="' + ilceAdi + '">' + ilceAdi + '</option>';
+                }
+            }
+        }
+
+        function ilceSecildi() {
+            var ilAdi = document.getElementById("il").value;
+            var ilceAdi = document.getElementById("ilce").value;
+            var koySelect = document.getElementById("koy");
+            
+            koySelect.innerHTML = '<option value="" disabled selected>Lütfen Köy Seçiniz</option>';
+            
+            if (lokasyonDB && lokasyonDB[ilAdi] && lokasyonDB[ilAdi][ilceAdi]) {
+                var koyler = lokasyonDB[ilAdi][ilceAdi];
+                for (var i = 0; i < koyler.length; i++) {
+                    koySelect.innerHTML += '<option value="' + koyler[i] + '">' + koyler[i] + '</option>';
+                }
+            }
+        }
+
+        lokasyonlariYukle();
 
         // 1. ÖZELLİK: Veritabanındaki kayıtları canlı dinle (ekleme, değiştirme, silme)
         db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
@@ -300,14 +347,25 @@
                     popupIcerik += "</div>";
                     // Sadece geçerli koordinatı olanları haritaya ekle (Eksik veri çökmesini engeller)
                     if (data.lat !== undefined && data.lng !== undefined) {
+                        
+                        // Böcek sayısına göre iğne rengini belirle
+                        var bocekS = parseInt(data.bocekSayisi) || 0;
+                        var seciliIkon = greenIcon; // Varsayılan Yeşil (0-19 böcek)
+                        if (bocekS >= 50) {
+                            seciliIkon = redIcon; // Tehlike/Çok Yoğun (50+ böcek)
+                        } else if (bocekS >= 20) {
+                            seciliIkon = yellowIcon; // Uyarı/Orta (20-49 böcek)
+                        }
+
                         if (change.type === "added") {
-                            var marker = L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
+                            var marker = L.marker([data.lat, data.lng], {icon: seciliIkon}).addTo(map).bindPopup(popupIcerik);
                             markerListesi[docId] = marker;
                         } else if (change.type === "modified") {
                             var marker = markerListesi[docId];
                             if (marker) {
                                 marker.setLatLng([data.lat, data.lng]);
                                 marker.setPopupContent(popupIcerik);
+                                marker.setIcon(seciliIkon); // Rengi de güncelle
                             }
                         }
                     }
@@ -439,9 +497,29 @@
                         document.getElementById('unvan').value = "";
                     }
 
-                    document.getElementById('il').value = data.il || "Rize";
-                    document.getElementById('ilce').value = data.ilce || "Güneysu";
-                    document.getElementById('koy').value = data.koy || data.ad || "";
+                    // Lokasyon Doldurma ve Seçme
+                    if (data.il) {
+                        document.getElementById('il').value = data.il;
+                        ilSecildi(); // İlçeleri doldur
+                        if (data.ilce) {
+                            document.getElementById('ilce').value = data.ilce;
+                            ilceSecildi(); // Köyleri doldur
+                            var gercekKoy = data.koy || data.ad || "";
+                            if (gercekKoy) {
+                                // Eğer köy veritabanında yoksa bile görünmesi için ekleyelim
+                                var koyVarMi = false;
+                                var koySelect = document.getElementById('koy');
+                                for(var j=0; j<koySelect.options.length; j++){
+                                    if(koySelect.options[j].value === gercekKoy) koyVarMi = true;
+                                }
+                                if(!koyVarMi) {
+                                    koySelect.innerHTML += '<option value="' + gercekKoy + '">' + gercekKoy + '</option>';
+                                }
+                                koySelect.value = gercekKoy;
+                            }
+                        }
+                    }
+
                     document.getElementById('tuzakNo').value = data.tuzakNo || "";
                     document.getElementById('bocekSayisi').value = data.bocekSayisi !== undefined ? data.bocekSayisi : "";
 
@@ -483,9 +561,13 @@
             document.getElementById('digerPersonelAlani').style.display = "none";
             document.getElementById('adSoyad').value = "";
             document.getElementById('unvan').value = "";
-            document.getElementById('il').value = "Rize";
-            document.getElementById('ilce').value = "Güneysu";
-            document.getElementById('koy').value = "";
+            
+            var ilSelect = document.getElementById('il');
+            if (ilSelect.options.length > 1) {
+                ilSelect.selectedIndex = 0; // Lütfen il seçiniz
+            }
+            document.getElementById('ilce').innerHTML = '<option value="" disabled selected>Önce İl Seçiniz</option>';
+            document.getElementById('koy').innerHTML = '<option value="" disabled selected>Önce İlçe Seçiniz</option>';
             document.getElementById('tuzakNo').value = "";
             document.getElementById('bocekSayisi').value = "";
             document.getElementById('duzenlenenDocId').value = "";
