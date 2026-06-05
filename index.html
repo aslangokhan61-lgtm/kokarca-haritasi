@@ -4,13 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kokarca Haritası</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #harita { height: 100vh; width: 100%; }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 12px;
+            width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: translateY(-20px); transition: 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-content h3 { margin-top: 0; color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; }
+        .form-control {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 15px; box-sizing: border-box; outline: none; transition: border 0.3s;
+        }
+        .form-control:focus { border-color: #007bff; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; }
+        .btn-cancel { background: #f1f3f5; color: #333; }
+        .btn-save { background: #28a745; color: white; }
+        .btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
+
+    <!-- Modal Form -->
+    <div id="tuzakModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Yeni Kayıt Ekle</h3>
+            <div class="form-group">
+                <label>Ad Soyad</label>
+                <input type="text" id="adSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
+            </div>
+            <div class="form-group">
+                <label>Ünvan</label>
+                <input type="text" id="unvan" class="form-control" placeholder="Örn: Muhtar, Çiftçi vs.">
+            </div>
+            <div class="form-group">
+                <label>İl</label>
+                <select id="il" class="form-control">
+                    <option value="Rize" selected>Rize</option>
+                    <option value="Trabzon">Trabzon</option>
+                    <option value="Artvin">Artvin</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>İlçe</label>
+                <select id="ilce" class="form-control">
+                    <option value="Güneysu" selected>Güneysu</option>
+                    <option value="Merkez">Merkez</option>
+                    <option value="Çayeli">Çayeli</option>
+                    <option value="Ardeşen">Ardeşen</option>
+                    <option value="Diğer">Diğer</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Köy/Mahalle</label>
+                <input type="text" id="koy" class="form-control" placeholder="Örn: Ortaköy">
+            </div>
+            <div class="form-group">
+                <label>Tuzak No</label>
+                <input type="text" id="tuzakNo" class="form-control" placeholder="Örn: 105">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatModal()">İptal</button>
+                <button class="btn btn-save" onclick="kaydet()">Kaydet</button>
+            </div>
+        </div>
+    </div>
 
     <div id="harita"></div>
 
@@ -36,42 +111,106 @@
         const db = firebase.firestore();
 
         // Haritayı Başlat (Güneysu/Rize)
-        var map = L.map('harita').setView([40.9500, 40.6300], 12);
+        var map = L.map('harita').setView([40.9400, 40.6300], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
+
+        // Konum Bulma Özelliği
+        map.locate({setView: true, maxZoom: 16});
+
+        function onLocationFound(e) {
+            var radius = e.accuracy / 2;
+            L.marker(e.latlng).addTo(map)
+                .bindPopup("Şu an buradasınız").openPopup();
+            L.circle(e.latlng, radius).addTo(map);
+        }
+        map.on('locationfound', onLocationFound);
+
+        // Özel Tuzak İkonu Tanımlama
+        var tuzakIkonu = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/2805/2805355.png', // Böcek/Tuzak İkonu
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        });
 
         // 1. ÖZELLİK: Veritabanındaki eski kayıtları otomatik olarak haritaya çek
         db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
             querySnapshot.docChanges().forEach(function(change) {
                 if (change.type === "added") {
                     var data = change.doc.data();
-                    L.marker([data.lat, data.lng]).addTo(map).bindPopup("<b>" + data.ad + "</b><br>Kayıt: " + data.tarih);
+                    
+                    var popupIcerik = "";
+                    if (data.koy) popupIcerik += "<b>Köy:</b> " + data.koy + "<br>";
+                    if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
+                    
+                    var ekleyen = data.adSoyad || data.ad || "Bilinmiyor";
+                    if (data.unvan) ekleyen += " (" + data.unvan + ")";
+                    popupIcerik += "<b>Ekleyen:</b> " + ekleyen + "<br>";
+                    
+                    L.marker([data.lat, data.lng], {icon: tuzakIkonu}).addTo(map).bindPopup(popupIcerik);
                 }
             });
         });
 
-        // 2. ÖZELLİK: Haritaya tıklanınca yeni tuzak ekle
+        // Seçilen konumu geçici olarak tutacağımız değişken
+        var secilenKonum = null;
+
+        // 2. ÖZELLİK: Haritaya tıklanınca modal formunu aç
         map.on('click', function(e) {
-            var enlem = e.latlng.lat;
-            var boylam = e.latlng.lng;
-            
-            var isim = prompt("Yeni eklenecek tuzağın adını girin:");
-            
-            if (isim != null && isim != "") {
+            secilenKonum = e.latlng;
+            document.getElementById('tuzakModal').classList.add('active');
+        });
+
+        // Formu kapatma fonksiyonu
+        function kapatModal() {
+            document.getElementById('tuzakModal').classList.remove('active');
+            // Formu temizle
+            document.getElementById('adSoyad').value = "";
+            document.getElementById('unvan').value = "";
+            document.getElementById('il').value = "Rize";
+            document.getElementById('ilce').value = "Güneysu";
+            document.getElementById('koy').value = "";
+            document.getElementById('tuzakNo').value = "";
+            secilenKonum = null;
+        }
+
+        // Veritabanına kaydetme fonksiyonu
+        function kaydet() {
+            var adSoyad = document.getElementById('adSoyad').value.trim();
+            var unvan = document.getElementById('unvan').value.trim();
+            var il = document.getElementById('il').value;
+            var ilce = document.getElementById('ilce').value;
+            var koy = document.getElementById('koy').value.trim();
+            var tuzakNo = document.getElementById('tuzakNo').value.trim();
+
+            if (adSoyad === "") {
+                alert("Lütfen Ad Soyad alanını doldurunuz.");
+                return;
+            }
+
+            if (secilenKonum) {
                 // Firebase Veritabanına Gönder
                 db.collection("tuzaklar").add({
-                    ad: isim,
-                    lat: enlem,
-                    lng: boylam,
+                    adSoyad: adSoyad,
+                    ad: adSoyad, // Geriye dönük uyumluluk (eski kodların patlamaması için)
+                    unvan: unvan,
+                    il: il,
+                    ilce: ilce,
+                    koy: koy,
+                    tuzakNo: tuzakNo,
+                    lat: secilenKonum.lat,
+                    lng: secilenKonum.lng,
                     tarih: new Date().toLocaleDateString('tr-TR')
                 }).then(function() {
-                    alert("Harika! Tuzak başarıyla veritabanına kaydedildi.");
+                    alert("Harika! Kayıt başarıyla veritabanına eklendi.");
+                    kapatModal();
                 }).catch(function(error) {
                     alert("Kayıt başarısız oldu. Hata detayı: " + error.message);
                 });
             }
-        });
+        }
     </script>
 </body>
 </html>
