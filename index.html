@@ -245,9 +245,15 @@
             width: 30px;
             height: 30px;
         }
-        .marker-green { background: #10b981; }
+        /* Huni tuzak renk skalası (yeşil → sarı → kırmızı) */
+        .marker-green  { background: #10b981; }
         .marker-yellow { background: #f59e0b; color: #ffffff; }
-        .marker-red { background: #ef4444; }
+        .marker-red    { background: #ef4444; }
+
+        /* Yapışkan tuzak renk skalası (amber → turuncu → mor) */
+        .marker-yp-az    { background: #fbbf24; color: #78350f; }  /* az böcek → amber */
+        .marker-yp-orta  { background: #ea580c; color: #ffffff; }  /* orta    → turuncu */
+        .marker-yp-cok   { background: #9333ea; color: #ffffff; }  /* çok     → mor     */
 
         /* Responsive adjustments to prevent overlap on mobile */
         @media (max-width: 600px) {
@@ -857,24 +863,31 @@
         function createCustomMarkerIcon(tuzakTipi, bocekSayisi) {
             var bocekCount = parseInt(bocekSayisi) || 0;
             var typeVal = tuzakTipi || "Huni";
-            var shapeClass = (typeVal === "Yapışkan") ? "marker-yapiskan" : "marker-huni";
-            var colorClass = "marker-green";
-            
-            if (bocekCount >= 50) {
-                colorClass = "marker-red";
-            } else if (bocekCount >= 20) {
-                colorClass = "marker-yellow";
+            var isYapiskan = (typeVal === "Yapışkan");
+            var shapeClass = isYapiskan ? "marker-yapiskan" : "marker-huni";
+            var colorClass;
+
+            if (isYapiskan) {
+                // Yapışkan: amber → turuncu → mor
+                if (bocekCount >= 50)       colorClass = "marker-yp-cok";
+                else if (bocekCount >= 20)  colorClass = "marker-yp-orta";
+                else                        colorClass = "marker-yp-az";
+            } else {
+                // Huni: yeşil → sarı → kırmızı
+                if (bocekCount >= 50)       colorClass = "marker-red";
+                else if (bocekCount >= 20)  colorClass = "marker-yellow";
+                else                        colorClass = "marker-green";
             }
-            
-            var shortSymbol = (typeVal === "Yapışkan") ? "Y" : "H";
+
+            var shortSymbol = isYapiskan ? "Y" : "H";
             var iconHtml = '<span style="font-size: 8px; font-weight: 800; display: block; line-height: 1;">' + shortSymbol + '</span>' +
                            '<span style="font-size: 11px; font-weight: 800; line-height: 1.2;">' + bocekCount + '</span>';
 
             return L.divIcon({
                 className: 'custom-marker ' + shapeClass + ' ' + colorClass,
                 html: '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">' + iconHtml + '</div>',
-                iconSize: (typeVal === "Yapışkan") ? [30, 30] : [32, 32],
-                iconAnchor: (typeVal === "Yapışkan") ? [15, 15] : [16, 16],
+                iconSize: isYapiskan ? [30, 30] : [32, 32],
+                iconAnchor: isYapiskan ? [15, 15] : [16, 16],
                 popupAnchor: [0, -16]
             });
         }
@@ -1577,10 +1590,29 @@
                 modullerHeader.innerText = "🛠️ Menü Modülleri";
                 sideMenu.appendChild(modullerHeader);
 
-                // Reports
+                // ── Hızlı Erişim Modülleri ──
+                // Modül: Beyza → Rize Tüm İlçeler
+                var itemBeyza = document.createElement("div");
+                itemBeyza.className = "menu-item";
+                itemBeyza.style = "border-left: 3px solid #7c3aed;";
+                itemBeyza.onclick = function() { acBolgeRaporu("Rize", "Tümü", "Beyza FEYİZ"); };
+                itemBeyza.innerHTML = '<span>📌</span> Beyza - Rize Tüm İlçeler';
+                sideMenu.appendChild(itemBeyza);
+
+                // Modül: Gökhan → Kendi ilçesi
+                var itemBenim = document.createElement("div");
+                itemBenim.className = "menu-item";
+                itemBenim.style = "border-left: 3px solid #0369a1;";
+                (function(kullanici) {
+                    itemBenim.onclick = function() { acBolgeRaporu("Rize", kullanici.ilce, kullanici.adSoyad); };
+                    itemBenim.innerHTML = '<span>📌</span> ' + kullanici.adSoyad.split(' ')[0] + ' - ' + kullanici.ilce + ' İlçesi';
+                })(aktifKullanici);
+                sideMenu.appendChild(itemBenim);
+
+                // Genel Raporlar (tüm filtre sıfırlı)
                 var item1 = document.createElement("div");
                 item1.className = "menu-item";
-                item1.onclick = function() { setRaporFiltre('Yapışkan'); };
+                item1.onclick = function() { acBolgeRaporu("Tümü", "Tümü", null); };
                 item1.innerHTML = '<span>📊</span> Genel Raporlar';
                 sideMenu.appendChild(item1);
                 
@@ -1692,6 +1724,34 @@
                 aktifFiltreler.koy = koySelect.value;
             }
             filtreleriUygula();
+        }
+
+        // Hızlı bölge raporu açıcı (modül butonları için)
+        function acBolgeRaporu(il, ilce, etiket) {
+            // 1. Filtreleri ayarla
+            aktifFiltreler.il = il || "Tümü";
+            aktifFiltreler.ilce = ilce || "Tümü";
+            aktifFiltreler.koy = "Tümü";
+
+            // 2. Harita markerlarını güncelle
+            filtreleriUygula();
+
+            // 3. Yan menü dropdown'larını güncelle
+            var menuIlSelect = document.getElementById("menuFiltreIl");
+            var menuIlceSelect = document.getElementById("menuFiltreIlce");
+            var menuKoySelect = document.getElementById("menuFiltreKoy");
+            if (menuIlSelect) {
+                menuIlSelect.value = aktifFiltreler.il;
+                menuFiltreIlSecildi(true);
+            }
+            if (menuIlceSelect && ilce !== "Tümü") {
+                menuIlceSelect.value = aktifFiltreler.ilce;
+                menuFiltreIlceSecildi(true);
+            }
+            if (menuKoySelect) menuKoySelect.value = "Tümü";
+
+            // 4. Raporu aç (Yapışkan sekmesiyle)
+            setRaporFiltre('Yapışkan');
         }
 
         // PERSONEL CRUD PANEL İŞLEVLERİ
