@@ -987,31 +987,28 @@
             }
         }
 
-        // Real-Time Personnel Listener - Firestore driven with automatic default seeding
+        // Real-Time Personnel Listener - Robust default personnel checking and seeding
         function dinleVeTohumlaPersoneller() {
-            db.collection("personeller").limit(1).get().then(function(querySnapshot) {
-                if (querySnapshot.empty) {
-                    console.log("Personel listesi boş. Varsayılan personeller tohumlanıyor...");
-                    var varsayilanlar = [
-                        { adSoyad: "Gökhan ASLAN", kullaniciAdi: "gokhan.aslan", unvan: "Yönetici", ilce: "Güneysu", telefon: "+905555555555", rol: "Süper Admin" },
-                        { adSoyad: "Sursunali AZAKLI", kullaniciAdi: "sursunali.azakli", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905444444444", rol: "Saha Personeli" },
-                        { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905333333333", rol: "Saha Personeli" }
-                    ];
-                    var promises = varsayilanlar.map(function(p) {
+            var varsayilanlar = [
+                { adSoyad: "Gökhan ASLAN", kullaniciAdi: "gokhan.aslan", unvan: "Yönetici", ilce: "Güneysu", telefon: "+905555555555", rol: "Süper Admin" },
+                { adSoyad: "Dursun Ali AZAKLI", kullaniciAdi: "dursunali.azakli", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905444444444", rol: "Saha Personeli" },
+                { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905333333333", rol: "Saha Personeli" }
+            ];
+
+            var checks = varsayilanlar.map(function(p) {
+                return db.collection("personeller").doc(p.kullaniciAdi).get().then(function(doc) {
+                    if (!doc.exists || doc.data().adSoyad !== p.adSoyad) {
+                        console.log(p.kullaniciAdi + " veritabanında güncelleniyor/tohumlanıyor...");
                         return db.collection("personeller").doc(p.kullaniciAdi).set(p);
-                    });
-                    Promise.all(promises).then(function() {
-                        console.log("Varsayılan personeller başarıyla tohumlandı.");
-                        oturumKontrol();
-                    }).catch(function(err) {
-                        console.error("Tohumlama hatası:", err);
-                        oturumKontrol();
-                    });
-                } else {
-                    oturumKontrol();
-                }
+                    }
+                });
+            });
+
+            Promise.all(checks).then(function() {
+                console.log("Personel kontrol ve tohumlama tamamlandı.");
+                oturumKontrol();
             }).catch(function(err) {
-                console.warn("Personel kontrol hatası:", err);
+                console.warn("Personel kontrol/tohumlama hatası:", err);
                 oturumKontrol();
             });
         }
