@@ -106,6 +106,34 @@
             padding-left: 32px;
         }
 
+        /* Collapsible Accordion Group */
+        .menu-group-header {
+            padding: 14px 24px; cursor: pointer;
+            font-size: 13px; font-weight: 800; color: var(--text-dark);
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(0,0,0,0.025);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+        .menu-group-header:hover { background: rgba(27,94,32,0.07); color: var(--primary); }
+        .menu-group-header .group-label { display: flex; align-items: center; gap: 8px; }
+        .menu-group-header .group-arrow {
+            font-size: 11px; transition: transform 0.3s ease; color: var(--text-muted);
+        }
+        .menu-group-header.open .group-arrow { transform: rotate(180deg); }
+        .menu-group-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .menu-group-body.open { max-height: 600px; }
+        .menu-group-body .menu-item {
+            padding-left: 36px; font-size: 14px;
+            background: rgba(255,255,255,0.5);
+        }
+        .menu-group-body .menu-item:hover { padding-left: 44px; }
+
         /* Premium Modal Styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -1998,14 +2026,44 @@
             sideMenu.appendChild(header);
             
             if (isAdmin()) {
-                // Bölge Seçimi Filtreleri
-                var filterHeader = document.createElement("div");
-                filterHeader.style = "padding: 18px 24px 6px 24px; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;";
-                filterHeader.innerText = "📍 Bölge Seçimi";
-                sideMenu.appendChild(filterHeader);
+                // ── Yardımcı: Accordion Grup Oluşturucu ──
+                function menuGrubuOlustur(baslik, emoji, renk, acikMi) {
+                    var wrap = document.createElement('div');
 
-                var filterBox = document.createElement("div");
-                filterBox.style = "padding: 0 24px 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 12px;";
+                    var hdr = document.createElement('div');
+                    hdr.className = 'menu-group-header' + (acikMi ? ' open' : '');
+                    hdr.style.borderLeft = '3px solid ' + renk;
+                    hdr.innerHTML =
+                        '<span class="group-label"><span>' + emoji + '</span> ' + baslik + '</span>' +
+                        '<span class="group-arrow">▼</span>';
+
+                    var body = document.createElement('div');
+                    body.className = 'menu-group-body' + (acikMi ? ' open' : '');
+
+                    hdr.addEventListener('click', function() {
+                        hdr.classList.toggle('open');
+                        body.classList.toggle('open');
+                    });
+
+                    wrap.appendChild(hdr);
+                    wrap.appendChild(body);
+                    sideMenu.appendChild(wrap);
+                    return body; // öğeler buraya eklenir
+                }
+
+                function menuOgesi(emoji, etiket, renk, tikla) {
+                    var el = document.createElement('div');
+                    el.className = 'menu-item';
+                    if (renk) el.style.borderLeft = '3px solid ' + renk;
+                    el.innerHTML = '<span>' + emoji + '</span> ' + etiket;
+                    el.addEventListener('click', tikla);
+                    return el;
+                }
+
+                // ── 1. BÖLGE SEÇİMİ (açık başlar, collapsible) ──
+                var bolgeGrubu = menuGrubuOlustur('Bölge Seçimi', '📍', '#7c3aed', true);
+                var filterBox = document.createElement('div');
+                filterBox.style = 'padding: 12px 24px 20px 24px; display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.5);';
                 filterBox.innerHTML = `
                     <div style="display:flex; flex-direction:column; gap:4px;">
                         <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">İl</label>
@@ -2026,85 +2084,49 @@
                         </select>
                     </div>
                 `;
-                sideMenu.appendChild(filterBox);
+                bolgeGrubu.appendChild(filterBox);
 
-                // Diğer Menü Modülleri Başlığı
-                var modullerHeader = document.createElement("div");
-                modullerHeader.style = "padding: 18px 24px 6px 24px; font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;";
-                modullerHeader.innerText = "🛠️ Menü Modülleri";
-                sideMenu.appendChild(modullerHeader);
+                // ── 2. RAPORLAR grubu (açık başlar) ──
+                var raporGrubu = menuGrubuOlustur('Raporlar', '📊', '#0369a1', true);
 
-                // ── Hızlı Erişim Modülleri ──
-                // Modül 1: Rize Tüm İlçeler
-                var itemRize = document.createElement("div");
-                itemRize.className = "menu-item";
-                itemRize.style = "border-left: 3px solid #7c3aed;";
-                itemRize.onclick = function() { acBolgeRaporu("Rize", "Tümü", null); };
-                itemRize.innerHTML = '<span>🗺️</span> Rize Tüm İlçeler';
-                sideMenu.appendChild(itemRize);
-
-                // Modül 2: Kendi İlçesi (dinamik)
-                var itemKendi = document.createElement("div");
-                itemKendi.className = "menu-item";
-                itemKendi.style = "border-left: 3px solid #0369a1;";
-                (function(kullanici) {
-                    itemKendi.onclick = function() { acBolgeRaporu("Rize", kullanici.ilce, null); };
-                    itemKendi.innerHTML = '<span>📍</span> Kendi İlçem (' + kullanici.ilce + ')';
+                raporGrubu.appendChild(menuOgesi('🗺️', 'Rize Tüm İlçeler', '#7c3aed', function() {
+                    acBolgeRaporu('Rize', 'Tümü', null);
+                }));
+                (function(kul) {
+                    raporGrubu.appendChild(menuOgesi('📍', 'Kendi İlçem (' + kul.ilce + ')', '#0369a1', function() {
+                        acBolgeRaporu('Rize', kul.ilce, null);
+                    }));
                 })(aktifKullanici);
-                sideMenu.appendChild(itemKendi);
+                raporGrubu.appendChild(menuOgesi('📈', 'Genel Raporlar', null, function() {
+                    acBolgeRaporu('Tümü', 'Tümü', null);
+                }));
 
-                // Genel Raporlar (tüm filtre sıfırlı)
-                var item1 = document.createElement("div");
-                item1.className = "menu-item";
-                item1.onclick = function() { acBolgeRaporu("Tümü", "Tümü", null); };
-                item1.innerHTML = '<span>📊</span> Genel Raporlar';
-                sideMenu.appendChild(item1);
-                
-                // Personnel Management
-                var item2 = document.createElement("div");
-                item2.className = "menu-item";
-                item2.onclick = function() { acPersonelModal(); };
-                item2.innerHTML = '<span>👥</span> Personel Yönetimi';
-                sideMenu.appendChild(item2);
-                
-                // Bulk trap upload
-                var item3 = document.createElement("div");
-                item3.className = "menu-item";
-                item3.onclick = function() { acTopluYuklemeModal(); };
-                item3.innerHTML = '<span>🏺</span> Toplu Tuzak Yükleme';
-                sideMenu.appendChild(item3);
+                // ── 3. YÖNETİM grubu (kapalı başlar) ──
+                var yonetimGrubu = menuGrubuOlustur('Yönetim', '⚙️', '#d97706', false);
 
-                // Lokasyon Yönetimi
-                var item4 = document.createElement("div");
-                item4.className = "menu-item";
-                item4.onclick = function() { acLokasyonModal(); };
-                item4.innerHTML = '<span>📍</span> Lokasyon Yönetimi';
-                sideMenu.appendChild(item4);
+                yonetimGrubu.appendChild(menuOgesi('👥', 'Personel Yönetimi', null, function() {
+                    acPersonelModal();
+                }));
+                yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme', null, function() {
+                    acTopluYuklemeModal();
+                }));
+                yonetimGrubu.appendChild(menuOgesi('📍', 'Lokasyon Yönetimi', null, function() {
+                    acLokasyonModal();
+                }));
 
-                // Süper Admin Log Kayıtları
-                if (aktifKullanici && aktifKullanici.rol === "Süper Admin") {
-                    var itemLog = document.createElement("div");
-                    itemLog.className = "menu-item";
-                    itemLog.style = "border-left: 3px solid #db2777;";
-                    itemLog.onclick = function() { acLogModal(); };
-                    itemLog.innerHTML = '<span>📜</span> Log Kayıtları';
-                    sideMenu.appendChild(itemLog);
+                // ── 4. SÜPER ADMİN grubu (kapalı başlar, sadece Süper Admin'e) ──
+                if (aktifKullanici && aktifKullanici.rol === 'Süper Admin') {
+                    var adminGrubu = menuGrubuOlustur('Süper Admin', '🔐', '#db2777', false);
 
-                    // Sistemdekiler (Aktif Kullanıcılar)
-                    var itemAktif = document.createElement("div");
-                    itemAktif.className = "menu-item";
-                    itemAktif.style = "border-left: 3px solid #059669;";
-                    itemAktif.onclick = function() { acAktifKullanicilarModal(); };
-                    itemAktif.innerHTML = '<span>🟢</span> Sistemdekiler';
-                    sideMenu.appendChild(itemAktif);
-
-                    // Tarih Bazlı Excel İndir
-                    var itemExcel = document.createElement("div");
-                    itemExcel.className = "menu-item";
-                    itemExcel.style = "border-left: 3px solid #0369a1; background: rgba(3,105,161,0.06);";
-                    itemExcel.onclick = function() { toggleMenu(); tarihBazliExcelIndir(); };
-                    itemExcel.innerHTML = '<span>📊</span> Tarih Bazlı Excel İndir';
-                    sideMenu.appendChild(itemExcel);
+                    adminGrubu.appendChild(menuOgesi('📜', 'Log Kayıtları', '#db2777', function() {
+                        acLogModal();
+                    }));
+                    adminGrubu.appendChild(menuOgesi('🟢', 'Sistemdekiler', '#059669', function() {
+                        acAktifKullanicilarModal();
+                    }));
+                    adminGrubu.appendChild(menuOgesi('📊', 'Tarih Bazlı Excel İndir', '#0369a1', function() {
+                        toggleMenu(); tarihBazliExcelIndir();
+                    }));
                 }
 
                 setTimeout(initMenuFilters, 50);
