@@ -127,13 +127,7 @@
         }
         map.on('locationfound', onLocationFound);
 
-        // Özel Tuzak İkonu Tanımlama
-        var tuzakIkonu = L.icon({
-            iconUrl: 'icon.png', // İnternet yerine klasördeki kendi ikonumuzu kullanıyoruz (Kırık resim hatasını çözer)
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32]
-        });
+
 
         // 1. ÖZELLİK: Veritabanındaki eski kayıtları otomatik olarak haritaya çek
         db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
@@ -159,7 +153,7 @@
                         popupIcerik += "<b>Ekleyen:</b> Sistem (Toplu Kayıt)<br>";
                     }
                     
-                    L.marker([data.lat, data.lng], {icon: tuzakIkonu}).addTo(map).bindPopup(popupIcerik);
+                    L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
                 }
             });
         });
