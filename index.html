@@ -89,12 +89,27 @@
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
             <input type="hidden" id="duzenlenenDocId" value="">
             <div class="form-group">
-                <label>Ad Soyad</label>
-                <input type="text" id="adSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
+                <label>Ekleyen Personel</label>
+                <select id="personelSecim" class="form-control" onchange="personelDegisti()">
+                    <option value="" disabled selected>Lütfen seçiniz</option>
+                    <option value="Dursun Ali AZAKLI" data-unvan="Ziraat Mühendisi">Dursun Ali AZAKLI (Ziraat Mühendisi)</option>
+                    <option value="Gökhan ASLAN" data-unvan="Ziraat Mühendisi">Gökhan ASLAN (Ziraat Mühendisi)</option>
+                    <option value="Hakan PEHLEVAN" data-unvan="Ziraat Mühendisi">Hakan PEHLEVAN (Ziraat Mühendisi)</option>
+                    <option value="Ümit KALEBAŞ" data-unvan="Ziraat Teknisyeni">Ümit KALEBAŞ (Ziraat Teknisyeni)</option>
+                    <option value="Cihat Resul BOYRAZ" data-unvan="Destek Personeli">Cihat Resul BOYRAZ (Destek Personeli)</option>
+                    <option value="Diger">Diğer (Elle Gir)</option>
+                </select>
             </div>
-            <div class="form-group">
-                <label>Ünvan</label>
-                <input type="text" id="unvan" class="form-control" placeholder="Örn: Muhtar, Çiftçi vs.">
+            
+            <div id="digerPersonelAlani" style="display: none;">
+                <div class="form-group">
+                    <label>Ad Soyad (Diğer)</label>
+                    <input type="text" id="adSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
+                </div>
+                <div class="form-group">
+                    <label>Ünvan (Diğer)</label>
+                    <input type="text" id="unvan" class="form-control" placeholder="Örn: Muhtar, Çiftçi vs.">
+                </div>
             </div>
             <div class="form-group">
                 <label>İl</label>
@@ -314,6 +329,15 @@
         // Seçilen konumu geçici olarak tutacağımız değişken
         var secilenKonum = null;
 
+        function personelDegisti() {
+            var secim = document.getElementById('personelSecim').value;
+            if (secim === "Diger") {
+                document.getElementById('digerPersonelAlani').style.display = "block";
+            } else {
+                document.getElementById('digerPersonelAlani').style.display = "none";
+            }
+        }
+
         // Menü ve Raporlama Fonksiyonları
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('open');
@@ -389,8 +413,32 @@
                     document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum değiştirebilirsiniz)";
                     document.getElementById('duzenlenenDocId').value = docId;
                     
-                    document.getElementById('adSoyad').value = data.adSoyad || "";
-                    document.getElementById('unvan').value = data.unvan || "";
+                    var secici = document.getElementById('personelSecim');
+                    var secimBulundu = false;
+                    for (var i = 0; i < secici.options.length; i++) {
+                        if (secici.options[i].value === data.adSoyad) {
+                            secici.selectedIndex = i;
+                            secimBulundu = true;
+                            break;
+                        }
+                    }
+                    
+                    if (secimBulundu && data.adSoyad !== "Diger") {
+                        document.getElementById('digerPersonelAlani').style.display = "none";
+                        document.getElementById('adSoyad').value = "";
+                        document.getElementById('unvan').value = "";
+                    } else if (data.adSoyad) {
+                        secici.value = "Diger";
+                        document.getElementById('digerPersonelAlani').style.display = "block";
+                        document.getElementById('adSoyad').value = data.adSoyad || "";
+                        document.getElementById('unvan').value = data.unvan || "";
+                    } else {
+                        secici.value = "";
+                        document.getElementById('digerPersonelAlani').style.display = "none";
+                        document.getElementById('adSoyad').value = "";
+                        document.getElementById('unvan').value = "";
+                    }
+
                     document.getElementById('il').value = data.il || "Rize";
                     document.getElementById('ilce').value = data.ilce || "Güneysu";
                     document.getElementById('koy').value = data.koy || data.ad || "";
@@ -431,6 +479,8 @@
             }
 
             // Formu temizle
+            document.getElementById('personelSecim').value = "";
+            document.getElementById('digerPersonelAlani').style.display = "none";
             document.getElementById('adSoyad').value = "";
             document.getElementById('unvan').value = "";
             document.getElementById('il').value = "Rize";
@@ -445,8 +495,20 @@
 
         // Veritabanına kaydetme / güncelleme fonksiyonu
         function kaydet() {
-            var adSoyad = document.getElementById('adSoyad').value.trim();
-            var unvan = document.getElementById('unvan').value.trim();
+            var secim = document.getElementById('personelSecim').value;
+            var adSoyad = "";
+            var unvan = "";
+
+            if (secim === "Diger" || secim === "") {
+                adSoyad = document.getElementById('adSoyad').value.trim();
+                unvan = document.getElementById('unvan').value.trim();
+            } else {
+                var secici = document.getElementById('personelSecim');
+                var seciliOption = secici.options[secici.selectedIndex];
+                adSoyad = secim;
+                unvan = seciliOption.getAttribute('data-unvan') || "";
+            }
+
             var il = document.getElementById('il').value;
             var ilce = document.getElementById('ilce').value;
             var koy = document.getElementById('koy').value.trim();
