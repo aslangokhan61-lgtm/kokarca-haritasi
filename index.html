@@ -608,110 +608,28 @@
         var aktifKullanici = null;
         var tuzakListener = null;
 
-        // User Mapping Provided by the User
-        var varsayilanPersonelListesi = [
-            { adSoyad: "Gökhan ASLAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905414464561", rol: "Yönetici" },
-            { adSoyad: "Beyza FEYİZ", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905468571041", rol: "Yönetici" },
-            { adSoyad: "Cihat Resul BOYRAZ", unvan: "Destek Personeli", ilce: "Güneysu", telefon: "+905519892929", rol: "Saha Personeli" },
-            { adSoyad: "Dursun Ali AZAKLI", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905418180853", rol: "Saha Personeli" },
-            { adSoyad: "Duygu METE", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905533058977", rol: "Saha Personeli" },
-            { adSoyad: "Emre VARDAL", unvan: "Ziraat Mühendisi", ilce: "Hemşin", telefon: "+905364187624", rol: "Saha Personeli" },
-            { adSoyad: "Engin BALTA", unvan: "Ziraat Mühendisi", ilce: "Pazar", telefon: "+905064598490", rol: "Saha Personeli" },
-            { adSoyad: "Esra KIRKBİR", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905432329043", rol: "Saha Personeli" },
-            { adSoyad: "Feyzi Emin DERECİ", unvan: "Ziraat Mühendisi", ilce: "Çayeli", telefon: "+905523299153", rol: "Saha Personeli" },
-            { adSoyad: "Hakan PEHLEVAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905438574116", rol: "Saha Personeli" },
-            { adSoyad: "Ümit KALEBAŞ", unvan: "Teknisyen", ilce: "Güneysu", telefon: "+905322805560", rol: "Saha Personeli" }
-        ];
-
-        // Rize's All 12 Districts and Villages (Alphabetical)
-        var varsayilanRize = {
-            "Rize": {
-                "Merkez": [
-                    "Akarsu", "Akpınar", "Aktaş", "Ambarlık", "Ayane", "Azaklıhoca", "Balıkçılar", "Beştepe", "Bıldırcınköy", "Boğaz", "Camidağı", "Çaybaşı", "Çaycılar", "Çimenli", "Derebaşı", "Dörtyol", "Düzköy", "Elmalı", "Erenköy", "Gölgeli", "Güzelköy", "Güzelyurt", "Karasu", "Karayemiş", "Ketenli", "Kırklartepesi", "Kocatepe", "Köprülü", "Kurtuluş", "Küçükçayır", "Küçükköy", "Melek", "Ortapazar", "Örnek", "Pazarköy", "Pekmezli", "Pınarbaşı", "Selimiye", "Soğukçeşme", "Söğütlü", "Sütlüce", "Taşköprü", "Taşlık", "Taşpınar", "Tekke", "Topkaya", "Tuğlalı", "Uzunköy", "Üçkaya", "Veliköy", "Yemişlik", "Yenidoğan", "Yenigüzel", "Yenikale", "Yenikasarcılar", "Yeniselimiye", "Yeşildere", "Yolüstü", "Yolveren", "Zincirliköprü"
-                ],
-                "Ardeşen": [
-                    "Akdere", "Akkaya", "Arıcılar", "Armağan", "Aşağıdurak", "Bayırcık", "Beyazkaya", "Çıraklar", "Deremezra", "Doğanay", "Duygulu", "Eskiarmutluk", "Gündoğan", "Güney", "Hoşdere", "Kaçkar", "Kirazlık", "Köprüköy", "Kurtuluş", "Küçükköy", "Manganez", "Ortaalan", "Önder", "Özgür", "Pınarlı", "Pirinçlik", "Serindere", "Seslikaya", "Sinanköy", "Şehitlik", "Şendere", "Şenyamaç", "Şenyurt", "Yamaçdere", "Yavuz", "Yeniköy", "Yeniyol", "Yeşiltepe", "Yukarıdurak", "Yurtsever", "Zeytinlik"
-                ],
-                "Çamlıhemşin": [
-                    "Behice", "Boğaziçi", "Çat", "Çayırdüzü", "Didi", "Dikkaya", "Derecik", "Güllü", "Güroluk", "Kale", "Komilo", "Köprübaşı", "Meydan", "Mollaveyis", "Ortaklar", "Ortan", "Ortayayla", "Sıraköy", "Şenköy", "Şenyuva", "Topluca", "Yaylaköy", "Yazlık", "Yolkıyı", "Yukarışimşirli", "Zilkale"
-                ],
-                "Çayeli": [
-                    "Abdullahhoca", "Armutlu", "Aşıklar", "Başköy", "Beşikçiler", "Beyazsu", "Buzlupınar", "Çataldere", "Çeşmeli", "Çınartepe", "Çilingir", "Çukurluhoca", "Demirhisar", "Derecik", "Düzgeçit", "Erdemli", "Erenler", "Esendağ", "Gemiciler", "Gürgenli", "Gürpınar", "Güzeltepe", "Haremtepe", "İncesırt", "İncesu", "Kaçkar", "Kaptanpaşa", "Karaağaç", "Kemerköy", "Kestanelik", "Köprübaşı", "Latifli", "Maltepe", "Musadağı", "Ormancık", "Ortaköy", "Sarısu", "Sefalı", "Selimiye", "Seslidere", "Sırtköy", "Şirinköy", "Uzundere", "Yamaçköy", "Yanıkdağ", "Yavuzlar", "Yenice", "Yenihisar", "Yenitepe", "Yeşilırmak", "Yeşilköy", "Yeşiltepe", "Yıldızeli", "Zafer"
-                ],
-                "Derepazarı": [
-                    "Bahattinpaşa", "Bürücek", "Çakmakçılar", "Çeşmeköy", "Çukurlu", "Esentepe", "Kirazdağı", "Maltepe", "Sandıktaş", "Uzunkaya", "Yanıktaş"
-                ],
-                "Fındıklı": [
-                    "Arılı", "Aslandere", "Avcılar", "Beydere", "Cennet", "Çağlayan", "Çınarlı", "Derbent", "Doğanay", "Düzköy", "Gürsu", "Hara", "Ihlamurlu", "Karaali", "Kıyıcık", "Meyvalı", "Saatköy", "Sulak", "Sümer", "Tepecik", "Yaylacılar", "Yeniköy", "Yenişehitlik"
-                ],
-                "Güneysu": [
-                    "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi", "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi", "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi", "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi", "Yarımada Köyü", "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü", "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
-                ],
-                "Hemşin": [
-                    "Akyamaç", "Bilenköy", "Çamlıktepe", "Hilal", "Kantarlı", "Leventköy", "Nurluca", "Yaltkaya"
-                ],
-                "İkizdere": [
-                    "Ayvalık", "Ballıköy", "Bayırköy", "Başköy", "Cevizlik", "Çamlıkköy", "Çataltepe", "Çiçekli", "Çifteköprü", "Demirkapı", "Dereköy", "Diktaş", "Eskice", "Gölyayla", "Güneyce", "Gürdere", "Güvenköy", "Ihlamur", "Ilıcaköy", "Kama", "Meşeköy", "Ortaköy", "Rüzgarlı", "Sivrikaya", "Şimşirli", "Tozköy", "Tulumpınar", "Yağcılar", "Yerelma"
-                ],
-                "İyidere": [
-                    "Büyükçiftlikköyü", "Çiftlikköy", "Denizgören", "Kalecik", "Köşklü", "Taşhane", "Yaylacılar"
-                ],
-                "Kalkandere": [
-                    "Çağlayan", "Çayırlı", "Dülgerli", "Esendere", "Esentepe", "Fındıklı", "Geçitli", "Hurmalık", "Hüseyinhoca", "İnci", "Kayabaşı", "Ormanlı", "Pınarköy", "Seyrantepe", "Soğuksu", "Ünalan", "Yenigeçitli", "Yeniköy", "Yeşilköy", "Yokuşlu", "Yolbaşı", "Yumurtatepe"
-                ],
-                "Pazar": [
-                    "Akbucak", "Akmescit", "Aktaş", "Aktepe", "Alçılı", "Balıkçı", "Başköy", "Boğazlı", "Bucak", "Dağdibi", "Darılı", "Derebaşı", "Derinsu", "Dernek", "Elmalık", "Güneyköy", "Hamidiye", "Handağı", "Hasköy", "Hisarlı", "Irmakköy", "Irmakyeniköy", "Kayağantaş", "Kesikköprü", "Kuzayca", "Merdivenli", "Ortaırmak", "Ortayol", "Örnek", "Papatya", "Sahilköy", "Sessizdere", "Sivrikale", "Sivritepe", "Subaşı", "Suçatı", "Sulak", "Şehitlik", "Şendere", "Şentepe", "Tektaş", "Topluca", "Tütüncüler", "Uğrak", "Yavuzköy", "Yemişli", "Yeşilköy", "Yücehisar"
-                ]
-            }
-        };
-
-        // Real-Time Personnel Listener & Auto-Seeding
-        function dinleVeTohumlaPersoneller() {
-            db.collection("personeller").limit(1).get().then(function(querySnapshot) {
-                if (querySnapshot.empty) {
-                    console.log("Personel listesi boş, varsayılan liste yükleniyor...");
-                    var batch = db.batch();
-                    varsayilanPersonelListesi.forEach(function(pers) {
-                        var docRef = db.collection("personeller").doc(pers.telefon);
-                        batch.set(docRef, pers);
-                    });
-                    batch.commit().then(function() {
-                        console.log("Personel listesi başarıyla veritabanına tohumlandı.");
-                        oturumKontrol();
-                    });
-                } else {
-                    oturumKontrol();
-                }
-            }).catch(function(err) {
-                console.warn("Personel tablosu tohumlama hatası:", err);
-                oturumKontrol();
-            });
-        }
-
-        // Load Locations from Firestore or local dictionary fallback
+        // Load Locations from Firestore or local storage fallback
         function lokasyonlariYukle() {
+            // Try loading from localStorage first (for instant offline startup)
+            var cached = localStorage.getItem("lokasyonDB");
+            if (cached) {
+                try {
+                    lokasyonDB = JSON.parse(cached);
+                    ilListesiniDoldur();
+                } catch (e) {
+                    console.error("Önbellekten lokasyon okuma hatası:", e);
+                }
+            }
+
             var docRef = db.collection("ayarlar").doc("lokasyonlar");
             docRef.get().then(function(doc) {
                 if (doc.exists) {
                     lokasyonDB = doc.data();
-                    if (!lokasyonDB.Rize || !lokasyonDB.Rize.Merkez || lokasyonDB.Rize.Merkez.length === 0) {
-                        docRef.set(varsayilanRize).then(function() {
-                            lokasyonDB = varsayilanRize;
-                            ilListesiniDoldur();
-                        });
-                    } else {
-                        ilListesiniDoldur();
-                    }
-                } else {
-                    docRef.set(varsayilanRize).then(function() {
-                        lokasyonDB = varsayilanRize;
-                        ilListesiniDoldur();
-                    });
+                    localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
+                    ilListesiniDoldur();
                 }
             }).catch(function(error) {
-                console.warn("Lokasyonlar çekilemedi, yerel veri kullanılıyor: ", error);
-                lokasyonDB = varsayilanRize;
-                ilListesiniDoldur();
+                console.warn("Lokasyonlar Firestore'dan çekilemedi:", error);
             });
         }
 
@@ -758,9 +676,9 @@
             }
         }
 
-        // Initialize lists and start listening to personnel
+        // Initialize lists and start login check
         lokasyonlariYukle();
-        dinleVeTohumlaPersoneller();
+        oturumKontrol();
 
         // Custom DivIcon Marker Builder (Offline compliant)
         function createCustomMarkerIcon(tuzakTipi, bocekSayisi) {
@@ -1472,7 +1390,7 @@
             
             var select = document.getElementById("pIlce");
             select.innerHTML = "";
-            var ilceler = Object.keys(varsayilanRize.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            var ilceler = lokasyonDB && lokasyonDB.Rize ? Object.keys(lokasyonDB.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); }) : [];
             ilceler.forEach(function(ilce) {
                 select.innerHTML += '<option value="' + ilce + '">' + ilce + '</option>';
             });
@@ -1504,7 +1422,7 @@
             
             var select = document.getElementById("pIlce");
             select.innerHTML = "";
-            var ilceler = Object.keys(varsayilanRize.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            var ilceler = lokasyonDB && lokasyonDB.Rize ? Object.keys(lokasyonDB.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); }) : [];
             ilceler.forEach(function(ilce) {
                 var selected = (ilce === pers.ilce) ? "selected" : "";
                 select.innerHTML += '<option value="' + ilce + '" ' + selected + '>' + ilce + '</option>';
