@@ -432,7 +432,60 @@
         </div>
     </div>
 
-    <!-- Trap Register/Edit Modal -->
+    <!-- Lokasyon Yönetimi Modal -->
+    <div id="lokasyonModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; max-height: 88vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800;">📍 Lokasyon Yönetimi</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatLokasyonModal()">&times;</span>
+            </div>
+
+            <!-- İl / İlçe seç -->
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">İl</label>
+                    <select id="lokIlSec" class="form-control" style="height: auto; padding: 8px 12px;" onchange="lokIlSecildi()">
+                        <option value="">İl Seçiniz</option>
+                    </select>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">İlçe</label>
+                    <select id="lokIlceSec" class="form-control" style="height: auto; padding: 8px 12px;" onchange="lokIlceSecildi()">
+                        <option value="">İlçe Seçiniz</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- İlçe Ekle / Sil -->
+            <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; border: 1.5px solid #e2e8f0;">
+                <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 800; color: var(--primary);">🏘️ İlçe İşlemleri</h4>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="yeniIlceAdi" class="form-control" placeholder="Yeni ilçe adı..." style="flex: 1;">
+                    <button class="btn btn-save" style="white-space: nowrap; padding: 10px 16px;" onclick="ilceEkle()">+ Ekle</button>
+                </div>
+                <div id="lokasyonIlceListe" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <!-- Köy / Mahalle Ekle / Sil -->
+            <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 16px; border: 1.5px solid #e2e8f0;">
+                <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: 800; color: var(--primary);">🌿 Köy / Mahalle İşlemleri</h4>
+                <p id="lokKoyIlceUyari" style="font-size: 12px; color: var(--text-muted); margin: 0 0 12px 0;">Yukarıdan bir ilçe seçin.</p>
+                <div style="display: flex; gap: 8px; align-items: center;" id="lokKoyEkleKutusu" style="display:none;">
+                    <input type="text" id="yeniKoyAdi" class="form-control" placeholder="Yeni köy / mahalle adı..." style="flex: 1;">
+                    <button class="btn btn-save" style="white-space: nowrap; padding: 10px 16px;" onclick="koyEkle()">+ Ekle</button>
+                </div>
+                <div id="lokasyonKoyListe" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; max-height: 240px; overflow-y: auto;"></div>
+            </div>
+
+            <div id="lokasyonDurumTxt" style="margin-top: 14px; font-size: 13px; font-weight: 700; color: var(--primary); min-height: 20px;"></div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-cancel" onclick="kapatLokasyonModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="tuzakModal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
@@ -689,89 +742,22 @@
             }
         }
 
-        // User Mapping Provided by the User
-        var varsayilanPersonelListesi = [
-            { adSoyad: "Gökhan ASLAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905414464561", rol: "Yönetici" },
-            { adSoyad: "Beyza FEYİZ", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905468571041", rol: "Yönetici" },
-            { adSoyad: "Cihat Resul BOYRAZ", unvan: "Destek Personeli", ilce: "Güneysu", telefon: "+905519892929", rol: "Saha Personeli" },
-            { adSoyad: "Dursun Ali AZAKLI", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905418180853", rol: "Saha Personeli" },
-            { adSoyad: "Duygu METE", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905533058977", rol: "Saha Personeli" },
-            { adSoyad: "Emre VARDAL", unvan: "Ziraat Mühendisi", ilce: "Hemşin", telefon: "+905364187624", rol: "Saha Personeli" },
-            { adSoyad: "Engin BALTA", unvan: "Ziraat Mühendisi", ilce: "Pazar", telefon: "+905064598490", rol: "Saha Personeli" },
-            { adSoyad: "Esra KIRKBİR", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905432329043", rol: "Saha Personeli" },
-            { adSoyad: "Feyzi Emin DERECİ", unvan: "Ziraat Mühendisi", ilce: "Çayeli", telefon: "+905523299153", rol: "Saha Personeli" },
-            { adSoyad: "Hakan PEHLEVAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905438574116", rol: "Saha Personeli" },
-            { adSoyad: "Ümit KALEBAŞ", unvan: "Teknisyen", ilce: "Güneysu", telefon: "+905322805560", rol: "Saha Personeli" }
-        ];
-
-        // Rize's All 12 Districts and Villages (Alphabetical)
-        var varsayilanRize = {
-            "Rize": {
-                "Merkez": [
-                    "Akarsu", "Akpınar", "Aktaş", "Ambarlık", "Ayane", "Azaklıhoca", "Balıkçılar", "Beştepe", "Bıldırcınköy", "Boğaz", "Camidağı", "Çaybaşı", "Çaycılar", "Çimenli", "Derebaşı", "Dörtyol", "Düzköy", "Elmalı", "Erenköy", "Gölgeli", "Güzelköy", "Güzelyurt", "Karasu", "Karayemiş", "Ketenli", "Kırklartepesi", "Kocatepe", "Köprülü", "Kurtuluş", "Küçükçayır", "Küçükköy", "Melek", "Ortapazar", "Örnek", "Pazarköy", "Pekmezli", "Pınarbaşı", "Selimiye", "Soğukçeşme", "Söğütlü", "Sütlüce", "Taşköprü", "Taşlık", "Taşpınar", "Tekke", "Topkaya", "Tuğlalı", "Uzunköy", "Üçkaya", "Veliköy", "Yemişlik", "Yenidoğan", "Yenigüzel", "Yenikale", "Yenikasarcılar", "Yeniselimiye", "Yeşildere", "Yolüstü", "Yolveren", "Zincirliköprü"
-                ],
-                "Ardeşen": [
-                    "Akdere", "Akkaya", "Arıcılar", "Armağan", "Aşağıdurak", "Bayırcık", "Beyazkaya", "Çıraklar", "Deremezra", "Doğanay", "Duygulu", "Eskiarmutluk", "Gündoğan", "Güney", "Hoşdere", "Kaçkar", "Kirazlık", "Köprüköy", "Kurtuluş", "Küçükköy", "Manganez", "Ortaalan", "Önder", "Özgür", "Pınarlı", "Pirinçlik", "Serindere", "Seslikaya", "Sinanköy", "Şehitlik", "Şendere", "Şenyamaç", "Şenyurt", "Yamaçdere", "Yavuz", "Yeniköy", "Yeniyol", "Yeşiltepe", "Yukarıdurak", "Yurtsever", "Zeytinlik"
-                ],
-                "Çamlıhemşin": [
-                    "Behice", "Boğaziçi", "Çat", "Çayırdüzü", "Didi", "Dikkaya", "Derecik", "Güllü", "Güroluk", "Kale", "Komilo", "Köprübaşı", "Meydan", "Mollaveyis", "Ortaklar", "Ortan", "Ortayayla", "Sıraköy", "Şenköy", "Şenyuva", "Topluca", "Yaylaköy", "Yazlık", "Yolkıyı", "Yukarışimşirli", "Zilkale"
-                ],
-                "Çayeli": [
-                    "Abdullahhoca", "Armutlu", "Aşıklar", "Başköy", "Beşikçiler", "Beyazsu", "Buzlupınar", "Çataldere", "Çeşmeli", "Çınartepe", "Çilingir", "Çukurluhoca", "Demirhisar", "Derecik", "Düzgeçit", "Erdemli", "Erenler", "Esendağ", "Gemiciler", "Gürgenli", "Gürpınar", "Güzeltepe", "Haremtepe", "İncesırt", "İncesu", "Kaçkar", "Kaptanpaşa", "Karaağaç", "Kemerköy", "Kestanelik", "Köprübaşı", "Latifli", "Maltepe", "Musadağı", "Ormancık", "Ortaköy", "Sarısu", "Sefalı", "Selimiye", "Seslidere", "Sırtköy", "Şirinköy", "Uzundere", "Yamaçköy", "Yanıkdağ", "Yavuzlar", "Yenice", "Yenihisar", "Yenitepe", "Yeşilırmak", "Yeşilköy", "Yeşiltepe", "Yıldızeli", "Zafer"
-                ],
-                "Derepazarı": [
-                    "Bahattinpaşa", "Bürücek", "Çakmakçılar", "Çeşmeköy", "Çukurlu", "Esentepe", "Kirazdağı", "Maltepe", "Sandıktaş", "Uzunkaya", "Yanıktaş"
-                ],
-                "Fındıklı": [
-                    "Arılı", "Aslandere", "Avcılar", "Beydere", "Cennet", "Çağlayan", "Çınarlı", "Derbent", "Doğanay", "Düzköy", "Gürsu", "Hara", "Ihlamurlu", "Karaali", "Kıyıcık", "Meyvalı", "Saatköy", "Sulak", "Sümer", "Tepecik", "Yaylacılar", "Yeniköy", "Yenişehitlik"
-                ],
-                "Güneysu": [
-                    "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi", "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi", "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi", "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi", "Yarımada Köyü", "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü", "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
-                ],
-                "Hemşin": [
-                    "Akyamaç", "Bilenköy", "Çamlıktepe", "Hilal", "Kantarlı", "Leventköy", "Nurluca", "Yaltkaya"
-                ],
-                "İkizdere": [
-                    "Ayvalık", "Ballıköy", "Bayırköy", "Başköy", "Cevizlik", "Çamlıkköy", "Çataltepe", "Çiçekli", "Çifteköprü", "Demirkapı", "Dereköy", "Diktaş", "Eskice", "Gölyayla", "Gölyayla", "Güneyce", "Gürdere", "Güvenköy", "Ihlamur", "Ilıcaköy", "Kama", "Meşeköy", "Ortaköy", "Rüzgarlı", "Sivrikaya", "Şimşirli", "Tozköy", "Tulumpınar", "Yağcılar", "Yerelma"
-                ],
-                "İyidere": [
-                    "Büyükçiftlikköyü", "Çiftlikköy", "Denizgören", "Kalecik", "Köşklü", "Taşhane", "Yaylacılar"
-                ],
-                "Kalkandere": [
-                    "Çağlayan", "Çayırlı", "Dülgerli", "Esendere", "Esentepe", "Fındıklı", "Geçitli", "Hurmalık", "Hüseyinhoca", "İnci", "Kayabaşı", "Ormanlı", "Pınarköy", "Seyrantepe", "Soğuksu", "Ünalan", "Yenigeçitli", "Yeniköy", "Yeşilköy", "Yokuşlu", "Yolbaşı", "Yumurtatepe"
-                ],
-                "Pazar": [
-                    "Akbucak", "Akmescit", "Aktaş", "Aktepe", "Alçılı", "Balıkçı", "Başköy", "Boğazlı", "Bucak", "Dağdibi", "Darılı", "Derebaşı", "Derinsu", "Dernek", "Elmalık", "Güneyköy", "Hamidiye", "Handağı", "Hasköy", "Hisarlı", "Irmakköy", "Irmakyeniköy", "Kayağantaş", "Kesikköprü", "Kuzayca", "Merdivenli", "Ortaırmak", "Ortayol", "Örnek", "Papatya", "Sahilköy", "Sessizdere", "Sivrikale", "Sivritepe", "Subaşı", "Suçatı", "Sulak", "Şehitlik", "Şendere", "Şentepe", "Tektaş", "Topluca", "Tütüncüler", "Uğrak", "Yavuzköy", "Yemişli", "Yeşilköy", "Yücehisar"
-                ]
-            }
-        };
-
-        // Real-Time Personnel Listener & Auto-Seeding
+        // Real-Time Personnel Listener - Firestore driven, no hardcoded seed
         function dinleVeTohumlaPersoneller() {
             db.collection("personeller").limit(1).get().then(function(querySnapshot) {
                 if (querySnapshot.empty) {
-                    console.log("Personel listesi boş, varsayılan liste yükleniyor...");
-                    var batch = db.batch();
-                    varsayilanPersonelListesi.forEach(function(pers) {
-                        var docRef = db.collection("personeller").doc(pers.telefon);
-                        batch.set(docRef, pers);
-                    });
-                    batch.commit().then(function() {
-                        console.log("Personel listesi başarıyla veritabanına tohumlandı.");
-                        oturumKontrol();
-                    });
-                } else {
-                    oturumKontrol();
+                    console.warn("Personel listesi boş. Lütfen Admin panelinden personel ekleyin.");
                 }
+                oturumKontrol();
             }).catch(function(err) {
-                console.warn("Personel tablosu tohumlama hatası:", err);
+                console.warn("Personel kontrol hatası:", err);
                 oturumKontrol();
             });
         }
 
-        // Load Locations from Firestore or local storage fallback
+        // Load Locations from Firestore → localStorage → lokasyonlar.json fallback
         function lokasyonlariYukle() {
-            // Try loading from localStorage first (for instant offline startup)
+            // 1. Instant startup from localStorage cache
             var cached = localStorage.getItem("lokasyonDB");
             if (cached) {
                 try {
@@ -782,6 +768,7 @@
                 }
             }
 
+            // 2. Try Firestore
             var docRef = db.collection("ayarlar").doc("lokasyonlar");
             docRef.get().then(function(doc) {
                 if (doc.exists) {
@@ -789,17 +776,32 @@
                     localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
                     ilListesiniDoldur();
                 } else {
-                    docRef.set(varsayilanRize).then(function() {
-                        lokasyonDB = varsayilanRize;
-                        localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
-                        ilListesiniDoldur();
-                    });
+                    // 3. Firestore empty: seed from lokasyonlar.json
+                    fetch('./lokasyonlar.json')
+                        .then(function(res) { return res.json(); })
+                        .then(function(jsonData) {
+                            docRef.set(jsonData).then(function() {
+                                lokasyonDB = jsonData;
+                                localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
+                                ilListesiniDoldur();
+                                console.log("Lokasyonlar JSON'dan Firestore'a tohumlandı.");
+                            });
+                        })
+                        .catch(function(fetchErr) {
+                            console.error("lokasyonlar.json yüklenemedi:", fetchErr);
+                        });
                 }
             }).catch(function(error) {
-                console.warn("Lokasyonlar Firestore'dan çekilemedi, yerel veri kullanılıyor:", error);
+                console.warn("Lokasyonlar Firestore'dan çekilemedi, önbellekten kullanılıyor:", error);
                 if (!lokasyonDB) {
-                    lokasyonDB = varsayilanRize;
-                    ilListesiniDoldur();
+                    // Last resort: try JSON file
+                    fetch('./lokasyonlar.json')
+                        .then(function(res) { return res.json(); })
+                        .then(function(jsonData) {
+                            lokasyonDB = jsonData;
+                            ilListesiniDoldur();
+                        })
+                        .catch(function() { console.error("Lokasyon verisi hiç yüklenemedi."); });
                 }
             });
         }
@@ -1596,6 +1598,13 @@
                 item3.innerHTML = '<span>🏺</span> Toplu Tuzak Yükleme';
                 sideMenu.appendChild(item3);
 
+                // Lokasyon Yönetimi
+                var item4 = document.createElement("div");
+                item4.className = "menu-item";
+                item4.onclick = function() { acLokasyonModal(); };
+                item4.innerHTML = '<span>📍</span> Lokasyon Yönetimi';
+                sideMenu.appendChild(item4);
+
                 setTimeout(initMenuFilters, 50);
             } else {
                 // Saha personeli için sadece kendi bölge raporu
@@ -1888,6 +1897,169 @@
             document.getElementById('topluDurumTxt').innerText = basarili + " adet tuzak veritabanına başarıyla aktarıldı!";
         }
 
+        // ─── LOKASYON YÖNETİMİ FONKSİYONLARI ───────────────────────────────────
+
+        function acLokasyonModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+                alert("Bu işlem için yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            lokasyonModalIlDoldur();
+            document.getElementById("lokasyonModal").classList.add("active");
+        }
+
+        function kapatLokasyonModal() {
+            document.getElementById("lokasyonModal").classList.remove("active");
+        }
+
+        function lokasyonModalIlDoldur() {
+            var ilSelect = document.getElementById("lokIlSec");
+            ilSelect.innerHTML = '<option value="">İl Seçiniz</option>';
+            if (lokasyonDB) {
+                var iller = Object.keys(lokasyonDB).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+                iller.forEach(function(il) {
+                    ilSelect.innerHTML += '<option value="' + il + '">' + il + '</option>';
+                });
+            }
+            // Reset ilçe select and panels
+            document.getElementById("lokIlceSec").innerHTML = '<option value="">İlçe Seçiniz</option>';
+            document.getElementById("lokasyonIlceListe").innerHTML = "";
+            document.getElementById("lokasyonKoyListe").innerHTML = "";
+            document.getElementById("lokKoyIlceUyari").style.display = "block";
+            document.getElementById("lokKoyEkleKutusu").style.display = "none";
+            document.getElementById("lokasyonDurumTxt").innerText = "";
+        }
+
+        function lokIlSecildi() {
+            var il = document.getElementById("lokIlSec").value;
+            var ilceSelect = document.getElementById("lokIlceSec");
+            ilceSelect.innerHTML = '<option value="">İlçe Seçiniz</option>';
+            document.getElementById("lokasyonKoyListe").innerHTML = "";
+            document.getElementById("lokKoyIlceUyari").style.display = "block";
+            document.getElementById("lokKoyEkleKutusu").style.display = "none";
+
+            if (!il || !lokasyonDB || !lokasyonDB[il]) {
+                renderIlceListe(il);
+                return;
+            }
+
+            var ilceler = Object.keys(lokasyonDB[il]).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            ilceler.forEach(function(ilce) {
+                ilceSelect.innerHTML += '<option value="' + ilce + '">' + ilce + '</option>';
+            });
+            renderIlceListe(il);
+        }
+
+        function renderIlceListe(il) {
+            var container = document.getElementById("lokasyonIlceListe");
+            container.innerHTML = "";
+            if (!il || !lokasyonDB || !lokasyonDB[il]) return;
+            var ilceler = Object.keys(lokasyonDB[il]).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            ilceler.forEach(function(ilce) {
+                var chip = document.createElement("div");
+                chip.style = "display:inline-flex; align-items:center; gap:6px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:700; color:#1b5e20;";
+                chip.innerHTML = ilce + ' <span style="cursor:pointer; color:#ef4444; font-size:15px; line-height:1;" onclick="ilceSil(\'' + il + '\',\'' + ilce + '\')">×</span>';
+                container.appendChild(chip);
+            });
+        }
+
+        function lokIlceSecildi() {
+            var il = document.getElementById("lokIlSec").value;
+            var ilce = document.getElementById("lokIlceSec").value;
+            document.getElementById("lokasyonKoyListe").innerHTML = "";
+            if (!ilce) {
+                document.getElementById("lokKoyIlceUyari").style.display = "block";
+                document.getElementById("lokKoyEkleKutusu").style.display = "none";
+                return;
+            }
+            document.getElementById("lokKoyIlceUyari").style.display = "none";
+            document.getElementById("lokKoyEkleKutusu").style.display = "flex";
+            renderKoyListe(il, ilce);
+        }
+
+        function renderKoyListe(il, ilce) {
+            var container = document.getElementById("lokasyonKoyListe");
+            container.innerHTML = "";
+            if (!lokasyonDB || !lokasyonDB[il] || !lokasyonDB[il][ilce]) return;
+            var koyler = [...lokasyonDB[il][ilce]].sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            koyler.forEach(function(koy) {
+                var chip = document.createElement("div");
+                chip.style = "display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:3px 10px; font-size:11px; font-weight:600; color:#334155;";
+                chip.innerHTML = koy + ' <span style="cursor:pointer; color:#ef4444; font-size:13px; line-height:1;" onclick="koySil(\'' + il + '\',\'' + ilce + '\',\'' + koy.replace(/'/g, "\\'") + '\')">×</span>';
+                container.appendChild(chip);
+            });
+        }
+
+        function lokasyonFirestoreGuncelle(callback) {
+            var docRef = db.collection("ayarlar").doc("lokasyonlar");
+            docRef.set(lokasyonDB).then(function() {
+                localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
+                // Refresh form dropdowns
+                ilListesiniDoldur();
+                initMenuFilters();
+                if (callback) callback();
+                document.getElementById("lokasyonDurumTxt").innerText = "✅ Kaydedildi.";
+                setTimeout(function() { document.getElementById("lokasyonDurumTxt").innerText = ""; }, 2500);
+            }).catch(function(err) {
+                document.getElementById("lokasyonDurumTxt").innerText = "❌ Hata: " + err.message;
+            });
+        }
+
+        function ilceEkle() {
+            var il = document.getElementById("lokIlSec").value;
+            var yeniIlce = document.getElementById("yeniIlceAdi").value.trim();
+            if (!il) { alert("Önce bir il seçin!"); return; }
+            if (!yeniIlce) { alert("İlçe adı boş olamaz!"); return; }
+            if (!lokasyonDB[il]) lokasyonDB[il] = {};
+            if (lokasyonDB[il][yeniIlce]) { alert("Bu ilçe zaten mevcut!"); return; }
+            lokasyonDB[il][yeniIlce] = [];
+            document.getElementById("yeniIlceAdi").value = "";
+            lokasyonFirestoreGuncelle(function() {
+                lokIlSecildi(); // Re-render
+            });
+        }
+
+        function ilceSil(il, ilce) {
+            if (!confirm('"' + ilce + '" ilçesini ve tüm köylerini silmek istediğinize emin misiniz?')) return;
+            if (lokasyonDB[il] && lokasyonDB[il][ilce]) {
+                delete lokasyonDB[il][ilce];
+                lokasyonFirestoreGuncelle(function() {
+                    lokIlSecildi();
+                });
+            }
+        }
+
+        function koyEkle() {
+            var il = document.getElementById("lokIlSec").value;
+            var ilce = document.getElementById("lokIlceSec").value;
+            var yeniKoy = document.getElementById("yeniKoyAdi").value.trim();
+            if (!il || !ilce) { alert("Önce il ve ilçe seçin!"); return; }
+            if (!yeniKoy) { alert("Köy/Mahalle adı boş olamaz!"); return; }
+            if (!lokasyonDB[il]) lokasyonDB[il] = {};
+            if (!lokasyonDB[il][ilce]) lokasyonDB[il][ilce] = [];
+            if (lokasyonDB[il][ilce].includes(yeniKoy)) { alert("Bu köy/mahalle zaten mevcut!"); return; }
+            lokasyonDB[il][ilce].push(yeniKoy);
+            document.getElementById("yeniKoyAdi").value = "";
+            lokasyonFirestoreGuncelle(function() {
+                renderKoyListe(il, ilce);
+            });
+        }
+
+        function koySil(il, ilce, koy) {
+            if (!confirm('"' + koy + '" köyünü silmek istediğinize emin misiniz?')) return;
+            if (lokasyonDB[il] && lokasyonDB[il][ilce]) {
+                var idx = lokasyonDB[il][ilce].indexOf(koy);
+                if (idx > -1) {
+                    lokasyonDB[il][ilce].splice(idx, 1);
+                    lokasyonFirestoreGuncelle(function() {
+                        renderKoyListe(il, ilce);
+                    });
+                }
+            }
+        }
+
     </script>
+
 </body>
 </html>
