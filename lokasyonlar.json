@@ -1,0 +1,83 @@
+{
+  "Rize": {
+    "Ardeşen": [
+      "Akdere", "Akkaya", "Arıcılar", "Armağan", "Aşağıdurak", "Bayırcık", "Beyazkaya",
+      "Çıraklar", "Deremezra", "Doğanay", "Duygulu", "Eskiarmutluk", "Gündoğan", "Güney",
+      "Hoşdere", "Kaçkar", "Kirazlık", "Köprüköy", "Kurtuluş", "Küçükköy", "Manganez",
+      "Ortaalan", "Önder", "Özgür", "Pınarlı", "Pirinçlik", "Serindere", "Seslikaya",
+      "Sinanköy", "Şehitlik", "Şendere", "Şenyamaç", "Şenyurt", "Yamaçdere", "Yavuz",
+      "Yeniköy", "Yeniyol", "Yeşiltepe", "Yukarıdurak", "Yurtsever", "Zeytinlik"
+    ],
+    "Çamlıhemşin": [
+      "Behice", "Boğaziçi", "Çat", "Çayırdüzü", "Didi", "Dikkaya", "Derecik", "Güllü",
+      "Güroluk", "Kale", "Komilo", "Köprübaşı", "Meydan", "Mollaveyis", "Ortaklar", "Ortan",
+      "Ortayayla", "Sıraköy", "Şenköy", "Şenyuva", "Topluca", "Yaylaköy", "Yazlık",
+      "Yolkıyı", "Yukarışimşirli", "Zilkale"
+    ],
+    "Çayeli": [
+      "Abdullahhoca", "Armutlu", "Aşıklar", "Başköy", "Beşikçiler", "Beyazsu", "Buzlupınar",
+      "Çataldere", "Çeşmeli", "Çınartepe", "Çilingir", "Çukurluhoca", "Demirhisar", "Derecik",
+      "Düzgeçit", "Erdemli", "Erenler", "Esendağ", "Gemiciler", "Gürgenli", "Gürpınar",
+      "Güzeltepe", "Haremtepe", "İncesırt", "İncesu", "Kaçkar", "Kaptanpaşa", "Karaağaç",
+      "Kemerköy", "Kestanelik", "Köprübaşı", "Latifli", "Maltepe", "Musadağı", "Ormancık",
+      "Ortaköy", "Sarısu", "Sefalı", "Selimiye", "Seslidere", "Sırtköy", "Şirinköy",
+      "Uzundere", "Yamaçköy", "Yanıkdağ", "Yavuzlar", "Yenice", "Yenihisar", "Yenitepe",
+      "Yeşilırmak", "Yeşilköy", "Yeşiltepe", "Yıldızeli", "Zafer"
+    ],
+    "Derepazarı": [
+      "Bahattinpaşa", "Bürücek", "Çakmakçılar", "Çeşmeköy", "Çukurlu", "Esentepe",
+      "Kirazdağı", "Maltepe", "Sandıktaş", "Uzunkaya", "Yanıktaş"
+    ],
+    "Fındıklı": [
+      "Arılı", "Aslandere", "Avcılar", "Beydere", "Cennet", "Çağlayan", "Çınarlı", "Derbent",
+      "Doğanay", "Düzköy", "Gürsu", "Hara", "Ihlamurlu", "Karaali", "Kıyıcık", "Meyvalı",
+      "Saatköy", "Sulak", "Sümer", "Tepecik", "Yaylacılar", "Yeniköy", "Yenişehitlik"
+    ],
+    "Güneysu": [
+      "Adacami Mahallesi", "Asmalıirmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü",
+      "Başaran Mahallesi", "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü",
+      "Dumankaya Köyü", "Eskicami Mahallesi", "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü",
+      "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi", "Merkez Mahallesi",
+      "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi",
+      "Yarımada Köyü", "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü",
+      "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
+    ],
+    "Hemşin": [
+      "Akyamaç", "Bilenköy", "Çamlıktepe", "Hilal", "Kantarlı", "Leventköy", "Nurluca", "Yaltkaya"
+    ],
+    "İkizdere": [
+      "Ayvalık", "Ballıköy", "Bayırköy", "Başköy", "Cevizlik", "Çamlıkköy", "Çataltepe",
+      "Çiçekli", "Çifteköprü", "Demirkapı", "Dereköy", "Diktaş", "Eskice", "Gölyayla",
+      "Güneyce", "Gürdere", "Güvenköy", "Ihlamur", "Ilıcaköy", "Kama", "Meşeköy",
+      "Ortaköy", "Rüzgarlı", "Sivrikaya", "Şimşirli", "Tozköy", "Tulumpınar", "Yağcılar", "Yerelma"
+    ],
+    "İyidere": [
+      "Büyükçiftlikköyü", "Çiftlikköy", "Denizgören", "Kalecik", "Köşklü", "Taşhane", "Yaylacılar"
+    ],
+    "Kalkandere": [
+      "Çağlayan", "Çayırlı", "Dülgerli", "Esendere", "Esentepe", "Fındıklı", "Geçitli",
+      "Hurmalık", "Hüseyinhoca", "İnci", "Kayabaşı", "Ormanlı", "Pınarköy", "Seyrantepe",
+      "Soğuksu", "Ünalan", "Yenigeçitli", "Yeniköy", "Yeşilköy", "Yokuşlu", "Yolbaşı", "Yumurtatepe"
+    ],
+    "Merkez": [
+      "Akarsu", "Akpınar", "Aktaş", "Ambarlık", "Ayane", "Azaklıhoca", "Balıkçılar", "Beştepe",
+      "Bıldırcınköy", "Boğaz", "Camidağı", "Çaybaşı", "Çaycılar", "Çimenli", "Derebaşı",
+      "Dörtyol", "Düzköy", "Elmalı", "Erenköy", "Gölgeli", "Güzelköy", "Güzelyurt", "Karasu",
+      "Karayemiş", "Ketenli", "Kırklartepesi", "Kocatepe", "Köprülü", "Kurtuluş", "Küçükçayır",
+      "Küçükköy", "Melek", "Ortapazar", "Örnek", "Pazarköy", "Pekmezli", "Pınarbaşı",
+      "Selimiye", "Soğukçeşme", "Söğütlü", "Sütlüce", "Taşköprü", "Taşlık", "Taşpınar",
+      "Tekke", "Topkaya", "Tuğlalı", "Uzunköy", "Üçkaya", "Veliköy", "Yemişlik", "Yenidoğan",
+      "Yenigüzel", "Yenikale", "Yenikasarcılar", "Yeniselimiye", "Yeşildere", "Yolüstü",
+      "Yolveren", "Zincirliköprü"
+    ],
+    "Pazar": [
+      "Akbucak", "Akmescit", "Aktaş", "Aktepe", "Alçılı", "Balıkçı", "Başköy", "Boğazlı",
+      "Bucak", "Dağdibi", "Darılı", "Derebaşı", "Derinsu", "Dernek", "Elmalık", "Güneyköy",
+      "Hamidiye", "Handağı", "Hasköy", "Hisarlı", "Irmakköy", "Irmakyeniköy", "Kayağantaş",
+      "Kesikköprü", "Kuzayca", "Merdivenli", "Ortaırmak", "Ortayol", "Örnek", "Papatya",
+      "Sahilköy", "Sessizdere", "Sivrikale", "Sivritepe", "Subaşı", "Suçatı", "Sulak",
+      "Şehitlik", "Şendere", "Şentepe", "Tektaş", "Topluca", "Tütüncüler", "Uğrak",
+      "Yavuzköy", "Yemişli", "Yeşilköy", "Yücehisar"
+    ]
+  }
+}
