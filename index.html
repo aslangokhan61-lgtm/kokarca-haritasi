@@ -6,111 +6,402 @@
     <title>Kokarca Haritası</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #harita { height: 100vh; width: 100%; }
-        
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s;
+        :root {
+            --primary: #1b5e20;
+            --primary-light: #2e7d32;
+            --primary-dark: #003300;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --bg-glass: rgba(255, 255, 255, 0.9);
+            --border-glass: rgba(255, 255, 255, 0.5);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --font: 'Plus Jakarta Sans', sans-serif;
+            
+            --success: #2e7d32;
+            --warning: #fbc02d;
+            --danger: #d32f2f;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: white; padding: 25px; border-radius: 12px;
-            width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transform: translateY(-20px); transition: 0.3s;
-        }
-        .modal-overlay.active .modal-content { transform: translateY(0); }
-        .modal-content h3 { margin-top: 0; color: #333; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; }
-        .form-control {
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
-            font-size: 15px; box-sizing: border-box; outline: none; transition: border 0.3s;
-        }
-        .form-control:focus { border-color: #007bff; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; }
-        .btn-cancel { background: #f1f3f5; color: #333; }
-        .btn-save { background: #28a745; color: white; }
-        .btn:hover { opacity: 0.9; }
-        .popup-actions { margin-top: 10px; display: flex; gap: 5px; justify-content: center; }
-        .popup-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; flex: 1; }
-        .btn-edit { background-color: #ffc107; color: black; font-weight: bold; }
-        .btn-delete { background-color: #dc3545; font-weight: bold; }
 
-        /* Side Menu Styles */
-        .menu-btn {
-            position: absolute; top: 15px; left: 15px; z-index: 1000;
-            background: white; padding: 10px 15px; border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-size: 20px; cursor: pointer;
+        body {
+            margin: 0; padding: 0;
+            font-family: var(--font);
+            color: var(--text-dark);
+            background-color: #f8fafc;
         }
+        
+        #harita { height: 100vh; width: 100%; z-index: 1; }
+        
+        /* Premium Floating Navigation Menu Button */
+        .menu-btn {
+            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            background: var(--bg-glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            padding: 12px 22px; border-radius: 30px;
+            box-shadow: var(--shadow); font-size: 15px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; color: var(--text-dark);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+            background: #ffffff;
+            color: var(--primary);
+        }
+        .menu-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* Offline Status Badge */
+        .offline-badge {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
+            background: rgba(211, 47, 47, 0.95); backdrop-filter: blur(10px);
+            color: white; padding: 8px 18px; border-radius: 20px;
+            font-size: 13px; font-weight: 700; box-shadow: var(--shadow);
+            display: none; align-items: center; gap: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* Glassmorphic Side Menu Styles */
         .side-menu {
-            position: fixed; top: 0; left: -260px; width: 260px; height: 100%;
-            background: #fff; z-index: 10000; box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-            transition: 0.3s; display: flex; flex-direction: column;
+            position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
+            background: var(--bg-glass); backdrop-filter: blur(20px);
+            z-index: 10000; box-shadow: 10px 0 40px rgba(0,0,0,0.15);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--border-glass);
         }
         .side-menu.open { left: 0; }
         .menu-header {
-            padding: 20px; font-size: 18px; font-weight: bold; background: #28a745;
+            padding: 28px 24px; font-size: 20px; font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white; display: flex; justify-content: space-between; align-items: center;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 20px rgba(27, 94, 32, 0.15);
         }
-        .close-btn { cursor: pointer; font-size: 24px; line-height: 1; margin-top: -5px; }
-        .menu-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 16px; font-weight: 500;}
-        .menu-item:hover { background: #f1f3f5; }
+        .close-btn { cursor: pointer; font-size: 28px; line-height: 1; transition: transform 0.2s; }
+        .close-btn:hover { transform: scale(1.1); }
+        .menu-item {
+            padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text-dark);
+            display: flex; align-items: center; gap: 12px;
+            transition: all 0.2s ease;
+        }
+        .menu-item:hover {
+            background: rgba(27, 94, 32, 0.08);
+            color: var(--primary);
+            padding-left: 32px;
+        }
 
-        /* Report Table Styles */
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .report-table th, .report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
-        .report-table th { background-color: #28a745; color: white; }
-        .report-summary { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        /* Premium Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 99999; opacity: 0; visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 30px; border-radius: var(--radius-lg);
+            width: 90%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            transform: translateY(20px) scale(0.95); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0) scale(1); }
+        .modal-content h3 { margin-top: 0; color: var(--text-dark); margin-bottom: 24px; font-size: 20px; font-weight: 800; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        
+        .form-control {
+            width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: var(--radius-md);
+            font-size: 15px; font-family: var(--font); box-sizing: border-box; outline: none;
+            transition: all 0.2s ease; background: #f8fafc; color: var(--text-dark);
+            font-weight: 500;
+        }
+        .form-control:focus {
+            border-color: var(--primary-light);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+        .form-control:disabled {
+            background: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+        
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
+        
+        /* Modern Button Styles */
+        .btn {
+            padding: 12px 22px; border: none; border-radius: var(--radius-md); cursor: pointer;
+            font-size: 15px; font-weight: 700; font-family: var(--font);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-cancel { background: #f1f5f9; color: #475569; }
+        .btn-cancel:hover { background: #e2e8f0; color: #1e293b; }
+        .btn-save {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; box-shadow: 0 4px 12px rgba(27, 94, 32, 0.25);
+        }
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(27, 94, 32, 0.35);
+        }
+
+        /* Leaflet Popups and Inner Actions */
+        .leaflet-popup-content-wrapper {
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            padding: 4px;
+        }
+        .leaflet-popup-content {
+            font-family: var(--font);
+            font-size: 14px;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        .popup-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: center; }
+        .popup-btn {
+            padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 12px; font-weight: 700; color: white; flex: 1;
+            font-family: var(--font); transition: all 0.2s;
+        }
+        .btn-edit { background-color: #f59e0b; color: #ffffff; }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-delete { background-color: #ef4444; }
+        .btn-delete:hover { background-color: #dc2626; }
+
+        /* Report Modal & Tab Components */
+        .report-tabs {
+            display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 18px;
+        }
+        .tab-btn {
+            background: transparent; border: none; padding: 10px 18px; font-size: 14px; font-weight: 700;
+            color: var(--text-muted); cursor: pointer; border-radius: var(--radius-md);
+            transition: all 0.2s ease; font-family: var(--font);
+        }
+        .tab-btn:hover { background: #f1f5f9; color: var(--text-dark); }
+        .tab-btn.active {
+            background: rgba(27, 94, 32, 0.1);
+            color: var(--primary);
+        }
+
+        /* Stats Dashboard Panel inside Report */
+        .stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f8fafc; border: 1.5px solid #f1f5f9; border-radius: var(--radius-md);
+            padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .stat-value { font-size: 22px; font-weight: 800; color: var(--text-dark); }
+        .stat-value.text-danger { color: var(--danger); }
+
+        /* Table design */
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        .report-table th, .report-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        .report-table th { background-color: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 12px; text-transform: uppercase; }
+        .report-table tr:hover td { background-color: #f8fafc; }
+        
+        /* Custom DivIcon Marker Styles */
+        .custom-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            border: 2px solid white;
+            color: white;
+            font-weight: 700;
+            font-family: var(--font);
+            transition: all 0.2s ease;
+        }
+        /* Huni (Funnel) Tuzak -> Circle */
+        .marker-huni {
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+        }
+        /* Yapışkan Tuzak -> Rounded Square */
+        .marker-yapiskan {
+            border-radius: 8px;
+            width: 30px;
+            height: 30px;
+        }
+        .marker-green { background: #10b981; }
+        .marker-yellow { background: #f59e0b; color: #ffffff; }
+        .marker-red { background: #ef4444; }
     </style>
 </head>
 <body>
 
+    <!-- Connection Status Badge -->
+    <div id="offlineBadge" class="offline-badge">
+        <span>🔴</span> İnternet Yok (Çevrimdışı Çalışıyor)
+    </div>
+
+    <!-- Floating Active User Profile Card -->
+    <div id="userProfileCard" style="position: absolute; top: 20px; right: 20px; z-index: 1000; display: none; background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border-glass); padding: 8px 18px; border-radius: 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; font-size: 13px;">
+        <span style="font-weight: 700; color: var(--text-dark);">👤 Giriş Yapan:</span>
+        <span id="userNameTxt" style="font-weight: 700; color: var(--primary);">Gökhan ASLAN</span>
+        <span id="userDistrictTxt" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">(Güneysu - Yönetici)</span>
+        <button style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);" onclick="oturumKapat()">Çıkış</button>
+    </div>
+
+    <!-- Login Modal (Phone Number Only) -->
+    <div id="girisModal" class="modal-overlay" style="z-index: 100000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span style="font-size: 44px;">🐜</span>
+            <h3 style="margin-top: 15px; margin-bottom: 8px; font-size: 20px; font-weight: 800;">Kokarca Haritası Giriş</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Devam etmek için lütfen telefon numaranızı giriniz</p>
+            
+            <div class="form-group" style="text-align: left;">
+                <label>Telefon Numarası</label>
+                <input type="text" id="girisTelefon" class="form-control" style="text-align: center; font-size: 16px; letter-spacing: 1px;" placeholder="+905xxxxxxxxx">
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 24px;">
+                <button class="btn btn-save" style="width: 100%; height: 44px;" onclick="girisYap()">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hamburger Menu Button -->
     <div class="menu-btn" onclick="toggleMenu()">
-        &#9776; Menü
+        <svg viewBox="0 0 24 24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+        Menü
     </div>
 
     <!-- Side Menu -->
     <div id="sideMenu" class="side-menu">
-        <div class="menu-header">Seçenekler <span class="close-btn" onclick="toggleMenu()">&times;</span></div>
-        <div class="menu-item" onclick="raporGoster()">📊 Köy Raporları</div>
+        <!-- Filled Dynamically depending on role -->
     </div>
 
-    <!-- Modal Form -->
+    <!-- Personnel Management Modal -->
+    <div id="personelModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 700px; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800;">👥 Personel ve Sorumluluk Yönetimi</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatPersonelModal()">&times;</span>
+            </div>
+
+            <button class="btn btn-save" style="margin-bottom: 20px;" onclick="yeniPersonelFormuAc()">➕ Yeni Personel Ekle</button>
+
+            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); margin-bottom: 20px;">
+                <table class="report-table">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th>Ad Soyad</th>
+                            <th>Ünvan</th>
+                            <th>Sorumlu İlçe</th>
+                            <th>Telefon</th>
+                            <th>Rol</th>
+                            <th style="width: 120px; text-align: center;">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personelTabloGovde">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="personelEkleDuzenleFormu" style="display: none; background: #f8fafc; padding: 20px; border-radius: var(--radius-md); border: 1.5px solid #f1f5f9; margin-top: 15px;">
+                <h4 id="personelFormBaslik" style="margin-top: 0; margin-bottom: 15px; color: var(--text-dark);">Yeni Personel Ekle</h4>
+                <input type="hidden" id="duzenlenenPersonelTel" value="">
+                
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="pAdSoyad" class="form-control" placeholder="Ad Soyad">
+                </div>
+                <div class="form-group">
+                    <label>Ünvan</label>
+                    <input type="text" id="pUnvan" class="form-control" placeholder="Örn: Ziraat Mühendisi, Teknisyen">
+                </div>
+                <div class="form-group">
+                    <label>Sorumlu İlçe</label>
+                    <select id="pIlce" class="form-control">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Telefon Numarası</label>
+                    <input type="text" id="pTelefon" class="form-control" placeholder="Örn: +905xxxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label>Rolü</label>
+                    <select id="pRol" class="form-control">
+                        <option value="Saha Personeli" selected>Saha Personeli</option>
+                        <option value="Yönetici">Yönetici (Admin)</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-cancel" onclick="iptalPersonelFormu()">İptal</button>
+                    <button class="btn btn-save" onclick="kaydetPersonel()">Kaydet</button>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatPersonelModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="topluYuklemeModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800;">🏺 Toplu Tuzak Yükleme</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatTopluYuklemeModal()">&times;</span>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Aşağıdaki kutuya virgülle ayrılmış verilerinizi (SıraNo, KöyAdı, Enlem, Boylam) yapıştırın:</p>
+            
+            <div class="form-group">
+                <textarea id="topluVeriKutusu" class="form-control" style="height: 180px; font-family: monospace; font-size: 12px;" placeholder="Örn:&#10;1,Adacami Mah.,41.000884,40.597200&#10;2,Asmalıırmak Köyü,40.955246,40.601077"></textarea>
+            </div>
+            
+            <h4 id="topluDurumTxt" style="margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: var(--primary);"></h4>
+            
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-cancel" onclick="kapatTopluYuklemeModal()">İptal</button>
+                <button class="btn btn-save" onclick="aktarTopluVeriler()">Aktarımı Başlat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trap Register/Edit Modal -->
     <div id="tuzakModal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
             <input type="hidden" id="duzenlenenDocId" value="">
+            
             <div class="form-group">
-                <label>Ekleyen Personel</label>
-                <select id="personelSecim" class="form-control" onchange="personelDegisti()">
-                    <option value="" disabled selected>Lütfen seçiniz</option>
-                    <option value="Dursun Ali AZAKLI" data-unvan="Ziraat Mühendisi">Dursun Ali AZAKLI (Ziraat Mühendisi)</option>
-                    <option value="Gökhan ASLAN" data-unvan="Ziraat Mühendisi">Gökhan ASLAN (Ziraat Mühendisi)</option>
-                    <option value="Hakan PEHLEVAN" data-unvan="Ziraat Mühendisi">Hakan PEHLEVAN (Ziraat Mühendisi)</option>
-                    <option value="Ümit KALEBAŞ" data-unvan="Ziraat Teknisyeni">Ümit KALEBAŞ (Ziraat Teknisyeni)</option>
-                    <option value="Cihat Resul BOYRAZ" data-unvan="Destek Personeli">Cihat Resul BOYRAZ (Destek Personeli)</option>
-                    <option value="Diger">Diğer (Elle Gir)</option>
+                <label>Tuzak Tipi</label>
+                <select id="tuzakTipi" class="form-control">
+                    <option value="Huni" selected>Huni (Funnel) Tuzak</option>
+                    <option value="Yapışkan">Yapışkan Tuzak</option>
                 </select>
             </div>
-            
-            <div id="digerPersonelAlani" style="display: none;">
-                <div class="form-group">
-                    <label>Ad Soyad (Diğer)</label>
-                    <input type="text" id="adSoyad" class="form-control" placeholder="Örn: Ahmet Yılmaz">
-                </div>
-                <div class="form-group">
-                    <label>Ünvan (Diğer)</label>
-                    <input type="text" id="unvan" class="form-control" placeholder="Örn: Muhtar, Çiftçi vs.">
-                </div>
-            </div>
+
             <div class="form-group">
                 <label>İl</label>
                 <select id="il" class="form-control" onchange="ilSecildi()">
@@ -146,38 +437,76 @@
 
     <!-- Report Modal -->
     <div id="raporModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
-            <h3>📊 Mahalle / Köy Raporu</h3>
-            <div class="report-summary">
-                <span id="toplamTuzakTxt" style="color: #666;">Toplam Tuzak: 0</span>
-                <span id="toplamBocekTxt" style="color: #d9534f;">Toplam Böcek: 0</span>
+        <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800;">📊 Mahalle / Köy Analizi</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatRapor()">&times;</span>
             </div>
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Köy / Mahalle</th>
-                        <th>Tuzak</th>
-                        <th>Böcek</th>
-                    </tr>
-                </thead>
-                <tbody id="raporTabloGovde">
-                </tbody>
-            </table>
-            <div class="modal-actions">
+
+            <!-- Report Tabs -->
+            <div class="report-tabs">
+                <button id="tabTumu" class="tab-btn active" onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
+                <button id="tabHuni" class="tab-btn" onclick="setRaporFiltre('Huni')">🏺 Huni</button>
+                <button id="tabYapiskan" class="tab-btn" onclick="setRaporFiltre('Yapışkan')">🟨 Yapışkan</button>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Toplam Tuzak</span>
+                    <span id="toplamTuzakTxt" class="stat-value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Toplam Böcek</span>
+                    <span id="toplamBocekTxt" class="stat-value text-danger">0</span>
+                </div>
+            </div>
+
+            <!-- Chart Container -->
+            <div style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; margin-bottom: 20px; border: 1.5px solid #f1f5f9;">
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="bocekGrafik"></canvas>
+                </div>
+            </div>
+
+            <!-- Scrollable Table Wrap -->
+            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md);">
+                <table class="report-table">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th>Köy / Mahalle</th>
+                            <th style="text-align: center; width: 90px;">Tuzak</th>
+                            <th style="text-align: center; width: 90px;">Böcek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="raporTabloGovde">
+                    </tbody>
+                    <tfoot id="raporTabloAyak" style="position: sticky; bottom: 0; z-index: 10;">
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
                 <button class="btn btn-cancel" onclick="kapatRapor()">Kapat</button>
             </div>
         </div>
     </div>
 
+    <!-- Map container -->
     <div id="harita"></div>
 
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // SİZİN FIREBASE BİLGİLERİNİZ
+        // FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
             authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
@@ -188,15 +517,51 @@
             measurementId: "G-WXJQ4DJLJX"
         };
 
-        // Sistemi Başlat
+        // Initialize Firebase Firestore and Offline Persistence
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Haritayı Başlat (Güneysu/Rize) ve Zoom butonlarını sağ alta al
+        db.enablePersistence()
+            .then(function() {
+                console.log("Firestore çevrimdışı önbellek desteği başarıyla etkinleştirildi.");
+            })
+            .catch(function(err) {
+                if (err.code == 'failed-precondition') {
+                    console.warn("Çevrimdışı önbellek etkinleştirilemedi: Çoklu sekme açık.");
+                } else if (err.code == 'unimplemented') {
+                    console.warn("Çevrimdışı önbellek etkinleştirilemedi: Tarayıcı desteklemiyor.");
+                }
+            });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(function(reg) {
+                    console.log('ServiceWorker başarıyla kaydedildi, kapsam: ', reg.scope);
+                }).catch(function(err) {
+                    console.error('ServiceWorker kaydı başarısız: ', err);
+                });
+            });
+        }
+
+        // Internet Connection Status Check
+        window.addEventListener('online', guncelleBaglantiDurumu);
+        window.addEventListener('offline', guncelleBaglantiDurumu);
+
+        function guncelleBaglantiDurumu() {
+            var badge = document.getElementById('offlineBadge');
+            if (navigator.onLine) {
+                badge.style.display = 'none';
+            } else {
+                badge.style.display = 'flex';
+            }
+        }
+        guncelleBaglantiDurumu();
+
+        // Initialize Map (Güneysu/Rize Focus)
         var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Harita Katmanları (Sokak ve Uydu)
         var sokakHaritasi = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         });
@@ -206,17 +571,15 @@
             maxZoom: 20
         });
 
-        // Varsayılan olarak uydu haritasını aç
         uyduHaritasi.addTo(map);
 
-        // Kullanıcıya harita tipini seçtiren menü (Sağ üste)
         var haritaTipleri = {
             "🛰️ Uydu Görünümü": uyduHaritasi,
             "🗺️ Sokak Görünümü": sokakHaritasi
         };
         L.control.layers(haritaTipleri, null, { position: 'topright' }).addTo(map);
 
-        // Konum Bulma Özelliği
+        // Geolocation Find User
         map.locate({setView: true, maxZoom: 16});
 
         function onLocationFound(e) {
@@ -227,59 +590,131 @@
         }
         map.on('locationfound', onLocationFound);
 
-
-
-        // Akıllı Harita İçin Özel Renkli İğneler
-        var shadowOpt = { shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] };
-        var greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
-        var yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
-        var redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: shadowOpt.shadowUrl, iconSize: shadowOpt.iconSize, iconAnchor: shadowOpt.iconAnchor, popupAnchor: shadowOpt.popupAnchor, shadowSize: shadowOpt.shadowSize });
-
-        // Haritadaki iğneleri ve ham veriyi takip etmek için
+        // Global Variables
         var markerListesi = {};
         var tuzakVerileri = {};
         var lokasyonDB = null;
+        var personelListesi = [];
+        var currentChart = null;
+        var seciliRaporFiltre = "Tümü";
+        var aktifKullanici = null;
+        var tuzakListener = null;
 
-        // Veritabanından İl/İlçe/Köy Verilerini Çek
+        // User Mapping Provided by the User
+        var varsayilanPersonelListesi = [
+            { adSoyad: "Gökhan ASLAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905414464561", rol: "Yönetici" },
+            { adSoyad: "Beyza FEYİZ", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905468571041", rol: "Yönetici" },
+            { adSoyad: "Cihat Resul BOYRAZ", unvan: "Destek Personeli", ilce: "Güneysu", telefon: "+905519892929", rol: "Saha Personeli" },
+            { adSoyad: "Dursun Ali AZAKLI", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905418180853", rol: "Saha Personeli" },
+            { adSoyad: "Duygu METE", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905533058977", rol: "Saha Personeli" },
+            { adSoyad: "Emre VARDAL", unvan: "Ziraat Mühendisi", ilce: "Hemşin", telefon: "+905364187624", rol: "Saha Personeli" },
+            { adSoyad: "Engin BALTA", unvan: "Ziraat Mühendisi", ilce: "Pazar", telefon: "+905064598490", rol: "Saha Personeli" },
+            { adSoyad: "Esra KIRKBİR", unvan: "Ziraat Mühendisi", ilce: "Merkez", telefon: "+905432329043", rol: "Saha Personeli" },
+            { adSoyad: "Feyzi Emin DERECİ", unvan: "Ziraat Mühendisi", ilce: "Çayeli", telefon: "+905523299153", rol: "Saha Personeli" },
+            { adSoyad: "Hakan PEHLEVAN", unvan: "Ziraat Mühendisi", ilce: "Güneysu", telefon: "+905438574116", rol: "Saha Personeli" },
+            { adSoyad: "Ümit KALEBAŞ", unvan: "Teknisyen", ilce: "Güneysu", telefon: "+905322805560", rol: "Saha Personeli" }
+        ];
+
+        // Rize's All 12 Districts and Villages (Alphabetical)
         var varsayilanRize = {
             "Rize": {
-                "Güneysu": [
-                    "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi",
-                    "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi",
-                    "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi",
-                    "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi", "Yarımada Köyü",
-                    "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü", "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
+                "Merkez": [
+                    "Akarsu", "Akpınar", "Aktaş", "Ambarlık", "Ayane", "Azaklıhoca", "Balıkçılar", "Beştepe", "Bıldırcınköy", "Boğaz", "Camidağı", "Çaybaşı", "Çaycılar", "Çimenli", "Derebaşı", "Dörtyol", "Düzköy", "Elmalı", "Erenköy", "Gölgeli", "Güzelköy", "Güzelyurt", "Karasu", "Karayemiş", "Ketenli", "Kırklartepesi", "Kocatepe", "Köprülü", "Kurtuluş", "Küçükçayır", "Küçükköy", "Melek", "Ortapazar", "Örnek", "Pazarköy", "Pekmezli", "Pınarbaşı", "Selimiye", "Soğukçeşme", "Söğütlü", "Sütlüce", "Taşköprü", "Taşlık", "Taşpınar", "Tekke", "Topkaya", "Tuğlalı", "Uzunköy", "Üçkaya", "Veliköy", "Yemişlik", "Yenidoğan", "Yenigüzel", "Yenikale", "Yenikasarcılar", "Yeniselimiye", "Yeşildere", "Yolüstü", "Yolveren", "Zincirliköprü"
                 ],
-                "Merkez": [],
-                "Çayeli": [],
-                "Ardeşen": []
+                "Ardeşen": [
+                    "Akdere", "Akkaya", "Arıcılar", "Armağan", "Aşağıdurak", "Bayırcık", "Beyazkaya", "Çıraklar", "Deremezra", "Doğanay", "Duygulu", "Eskiarmutluk", "Gündoğan", "Güney", "Hoşdere", "Kaçkar", "Kirazlık", "Köprüköy", "Kurtuluş", "Küçükköy", "Manganez", "Ortaalan", "Önder", "Özgür", "Pınarlı", "Pirinçlik", "Serindere", "Seslikaya", "Sinanköy", "Şehitlik", "Şendere", "Şenyamaç", "Şenyurt", "Yamaçdere", "Yavuz", "Yeniköy", "Yeniyol", "Yeşiltepe", "Yukarıdurak", "Yurtsever", "Zeytinlik"
+                ],
+                "Çamlıhemşin": [
+                    "Behice", "Boğaziçi", "Çat", "Çayırdüzü", "Didi", "Dikkaya", "Derecik", "Güllü", "Güroluk", "Kale", "Komilo", "Köprübaşı", "Meydan", "Mollaveyis", "Ortaklar", "Ortan", "Ortayayla", "Sıraköy", "Şenköy", "Şenyuva", "Topluca", "Yaylaköy", "Yazlık", "Yolkıyı", "Yukarışimşirli", "Zilkale"
+                ],
+                "Çayeli": [
+                    "Abdullahhoca", "Armutlu", "Aşıklar", "Başköy", "Beşikçiler", "Beyazsu", "Buzlupınar", "Çataldere", "Çeşmeli", "Çınartepe", "Çilingir", "Çukurluhoca", "Demirhisar", "Derecik", "Düzgeçit", "Erdemli", "Erenler", "Esendağ", "Gemiciler", "Gürgenli", "Gürpınar", "Güzeltepe", "Haremtepe", "İncesırt", "İncesu", "Kaçkar", "Kaptanpaşa", "Karaağaç", "Kemerköy", "Kestanelik", "Köprübaşı", "Latifli", "Maltepe", "Musadağı", "Ormancık", "Ortaköy", "Sarısu", "Sefalı", "Selimiye", "Seslidere", "Sırtköy", "Şirinköy", "Uzundere", "Yamaçköy", "Yanıkdağ", "Yavuzlar", "Yenice", "Yenihisar", "Yenitepe", "Yeşilırmak", "Yeşilköy", "Yeşiltepe", "Yıldızeli", "Zafer"
+                ],
+                "Derepazarı": [
+                    "Bahattinpaşa", "Bürücek", "Çakmakçılar", "Çeşmeköy", "Çukurlu", "Esentepe", "Kirazdağı", "Maltepe", "Sandıktaş", "Uzunkaya", "Yanıktaş"
+                ],
+                "Fındıklı": [
+                    "Arılı", "Aslandere", "Avcılar", "Beydere", "Cennet", "Çağlayan", "Çınarlı", "Derbent", "Doğanay", "Düzköy", "Gürsu", "Hara", "Ihlamurlu", "Karaali", "Kıyıcık", "Meyvalı", "Saatköy", "Sulak", "Sümer", "Tepecik", "Yaylacılar", "Yeniköy", "Yenişehitlik"
+                ],
+                "Güneysu": [
+                    "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi", "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi", "Güneli Köyü", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi", "Küçükcami Mahallesi", "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü", "Ulucami Mahallesi", "Yarımada Köyü", "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü", "Yeşilyurt Köyü", "Yukarı İslahiye Köyü", "Yüksekköy Köyü"
+                ],
+                "Hemşin": [
+                    "Akyamaç", "Bilenköy", "Çamlıktepe", "Hilal", "Kantarlı", "Leventköy", "Nurluca", "Yaltkaya"
+                ],
+                "İkizdere": [
+                    "Ayvalık", "Ballıköy", "Bayırköy", "Başköy", "Cevizlik", "Çamlıkköy", "Çataltepe", "Çiçekli", "Çifteköprü", "Demirkapı", "Dereköy", "Diktaş", "Eskice", "Gölyayla", "Güneyce", "Gürdere", "Güvenköy", "Ihlamur", "Ilıcaköy", "Kama", "Meşeköy", "Ortaköy", "Rüzgarlı", "Sivrikaya", "Şimşirli", "Tozköy", "Tulumpınar", "Yağcılar", "Yerelma"
+                ],
+                "İyidere": [
+                    "Büyükçiftlikköyü", "Çiftlikköy", "Denizgören", "Kalecik", "Köşklü", "Taşhane", "Yaylacılar"
+                ],
+                "Kalkandere": [
+                    "Çağlayan", "Çayırlı", "Dülgerli", "Esendere", "Esentepe", "Fındıklı", "Geçitli", "Hurmalık", "Hüseyinhoca", "İnci", "Kayabaşı", "Ormanlı", "Pınarköy", "Seyrantepe", "Soğuksu", "Ünalan", "Yenigeçitli", "Yeniköy", "Yeşilköy", "Yokuşlu", "Yolbaşı", "Yumurtatepe"
+                ],
+                "Pazar": [
+                    "Akbucak", "Akmescit", "Aktaş", "Aktepe", "Alçılı", "Balıkçı", "Başköy", "Boğazlı", "Bucak", "Dağdibi", "Darılı", "Derebaşı", "Derinsu", "Dernek", "Elmalık", "Güneyköy", "Hamidiye", "Handağı", "Hasköy", "Hisarlı", "Irmakköy", "Irmakyeniköy", "Kayağantaş", "Kesikköprü", "Kuzayca", "Merdivenli", "Ortaırmak", "Ortayol", "Örnek", "Papatya", "Sahilköy", "Sessizdere", "Sivrikale", "Sivritepe", "Subaşı", "Suçatı", "Sulak", "Şehitlik", "Şendere", "Şentepe", "Tektaş", "Topluca", "Tütüncüler", "Uğrak", "Yavuzköy", "Yemişli", "Yeşilköy", "Yücehisar"
+                ]
             }
         };
 
+        // Real-Time Personnel Listener & Auto-Seeding
+        function dinleVeTohumlaPersoneller() {
+            db.collection("personeller").limit(1).get().then(function(querySnapshot) {
+                if (querySnapshot.empty) {
+                    console.log("Personel listesi boş, varsayılan liste yükleniyor...");
+                    var batch = db.batch();
+                    varsayilanPersonelListesi.forEach(function(pers) {
+                        var docRef = db.collection("personeller").doc(pers.telefon);
+                        batch.set(docRef, pers);
+                    });
+                    batch.commit().then(function() {
+                        console.log("Personel listesi başarıyla veritabanına tohumlandı.");
+                        oturumKontrol();
+                    });
+                } else {
+                    oturumKontrol();
+                }
+            }).catch(function(err) {
+                console.warn("Personel tablosu tohumlama hatası:", err);
+                oturumKontrol();
+            });
+        }
+
+        // Load Locations from Firestore or local dictionary fallback
         function lokasyonlariYukle() {
             var docRef = db.collection("ayarlar").doc("lokasyonlar");
             docRef.get().then(function(doc) {
                 if (doc.exists) {
                     lokasyonDB = doc.data();
-                    ilListesiniDoldur();
+                    if (!lokasyonDB.Rize || !lokasyonDB.Rize.Merkez || lokasyonDB.Rize.Merkez.length === 0) {
+                        docRef.set(varsayilanRize).then(function() {
+                            lokasyonDB = varsayilanRize;
+                            ilListesiniDoldur();
+                        });
+                    } else {
+                        ilListesiniDoldur();
+                    }
                 } else {
-                    // İlk defa çalışıyorsa varsayılan Rize verilerini veritabanına kaydet
                     docRef.set(varsayilanRize).then(function() {
                         lokasyonDB = varsayilanRize;
                         ilListesiniDoldur();
                     });
                 }
             }).catch(function(error) {
-                console.log("Lokasyonlar çekilemedi: ", error);
+                console.warn("Lokasyonlar çekilemedi, yerel veri kullanılıyor: ", error);
+                lokasyonDB = varsayilanRize;
+                ilListesiniDoldur();
             });
         }
 
         function ilListesiniDoldur() {
             var ilSelect = document.getElementById("il");
+            if (!ilSelect) return;
             ilSelect.innerHTML = '<option value="" disabled selected>Lütfen İl Seçiniz</option>';
             if (lokasyonDB) {
-                for (var ilAdi in lokasyonDB) {
-                    ilSelect.innerHTML += '<option value="' + ilAdi + '">' + ilAdi + '</option>';
+                var iller = Object.keys(lokasyonDB).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+                for (var i = 0; i < iller.length; i++) {
+                    ilSelect.innerHTML += '<option value="' + iller[i] + '">' + iller[i] + '</option>';
                 }
             }
         }
@@ -293,8 +728,9 @@
             koySelect.innerHTML = '<option value="" disabled selected>Önce İlçe Seçiniz</option>';
             
             if (lokasyonDB && lokasyonDB[ilAdi]) {
-                for (var ilceAdi in lokasyonDB[ilAdi]) {
-                    ilceSelect.innerHTML += '<option value="' + ilceAdi + '">' + ilceAdi + '</option>';
+                var ilceler = Object.keys(lokasyonDB[ilAdi]).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+                for (var i = 0; i < ilceler.length; i++) {
+                    ilceSelect.innerHTML += '<option value="' + ilceler[i] + '">' + ilceler[i] + '</option>';
                 }
             }
         }
@@ -307,102 +743,171 @@
             koySelect.innerHTML = '<option value="" disabled selected>Lütfen Köy Seçiniz</option>';
             
             if (lokasyonDB && lokasyonDB[ilAdi] && lokasyonDB[ilAdi][ilceAdi]) {
-                var koyler = lokasyonDB[ilAdi][ilceAdi];
+                var koyler = [...lokasyonDB[ilAdi][ilceAdi]].sort(function(a, b) { return a.localeCompare(b, 'tr'); });
                 for (var i = 0; i < koyler.length; i++) {
                     koySelect.innerHTML += '<option value="' + koyler[i] + '">' + koyler[i] + '</option>';
                 }
             }
         }
 
+        // Initialize lists and start listening to personnel
         lokasyonlariYukle();
+        dinleVeTohumlaPersoneller();
 
-        // 1. ÖZELLİK: Veritabanındaki kayıtları canlı dinle (ekleme, değiştirme, silme)
-        db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
-            querySnapshot.docChanges().forEach(function(change) {
-                var data = change.doc.data();
-                var docId = change.doc.id;
-                
-                if (change.type === "added" || change.type === "modified") {
-                    tuzakVerileri[docId] = data; // Raporlama için veriyi kaydet
-                    var popupIcerik = "";
+        // Custom DivIcon Marker Builder (Offline compliant)
+        function createCustomMarkerIcon(tuzakTipi, bocekSayisi) {
+            var bocekCount = parseInt(bocekSayisi) || 0;
+            var typeVal = tuzakTipi || "Huni";
+            var shapeClass = (typeVal === "Yapışkan") ? "marker-yapiskan" : "marker-huni";
+            var colorClass = "marker-green";
+            
+            if (bocekCount >= 50) {
+                colorClass = "marker-red";
+            } else if (bocekCount >= 20) {
+                colorClass = "marker-yellow";
+            }
+            
+            var shortSymbol = (typeVal === "Yapışkan") ? "Y" : "H";
+            var iconHtml = '<span style="font-size: 8px; font-weight: 800; display: block; line-height: 1;">' + shortSymbol + '</span>' +
+                           '<span style="font-size: 11px; font-weight: 800; line-height: 1.2;">' + bocekCount + '</span>';
+
+            return L.divIcon({
+                className: 'custom-marker ' + shapeClass + ' ' + colorClass,
+                html: '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">' + iconHtml + '</div>',
+                iconSize: (typeVal === "Yapışkan") ? [30, 30] : [32, 32],
+                iconAnchor: (typeVal === "Yapışkan") ? [15, 15] : [16, 16],
+                popupAnchor: [0, -16]
+            });
+        }
+
+        // Setup real-time listeners for traps
+        function tuzaklariDinle() {
+            if (tuzakListener) {
+                tuzakListener(); // Clean up existing listener
+            }
+
+            // Clear previous map markers
+            for (var id in markerListesi) {
+                map.removeLayer(markerListesi[id]);
+            }
+            markerListesi = {};
+            tuzakVerileri = {};
+
+            tuzakListener = db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
+                querySnapshot.docChanges().forEach(function(change) {
+                    var data = change.doc.data();
+                    var docId = change.doc.id;
                     
-                    var koyIsmi = data.koy || data.ad || "Bilinmiyor";
-                    popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
-                    
-                    if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
-                    if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
-                    
-                    if (data.adSoyad) {
-                        var ekleyen = data.adSoyad;
-                        if (data.unvan) ekleyen += " (" + data.unvan + ")";
-                        popupIcerik += "<b>Ekleyen:</b> " + ekleyen + "<br>";
-                    } else {
-                        popupIcerik += "<b>Ekleyen:</b> Sistem (Toplu Kayıt)<br>";
+                    // ROLE-BASED DISTRICT ISOLATION (Only managers can see other districts)
+                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                        if (markerListesi[docId]) {
+                            map.removeLayer(markerListesi[docId]);
+                            delete markerListesi[docId];
+                            delete tuzakVerileri[docId];
+                        }
+                        return;
                     }
-
-                    // Düzenle ve Sil butonları eklendi
-                    popupIcerik += "<div class='popup-actions'>";
-                    popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
-                    popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
-                    popupIcerik += "</div>";
-                    // Sadece geçerli koordinatı olanları haritaya ekle (Eksik veri çökmesini engeller)
-                    if (data.lat !== undefined && data.lng !== undefined) {
+                    
+                    if (change.type === "added" || change.type === "modified") {
+                        tuzakVerileri[docId] = data;
                         
-                        // Böcek sayısına göre iğne rengini belirle
-                        var bocekS = parseInt(data.bocekSayisi) || 0;
-                        var seciliIkon = greenIcon; // Varsayılan Yeşil (0-19 böcek)
-                        if (bocekS >= 50) {
-                            seciliIkon = redIcon; // Tehlike/Çok Yoğun (50+ böcek)
-                        } else if (bocekS >= 20) {
-                            seciliIkon = yellowIcon; // Uyarı/Orta (20-49 böcek)
+                        var popupIcerik = "";
+                        var koyIsmi = data.koy || data.ad || "Bilinmiyor";
+                        var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
+                        
+                        popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
+                        popupIcerik += "<b>Tuzak Tipi:</b> " + tipStr + "<br>";
+                        if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
+                        if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
+                        
+                        var ekleyenStr = "";
+                        if (aktifKullanici && (aktifKullanici.rol === "Yönetici" || data.telefon === aktifKullanici.telefon)) {
+                            ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
+                            if (data.telefon) ekleyenStr += " (" + data.telefon + ")";
+                        } else {
+                            if (data.adSoyad) {
+                                ekleyenStr = "Saha Personeli";
+                            } else {
+                                ekleyenStr = "Sistem (Toplu Kayıt)";
+                            }
+                        }
+                        popupIcerik += "<b>Ekleyen:</b> " + ekleyenStr + "<br>";
+
+                        if (data.sonGuncelleyen) {
+                            var guncelleyenStr = "";
+                            if (aktifKullanici && (aktifKullanici.rol === "Yönetici" || data.sonGuncelleyenTel === aktifKullanici.telefon)) {
+                                guncelleyenStr = data.sonGuncelleyen;
+                                if (data.sonGuncelleyenTel) guncelleyenStr += " (" + data.sonGuncelleyenTel + ")";
+                            } else {
+                                guncelleyenStr = "Saha Personeli";
+                            }
+                            popupIcerik += "<b>Son Güncelleyen:</b> " + guncelleyenStr + "<br>";
+                            if (data.sonGuncellemeTarihi) popupIcerik += "<b>Güncelleme Tarihi:</b> " + data.sonGuncellemeTarihi + "<br>";
                         }
 
-                        if (change.type === "added") {
-                            var marker = L.marker([data.lat, data.lng], {icon: seciliIkon}).addTo(map).bindPopup(popupIcerik);
-                            markerListesi[docId] = marker;
-                        } else if (change.type === "modified") {
-                            var marker = markerListesi[docId];
-                            if (marker) {
-                                marker.setLatLng([data.lat, data.lng]);
-                                marker.setPopupContent(popupIcerik);
-                                marker.setIcon(seciliIkon); // Rengi de güncelle
+                        popupIcerik += "<div class='popup-actions'>";
+                        popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
+                        popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
+                        popupIcerik += "</div>";
+                        
+                        if (data.lat !== undefined && data.lng !== undefined) {
+                            var customIcon = createCustomMarkerIcon(data.tuzakTipi, data.bocekSayisi);
+
+                            if (change.type === "added") {
+                                var marker = L.marker([data.lat, data.lng], {icon: customIcon}).addTo(map).bindPopup(popupIcerik);
+                                markerListesi[docId] = marker;
+                            } else if (change.type === "modified") {
+                                var marker = markerListesi[docId];
+                                if (marker) {
+                                    marker.setLatLng([data.lat, data.lng]);
+                                    marker.setPopupContent(popupIcerik);
+                                    marker.setIcon(customIcon);
+                                }
                             }
                         }
                     }
-                } // EKSİK OLAN PARANTEZ EKLENDİ
-                
-                if (change.type === "removed") {
-                    var marker = markerListesi[docId];
-                    if (marker) {
-                        map.removeLayer(marker);
-                        delete markerListesi[docId];
-                        delete tuzakVerileri[docId]; // Rapordan da sil
+                    
+                    if (change.type === "removed") {
+                        var marker = markerListesi[docId];
+                        if (marker) {
+                            map.removeLayer(marker);
+                            delete markerListesi[docId];
+                            delete tuzakVerileri[docId];
+                        }
                     }
-                }
+                });
+            }, function(error) {
+                console.error("Tuzak dinleme hatası: " + error.message);
             });
-        }, function(error) {
-            alert("Firebase Hatası (Noktalar yüklenemedi): " + error.message);
-        });
-
-        // Seçilen konumu geçici olarak tutacağımız değişken
-        var secilenKonum = null;
-
-        function personelDegisti() {
-            var secim = document.getElementById('personelSecim').value;
-            if (secim === "Diger") {
-                document.getElementById('digerPersonelAlani').style.display = "block";
-            } else {
-                document.getElementById('digerPersonelAlani').style.display = "none";
-            }
         }
 
-        // Menü ve Raporlama Fonksiyonları
+        var secilenKonum = null;
+
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('open');
         }
 
-        function raporGoster() {
-            toggleMenu(); // Menüyü kapat
+        // Report Filter (All, Funnel, Sticky)
+        function setRaporFiltre(filtre) {
+            seciliRaporFiltre = filtre;
+            var tabs = ["Tümü", "Huni", "Yapışkan"];
+            var elIds = ["tabTumu", "tabHuni", "tabYapiskan"];
+            
+            for (var i = 0; i < tabs.length; i++) {
+                if (tabs[i] === filtre) {
+                    document.getElementById(elIds[i]).classList.add("active");
+                } else {
+                    document.getElementById(elIds[i]).classList.remove("active");
+                }
+            }
+            raporGoster(true);
+        }
+
+        // Show Reports
+        function raporGoster(skipToggleMenu) {
+            if (!skipToggleMenu) {
+                toggleMenu();
+            }
             
             var toplamBocek = 0;
             var toplamTuzak = 0;
@@ -410,6 +915,12 @@
             
             for (var id in tuzakVerileri) {
                 var data = tuzakVerileri[id];
+                var tipVal = data.tuzakTipi || "Huni";
+                
+                if (seciliRaporFiltre !== "Tümü" && tipVal !== seciliRaporFiltre) {
+                    continue;
+                }
+
                 var koy = data.koy || data.ad || "Bilinmiyor";
                 var bocek = parseInt(data.bocekSayisi) || 0;
                 
@@ -423,101 +934,164 @@
                 koyIstatistik[koy].bocek += bocek;
             }
             
-            // Veriyi diziye çevirip böcek sayısına göre sıralama
+            // Convert to array and sort Turkish alphabetically
             var raporArray = [];
             for (var k in koyIstatistik) {
                 raporArray.push({ koy: k, tuzak: koyIstatistik[k].tuzak, bocek: koyIstatistik[k].bocek });
             }
-            raporArray.sort(function(a, b) { return b.bocek - a.bocek; });
+            raporArray.sort(function(a, b) {
+                return a.koy.localeCompare(b.koy, 'tr');
+            });
             
-            document.getElementById('toplamTuzakTxt').innerText = "Toplam Tuzak: " + toplamTuzak;
-            document.getElementById('toplamBocekTxt').innerText = "Toplam Böcek: " + toplamBocek;
+            document.getElementById('toplamTuzakTxt').innerText = toplamTuzak;
+            document.getElementById('toplamBocekTxt').innerText = toplamBocek;
             
             var tbody = document.getElementById('raporTabloGovde');
             tbody.innerHTML = "";
             raporArray.forEach(function(item) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = "<td>" + item.koy + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#d9534f;'>" + item.bocek + "</td>";
+                tr.innerHTML = "<td>" + item.koy + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
                 tbody.appendChild(tr);
             });
+
+            // Summary Totals Row at the bottom
+            var tfoot = document.getElementById('raporTabloAyak');
+            tfoot.innerHTML = "<tr style='font-weight:bold; background-color:#f1f5f9; border-top: 2px solid #e2e8f0;'>" +
+                              "<td>TOPLAM</td>" +
+                              "<td style='text-align:center;'>" + toplamTuzak + "</td>" +
+                              "<td style='text-align:center; color:#ef4444;'>" + toplamBocek + "</td>" +
+                              "</tr>";
             
+            cizGrafik(raporArray);
             document.getElementById('raporModal').classList.add('active');
         }
 
+        // Draw Chart.js Graph
+        function cizGrafik(raporArray) {
+            var ctx = document.getElementById('bocekGrafik').getContext('2d');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            // Show top 10 most populated areas in graphs
+            var grafikData = [...raporArray].sort(function(a, b) { return b.bocek - a.bocek; }).slice(0, 10);
+            
+            var labels = grafikData.map(function(item) { return item.koy; });
+            var values = grafikData.map(function(item) { return item.bocek; });
+            
+            currentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Yakalanan Kokarca Sayısı',
+                        data: values,
+                        backgroundColor: 'rgba(46, 125, 50, 0.85)',
+                        borderColor: '#1b5e20',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'En Çok Kokarca Görülen Mahalleler (İlk 10)',
+                            font: { family: 'Plus Jakarta Sans', size: 12, weight: '800' },
+                            color: '#1e293b'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: '#1e293b' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Close Report Window
         function kapatRapor() {
             document.getElementById('raporModal').classList.remove('active');
         }
 
-        // Tuzak Silme Fonksiyonu
+        // Delete Trap (Checks District Access)
         function tuzakSil(docId) {
-            if (confirm("Bu kaydı haritadan silmek istediğinize emin misiniz?")) {
-                db.collection("tuzaklar").doc(docId).delete().then(function() {
-                    // Firebase onSnapshot otomatik silecek
-                }).catch(function(error) {
-                    alert("Silme hatası: " + error.message);
-                });
-            }
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (doc.exists) {
+                    var data = doc.data();
+                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                        alert("Bu tuzağı silme yetkiniz yok!");
+                        return;
+                    }
+                    if (confirm("Bu kaydı haritadan silmek istediğinize emin misiniz?")) {
+                        db.collection("tuzaklar").doc(docId).delete().then(function() {
+                            console.log("Kayıt silindi.");
+                        }).catch(function(error) {
+                            alert("Silme hatası: " + error.message);
+                        });
+                    }
+                }
+            });
         }
 
-        // Tuzak Düzenleme Modu
+        // Edit Mode (Checks District Access)
         function tuzakDuzenle(docId) {
             var marker = markerListesi[docId];
             if (!marker) return;
 
-            // Veritabanından mevcut bilgileri çek
             db.collection("tuzaklar").doc(docId).get().then(function(doc) {
                 if (doc.exists) {
                     var data = doc.data();
-                    document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum değiştirebilirsiniz)";
-                    document.getElementById('duzenlenenDocId').value = docId;
                     
-                    var secici = document.getElementById('personelSecim');
-                    var secimBulundu = false;
-                    for (var i = 0; i < secici.options.length; i++) {
-                        if (secici.options[i].value === data.adSoyad) {
-                            secici.selectedIndex = i;
-                            secimBulundu = true;
-                            break;
-                        }
-                    }
-                    
-                    if (secimBulundu && data.adSoyad !== "Diger") {
-                        document.getElementById('digerPersonelAlani').style.display = "none";
-                        document.getElementById('adSoyad').value = "";
-                        document.getElementById('unvan').value = "";
-                    } else if (data.adSoyad) {
-                        secici.value = "Diger";
-                        document.getElementById('digerPersonelAlani').style.display = "block";
-                        document.getElementById('adSoyad').value = data.adSoyad || "";
-                        document.getElementById('unvan').value = data.unvan || "";
-                    } else {
-                        secici.value = "";
-                        document.getElementById('digerPersonelAlani').style.display = "none";
-                        document.getElementById('adSoyad').value = "";
-                        document.getElementById('unvan').value = "";
+                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici" && data.ilce !== aktifKullanici.ilce) {
+                        alert("Bu tuzağı düzenleme yetkiniz yok!");
+                        return;
                     }
 
-                    // Lokasyon Doldurma ve Seçme
-                    if (data.il) {
-                        document.getElementById('il').value = data.il;
-                        ilSecildi(); // İlçeleri doldur
-                        if (data.ilce) {
-                            document.getElementById('ilce').value = data.ilce;
-                            ilceSecildi(); // Köyleri doldur
-                            var gercekKoy = data.koy || data.ad || "";
-                            if (gercekKoy) {
-                                // Eğer köy veritabanında yoksa bile görünmesi için ekleyelim
-                                var koyVarMi = false;
-                                var koySelect = document.getElementById('koy');
-                                for(var j=0; j<koySelect.options.length; j++){
-                                    if(koySelect.options[j].value === gercekKoy) koyVarMi = true;
-                                }
-                                if(!koyVarMi) {
-                                    koySelect.innerHTML += '<option value="' + gercekKoy + '">' + gercekKoy + '</option>';
-                                }
-                                koySelect.value = gercekKoy;
-                            }
+                    document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum güncelleyebilirsiniz)";
+                    document.getElementById('duzenlenenDocId').value = docId;
+                    document.getElementById('tuzakTipi').value = data.tuzakTipi || "Huni";
+
+                    var ilSelect = document.getElementById('il');
+                    var ilceSelect = document.getElementById('ilce');
+                    
+                    ilSelect.value = data.il || "Rize";
+                    ilSecildi();
+                    
+                    ilceSelect.value = data.ilce || "";
+                    ilceSecildi();
+                    
+                    // Lock District select for standard personnel
+                    if (aktifKullanici && aktifKullanici.rol !== "Yönetici") {
+                        ilceSelect.disabled = true;
+                    } else {
+                        ilceSelect.disabled = false;
+                    }
+
+                    var gercekKoy = data.koy || data.ad || "";
+                    if (gercekKoy) {
+                        var koySelect = document.getElementById('koy');
+                        var koyVarMi = false;
+                        for(var j = 0; j < koySelect.options.length; j++){
+                            if(koySelect.options[j].value === gercekKoy) koyVarMi = true;
                         }
+                        if(!koyVarMi) {
+                            koySelect.innerHTML += '<option value="' + gercekKoy + '">' + gercekKoy + '</option>';
+                        }
+                        koySelect.value = gercekKoy;
                     }
 
                     document.getElementById('tuzakNo').value = data.tuzakNo || "";
@@ -525,7 +1099,6 @@
 
                     secilenKonum = marker.getLatLng();
 
-                    // Markeri sürüklenebilir yap
                     marker.dragging.enable();
                     marker.on('dragend', function(e) {
                         secilenKonum = e.target.getLatLng();
@@ -537,88 +1110,88 @@
             });
         }
 
-        // 2. ÖZELLİK: Haritaya tıklanınca modal formunu aç
+        // Open Register Form (On map click)
         map.on('click', function(e) {
+            if (!aktifKullanici) return;
+            
             document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
             document.getElementById('duzenlenenDocId').value = "";
             secilenKonum = e.latlng;
+            
+            var ilSelect = document.getElementById('il');
+            var ilceSelect = document.getElementById('ilce');
+            
+            ilSelect.value = "Rize";
+            ilSecildi();
+            
+            // Automatically select and lock the active user's assigned district
+            ilceSelect.value = aktifKullanici.ilce;
+            ilceSecildi();
+            
+            if (aktifKullanici.rol !== "Yönetici") {
+                ilceSelect.disabled = true;
+            } else {
+                ilceSelect.disabled = false;
+            }
+
             document.getElementById('tuzakModal').classList.add('active');
         });
 
-        // Formu kapatma fonksiyonu
         function kapatModal() {
             document.getElementById('tuzakModal').classList.remove('active');
             
-            // Düzenleme modundayken kapatıldıysa iğne sürüklemeyi devredışı bırak
             var docId = document.getElementById('duzenlenenDocId').value;
             if (docId && markerListesi[docId]) {
                 markerListesi[docId].dragging.disable();
                 markerListesi[docId].off('dragend');
             }
-
-            // Formu temizle
-            document.getElementById('personelSecim').value = "";
-            document.getElementById('digerPersonelAlani').style.display = "none";
-            document.getElementById('adSoyad').value = "";
-            document.getElementById('unvan').value = "";
             
             var ilSelect = document.getElementById('il');
             if (ilSelect.options.length > 1) {
-                ilSelect.selectedIndex = 0; // Lütfen il seçiniz
+                ilSelect.selectedIndex = 0;
             }
             document.getElementById('ilce').innerHTML = '<option value="" disabled selected>Önce İl Seçiniz</option>';
             document.getElementById('koy').innerHTML = '<option value="" disabled selected>Önce İlçe Seçiniz</option>';
             document.getElementById('tuzakNo').value = "";
             document.getElementById('bocekSayisi').value = "";
+            document.getElementById('tuzakTipi').value = "Huni";
             document.getElementById('duzenlenenDocId').value = "";
             
             secilenKonum = null;
         }
 
-        // Veritabanına kaydetme / güncelleme fonksiyonu
+        // Save/Update database records
         function kaydet() {
-            var secim = document.getElementById('personelSecim').value;
-            var adSoyad = "";
-            var unvan = "";
-
-            if (secim === "Diger" || secim === "") {
-                adSoyad = document.getElementById('adSoyad').value.trim();
-                unvan = document.getElementById('unvan').value.trim();
-            } else {
-                var secici = document.getElementById('personelSecim');
-                var seciliOption = secici.options[secici.selectedIndex];
-                adSoyad = secim;
-                unvan = seciliOption.getAttribute('data-unvan') || "";
-            }
-
             var il = document.getElementById('il').value;
             var ilce = document.getElementById('ilce').value;
             var koy = document.getElementById('koy').value.trim();
             var tuzakNo = document.getElementById('tuzakNo').value.trim();
             var bocekSayisi = document.getElementById('bocekSayisi').value.trim();
+            var tuzakTipi = document.getElementById('tuzakTipi').value;
             var docId = document.getElementById('duzenlenenDocId').value;
 
-            if (adSoyad === "") {
-                alert("Lütfen Ad Soyad alanını doldurunuz.");
+            if (koy === "") {
+                alert("Lütfen Köy/Mahalle alanını doldurunuz.");
                 return;
             }
 
             if (secilenKonum) {
                 var saveData = {
-                    adSoyad: adSoyad,
-                    ad: koy, // Geriye dönük uyumluluk
-                    unvan: unvan,
                     il: il,
                     ilce: ilce,
                     koy: koy,
+                    ad: koy, // Compatibility
                     tuzakNo: tuzakNo,
                     bocekSayisi: bocekSayisi ? parseInt(bocekSayisi) : 0,
+                    tuzakTipi: tuzakTipi,
                     lat: secilenKonum.lat,
-                    lng: secilenKonum.lng
+                    lng: secilenKonum.lng,
+                    sonGuncelleyen: aktifKullanici.adSoyad,
+                    sonGuncelleyenTel: aktifKullanici.telefon,
+                    sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR')
                 };
 
                 if (docId) {
-                    // Mevcut Kaydı Güncelle
                     db.collection("tuzaklar").doc(docId).update(saveData).then(function() {
                         alert("Kayıt başarıyla güncellendi.");
                         kapatModal();
@@ -626,10 +1199,13 @@
                         alert("Güncelleme başarısız oldu: " + error.message);
                     });
                 } else {
-                    // Yeni Kayıt
+                    saveData.adSoyad = aktifKullanici.adSoyad;
+                    saveData.unvan = aktifKullanici.unvan;
+                    saveData.telefon = aktifKullanici.telefon;
                     saveData.tarih = new Date().toLocaleDateString('tr-TR');
+                    
                     db.collection("tuzaklar").add(saveData).then(function() {
-                        alert("Harika! Kayıt başarıyla eklendi.");
+                        alert("Kayıt başarıyla eklendi.");
                         kapatModal();
                     }).catch(function(error) {
                         alert("Kayıt başarısız oldu: " + error.message);
@@ -637,6 +1213,400 @@
                 }
             }
         }
+
+        // OTURUM YÖNETİMİ VE GİRİŞ İŞLEVLERİ
+
+        var personelListener = null;
+        function personelListesiniDinle() {
+            if (personelListener) personelListener();
+            personelListener = db.collection("personeller").onSnapshot(function(querySnapshot) {
+                personelListesi = [];
+                querySnapshot.forEach(function(doc) {
+                    personelListesi.push(doc.data());
+                });
+                if (document.getElementById("personelModal").classList.contains("active")) {
+                    guncellePersonelTablosu();
+                }
+            }, function(err) {
+                console.error("Personel dinleme hatası:", err);
+            });
+        }
+
+        function oturumKontrol() {
+            var cached = localStorage.getItem("aktifPersonel");
+            if (cached) {
+                var cachedUser = JSON.parse(cached);
+                db.collection("personeller").doc(cachedUser.telefon).get().then(function(doc) {
+                    if (doc.exists) {
+                        var user = doc.data();
+                        aktifKullanici = user;
+                        localStorage.setItem("aktifPersonel", JSON.stringify(user));
+                        document.getElementById("girisModal").classList.remove("active");
+                        guncelleArayuzRolBazli();
+                        tuzaklariDinle();
+                        
+                        if (aktifKullanici.rol === "Yönetici") {
+                            personelListesiniDinle();
+                        }
+                    } else {
+                        localStorage.removeItem("aktifPersonel");
+                        aktifKullanici = null;
+                        document.getElementById("girisModal").classList.add("active");
+                    }
+                }).catch(function(err) {
+                    console.warn("Firestore bağlantı hatası, yerel önbellekten oturum açılıyor:", err);
+                    aktifKullanici = cachedUser;
+                    document.getElementById("girisModal").classList.remove("active");
+                    guncelleArayuzRolBazli();
+                    tuzaklariDinle();
+                });
+            } else {
+                document.getElementById("girisModal").classList.add("active");
+            }
+        }
+
+        function girisYap() {
+            var telInput = document.getElementById("girisTelefon").value.trim();
+            if (telInput === "") {
+                alert("Lütfen telefon numaranızı giriniz.");
+                return;
+            }
+            
+            var temizTel = telInput.replace(/\s+/g, '');
+            
+            db.collection("personeller").doc(temizTel).get().then(function(doc) {
+                if (doc.exists) {
+                    var user = doc.data();
+                    localStorage.setItem("aktifPersonel", JSON.stringify(user));
+                    aktifKullanici = user;
+                    
+                    document.getElementById("girisModal").classList.remove("active");
+                    guncelleArayuzRolBazli();
+                    tuzaklariDinle();
+                    
+                    if (aktifKullanici.rol === "Yönetici") {
+                        personelListesiniDinle();
+                    }
+                    
+                    alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+                } else {
+                    db.collection("personeller").get().then(function(qs) {
+                        var foundUser = null;
+                        qs.forEach(function(d) {
+                            var p = d.data();
+                            if (p.telefon.replace(/\s+/g, '') === temizTel) {
+                                foundUser = p;
+                            }
+                        });
+                        
+                        if (foundUser) {
+                            localStorage.setItem("aktifPersonel", JSON.stringify(foundUser));
+                            aktifKullanici = foundUser;
+                            
+                            document.getElementById("girisModal").classList.remove("active");
+                            guncelleArayuzRolBazli();
+                            tuzaklariDinle();
+                            
+                            if (aktifKullanici.rol === "Yönetici") {
+                                personelListesiniDinle();
+                            }
+                            
+                            alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+                        } else {
+                            alert("Kayıtlı personel bulunamadı! Lütfen telefon numaranızı doğru yazdığınızdan emin olun.");
+                        }
+                    }).catch(function(err) {
+                        alert("Giriş sırasında hata oluştu: " + err.message);
+                    });
+                }
+            }).catch(function(err) {
+                alert("Giriş yaparken hata oluştu. Lütfen internet bağlantınızı kontrol edin.");
+            });
+        }
+
+        function oturumKapat() {
+            if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
+                localStorage.removeItem("aktifPersonel");
+                aktifKullanici = null;
+                
+                document.getElementById("userProfileCard").style.display = "none";
+                document.getElementById("sideMenu").innerHTML = "";
+                document.getElementById("girisModal").classList.add("active");
+                document.getElementById("girisTelefon").value = "";
+                
+                if (tuzakListener) {
+                    tuzakListener();
+                    tuzakListener = null;
+                }
+                if (personelListener) {
+                    personelListener();
+                    personelListener = null;
+                }
+                
+                for (var id in markerListesi) {
+                    map.removeLayer(markerListesi[id]);
+                }
+                markerListesi = {};
+                tuzakVerileri = {};
+                personelListesi = [];
+                
+                alert("Oturum kapatıldı.");
+            }
+        }
+
+        function guncelleArayuzRolBazli() {
+            if (!aktifKullanici) return;
+            
+            // Show active profile card
+            var userCard = document.getElementById("userProfileCard");
+            userCard.style.display = "flex";
+            
+            document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
+            document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (aktifKullanici.rol === "Yönetici" ? "Yönetici" : "Personel") + ")";
+            
+            // Build dynamic side menu
+            var sideMenu = document.getElementById("sideMenu");
+            sideMenu.innerHTML = "";
+            
+            var header = document.createElement("div");
+            header.className = "menu-header";
+            header.innerHTML = 'Seçenekler <span class="close-btn" onclick="toggleMenu()">&times;</span>';
+            sideMenu.appendChild(header);
+            
+            if (aktifKullanici.rol === "Yönetici") {
+                // Reports
+                var item1 = document.createElement("div");
+                item1.className = "menu-item";
+                item1.onclick = function() { setRaporFiltre('Tümü'); };
+                item1.innerHTML = '<span>📊</span> Genel Raporlar';
+                sideMenu.appendChild(item1);
+                
+                // Personnel Management
+                var item2 = document.createElement("div");
+                item2.className = "menu-item";
+                item2.onclick = function() { acPersonelModal(); };
+                item2.innerHTML = '<span>👥</span> Personel Yönetimi';
+                sideMenu.appendChild(item2);
+                
+                // Bulk trap upload
+                var item3 = document.createElement("div");
+                item3.className = "menu-item";
+                item3.onclick = function() { acTopluYuklemeModal(); };
+                item3.innerHTML = '<span>🏺</span> Toplu Tuzak Yükleme';
+                sideMenu.appendChild(item3);
+            } else {
+                // Saha personeli için sadece kendi bölge raporu
+                var item1 = document.createElement("div");
+                item1.className = "menu-item";
+                item1.onclick = function() { setRaporFiltre('Tümü'); };
+                item1.innerHTML = '<span>📊</span> Bölge Raporları';
+                sideMenu.appendChild(item1);
+            }
+        }
+
+        // PERSONEL CRUD PANEL İŞLEVLERİ
+
+        function acPersonelModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+                alert("Bu sayfaya erişim yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            guncellePersonelTablosu();
+            iptalPersonelFormu();
+            document.getElementById("personelModal").classList.add("active");
+        }
+
+        function kapatPersonelModal() {
+            document.getElementById("personelModal").classList.remove("active");
+        }
+
+        function guncellePersonelTablosu() {
+            var tbody = document.getElementById("personelTabloGovde");
+            tbody.innerHTML = "";
+            
+            var sorted = [...personelListesi].sort(function(a, b) { return a.adSoyad.localeCompare(b.adSoyad, 'tr'); });
+            sorted.forEach(function(pers) {
+                var tr = document.createElement("tr");
+                tr.innerHTML = "<td>" + pers.adSoyad + "</td>" +
+                               "<td>" + pers.unvan + "</td>" +
+                               "<td>" + pers.ilce + "</td>" +
+                               "<td>" + pers.telefon + "</td>" +
+                               "<td>" + (pers.rol === "Yönetici" ? "Yönetici" : "Personel") + "</td>" +
+                               "<td style='text-align:center; display:flex; gap:5px; justify-content:center;'>" +
+                               "<button class='popup-btn btn-edit' style='padding:4px 8px; flex:none;' onclick='personelDuzenle(\"" + pers.telefon + "\")'>Düzenle</button>" +
+                               "<button class='popup-btn btn-delete' style='padding:4px 8px; flex:none;' onclick='personelSil(\"" + pers.telefon + "\")'>Sil</button>" +
+                               "</td>";
+                tbody.appendChild(tr);
+            });
+        }
+
+        function yeniPersonelFormuAc() {
+            document.getElementById("personelFormBaslik").innerText = "Yeni Personel Ekle";
+            document.getElementById("duzenlenenPersonelTel").value = "";
+            document.getElementById("pAdSoyad").value = "";
+            document.getElementById("pUnvan").value = "";
+            document.getElementById("pTelefon").value = "";
+            document.getElementById("pRol").value = "Saha Personeli";
+            
+            var select = document.getElementById("pIlce");
+            select.innerHTML = "";
+            var ilceler = Object.keys(varsayilanRize.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            ilceler.forEach(function(ilce) {
+                select.innerHTML += '<option value="' + ilce + '">' + ilce + '</option>';
+            });
+            
+            document.getElementById("pTelefon").disabled = false;
+            document.getElementById("personelEkleDuzenleFormu").style.display = "block";
+        }
+
+        function iptalPersonelFormu() {
+            document.getElementById("personelEkleDuzenleFormu").style.display = "none";
+            document.getElementById("duzenlenenPersonelTel").value = "";
+            document.getElementById("pAdSoyad").value = "";
+            document.getElementById("pUnvan").value = "";
+            document.getElementById("pTelefon").value = "";
+        }
+
+        function personelDuzenle(tel) {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            var pers = personelListesi.find(function(p) { return p.telefon === tel; });
+            if (!pers) return;
+            
+            document.getElementById("personelFormBaslik").innerText = "Personel Düzenle";
+            document.getElementById("duzenlenenPersonelTel").value = tel;
+            document.getElementById("pAdSoyad").value = pers.adSoyad;
+            document.getElementById("pUnvan").value = pers.unvan;
+            document.getElementById("pTelefon").value = pers.telefon;
+            document.getElementById("pTelefon").disabled = true;
+            document.getElementById("pRol").value = pers.rol || "Saha Personeli";
+            
+            var select = document.getElementById("pIlce");
+            select.innerHTML = "";
+            var ilceler = Object.keys(varsayilanRize.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); });
+            ilceler.forEach(function(ilce) {
+                var selected = (ilce === pers.ilce) ? "selected" : "";
+                select.innerHTML += '<option value="' + ilce + '" ' + selected + '>' + ilce + '</option>';
+            });
+            
+            document.getElementById("personelEkleDuzenleFormu").style.display = "block";
+        }
+
+        function kaydetPersonel() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            var adSoyad = document.getElementById("pAdSoyad").value.trim();
+            var unvan = document.getElementById("pUnvan").value.trim();
+            var telefon = document.getElementById("pTelefon").value.trim();
+            var ilce = document.getElementById("pIlce").value;
+            var rol = document.getElementById("pRol").value;
+            var duzenlenenTel = document.getElementById("duzenlenenPersonelTel").value;
+            
+            if (adSoyad === "" || telefon === "") {
+                alert("Lütfen ad soyad ve telefon numarasını doldurunuz.");
+                return;
+            }
+            
+            var targetTel = duzenlenenTel || telefon;
+            
+            var data = {
+                adSoyad: adSoyad,
+                unvan: unvan || "Saha Personeli",
+                telefon: targetTel,
+                ilce: ilce,
+                rol: rol
+            };
+            
+            db.collection("personeller").doc(targetTel).set(data).then(function() {
+                alert("Personel bilgileri kaydedildi.");
+                iptalPersonelFormu();
+                guncellePersonelTablosu();
+            }).catch(function(err) {
+                alert("Kaydetme hatası: " + err.message);
+            });
+        }
+
+        function personelSil(tel) {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") return;
+            if (aktifKullanici && aktifKullanici.telefon === tel) {
+                alert("Aktif kendi oturumunuzu silemezsiniz!");
+                return;
+            }
+            
+            if (confirm("Bu personeli silmek istediğinize emin misiniz?")) {
+                db.collection("personeller").doc(tel).delete().then(function() {
+                    alert("Personel kaydı silindi.");
+                    guncellePersonelTablosu();
+                }).catch(function(err) {
+                    alert("Silme hatası: " + err.message);
+                });
+            }
+        }
+
+        // TOPLU VERİ YÜKLEME MODÜLÜ İŞLEVLERİ
+
+        function acTopluYuklemeModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+                alert("Bu işlem için yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            document.getElementById("topluVeriKutusu").value = "";
+            document.getElementById("topluDurumTxt").innerText = "";
+            document.getElementById("topluYuklemeModal").classList.add("active");
+        }
+
+        function kapatTopluYuklemeModal() {
+            document.getElementById("topluYuklemeModal").classList.remove("active");
+        }
+
+        async function aktarTopluVeriler() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+                alert("Bu işlem için yetkiniz yoktur!");
+                return;
+            }
+            const metin = document.getElementById('topluVeriKutusu').value;
+            const satirlar = metin.split('\n');
+            let basarili = 0;
+            
+            document.getElementById('topluDurumTxt').innerText = "Aktarım başlatıldı, lütfen bekleyin...";
+            
+            for (let i = 0; i < satirlar.length; i++) {
+                let satir = satirlar[i].trim();
+                if (satir === "") continue;
+
+                let parcalar = satir.split(',');
+                if (parcalar.length < 3) continue;
+
+                let adStr = parcalar[1];
+                let lat = parseFloat(parcalar[2]);
+                let lng = parseFloat(parcalar[3]);
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    try {
+                        await db.collection("tuzaklar").add({
+                            adSoyad: aktifKullanici.adSoyad,
+                            unvan: aktifKullanici.unvan,
+                            telefon: aktifKullanici.telefon,
+                            il: "Rize",
+                            ilce: aktifKullanici.ilce,
+                            koy: adStr,
+                            ad: adStr,
+                            tuzakNo: "Toplu",
+                            bocekSayisi: 0,
+                            tuzakTipi: "Huni",
+                            lat: lat,
+                            lng: lng,
+                            tarih: new Date().toLocaleDateString('tr-TR')
+                        });
+                        basarili++;
+                    } catch (e) {
+                        console.error("Toplu yükleme satır hatası:", e);
+                    }
+                }
+            }
+            document.getElementById('topluDurumTxt').innerText = basarili + " adet tuzak veritabanına başarıyla aktarıldı!";
+        }
+
     </script>
 </body>
 </html>
