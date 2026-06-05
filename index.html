@@ -735,6 +735,9 @@
                 <button id="csvIndirBtn" class="btn-csv" style="display:none;" onclick="csvIndir()">
                     📥 CSV İndir
                 </button>
+                <button id="tarihliExcelBtn" class="btn-csv" style="display:none; background: linear-gradient(135deg,#0369a1,#0284c7); color:white; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:700; font-family:var(--font); cursor:pointer; display:none; align-items:center; gap:6px;" onclick="tarihBazliExcelIndir()">
+                    📊 Tarihli Excel
+                </button>
                 <button class="btn btn-cancel" onclick="kapatRapor()">Kapat</button>
             </div>
         </div>
@@ -1233,12 +1236,15 @@
             }
 
             // Admin-only UI göster
-            var tarihBox = document.getElementById('tarihFiltreKutusu');
-            var trendTab = document.getElementById('tabTrend');
-            var csvBtn   = document.getElementById('csvIndirBtn');
+            var tarihBox    = document.getElementById('tarihFiltreKutusu');
+            var trendTab    = document.getElementById('tabTrend');
+            var csvBtn      = document.getElementById('csvIndirBtn');
+            var excelBtn    = document.getElementById('tarihliExcelBtn');
+            var isSuperAdmin = aktifKullanici && aktifKullanici.rol === 'Süper Admin';
             if (tarihBox) tarihBox.style.display = isYonetici ? 'block' : 'none';
             if (trendTab) trendTab.style.display  = isYonetici ? '' : 'none';
             if (csvBtn)   csvBtn.style.display    = isYonetici ? 'flex' : 'none';
+            if (excelBtn) excelBtn.style.display  = isSuperAdmin ? 'flex' : 'none';
 
             // Trend sekme aktifse burada dur
             if (seciliRaporFiltre === "Trend") {
@@ -1514,6 +1520,120 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // ── Tarih Bazlı Detaylı Excel / CSV İndir (Süper Admin) ──
+        function tarihBazliExcelIndir() {
+            // Tarih bazında veri grupla: { 'GG.AA.YYYY': { yapiskan: {tuzak,bocek}, huni: {tuzak,bocek} } }
+            var gunluk = {};
+
+            for (var id in tuzakVerileri) {
+                var data = tuzakVerileri[id];
+
+                // Aktif konum filtrelerini uygula
+                if (aktifFiltreler.il   !== 'Tümü' && data.il   !== aktifFiltreler.il)   continue;
+                if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
+                if (aktifFiltreler.koy  !== 'Tümü' && data.koy  !== aktifFiltreler.koy)  continue;
+
+                var tarih = data.tarih || data.sonGuncellemeTarihi || 'Tarihsiz';
+                var tip   = data.tuzakTipi || 'Huni';
+                var bocek = parseInt(data.bocekSayisi) || 0;
+                var il    = data.il   || '-';
+                var ilce  = data.ilce || '-';
+                var koy   = data.koy  || data.ad || '-';
+                var tuzakNo = data.tuzakNo || '-';
+
+                // Bireysel satır için anahtar: tarih + docId
+                var key = tarih;
+                if (!gunluk[key]) gunluk[key] = [];
+                gunluk[key].push({
+                    il: il, ilce: ilce, koy: koy,
+                    tuzakNo: tuzakNo, tip: tip, bocek: bocek
+                });
+            }
+
+            // Tarihleri sırala
+            var gunler = Object.keys(gunluk).sort(function(a, b) {
+                var da = parseTurkishDate(a), db_ = parseTurkishDate(b);
+                if (da && db_) return da - db_;
+                return a.localeCompare(b, 'tr');
+            });
+
+            if (gunler.length === 0) {
+                alert('Dışa aktarılacak veri bulunamadı.');
+                return;
+            }
+
+            // CSV Başlık Satırı
+            var satirlar = [[
+                '\uFEFFTarih', 'İl', 'İlçe', 'Köy / Mahalle',
+                'Tuzak No', 'Tuzak Tipi', 'Böcek Sayısı'
+            ]];
+
+            // Günlük özet satırları (her tuzak ayrı satır)
+            var toplamYapiskanTuzak = 0, toplamYapiskanBocek = 0;
+            var toplamHuniTuzak    = 0, toplamHuniBocek    = 0;
+
+            gunler.forEach(function(gun) {
+                var kayitlar = gunluk[gun];
+                kayitlar.forEach(function(k) {
+                    satirlar.push([gun, k.il, k.ilce, k.koy, k.tuzakNo, k.tip, k.bocek]);
+                    if (k.tip === 'Yapışkan') {
+                        toplamYapiskanTuzak++;
+                        toplamYapiskanBocek += k.bocek;
+                    } else {
+                        toplamHuniTuzak++;
+                        toplamHuniBocek += k.bocek;
+                    }
+                });
+
+                // Gün sonu ara toplam
+                var gunYapiskan = kayitlar.filter(function(k){ return k.tip === 'Yapışkan'; });
+                var gunHuni     = kayitlar.filter(function(k){ return k.tip !== 'Yapışkan'; });
+                var gunYBocek   = gunYapiskan.reduce(function(s,k){ return s+k.bocek; }, 0);
+                var gunHBocek   = gunHuni.reduce(function(s,k){ return s+k.bocek; }, 0);
+                satirlar.push([
+                    '↳ ' + gun + ' TOPLAMI',
+                    '', '', '',
+                    'Yapışkan: ' + gunYapiskan.length + ' tuzak / ' + gunYBocek + ' böcek',
+                    'Huni: ' + gunHuni.length + ' tuzak / ' + gunHBocek + ' böcek',
+                    kayitlar.length + ' tuzak toplam'
+                ]);
+                satirlar.push(['', '', '', '', '', '', '']); // boş ayırıcı satır
+            });
+
+            // Genel TOPLAM
+            satirlar.push([
+                'GENEL TOPLAM',
+                '', '', '',
+                'Yapışkan: ' + toplamYapiskanTuzak + ' tuzak / ' + toplamYapiskanBocek + ' böcek',
+                'Huni: ' + toplamHuniTuzak + ' tuzak / ' + toplamHuniBocek + ' böcek',
+                (toplamYapiskanTuzak + toplamHuniTuzak) + ' tuzak toplam'
+            ]);
+
+            // CSV oluştur
+            var csvIcerik = satirlar.map(function(satir) {
+                return satir.map(function(hucre) {
+                    return '"' + String(hucre).replace(/"/g, '""') + '"';
+                }).join(',');
+            }).join('\r\n');
+
+            // İndir
+            var blob = new Blob([csvIcerik], { type: 'text/csv;charset=utf-8;' });
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            var bugun = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+            var bolge = aktifFiltreler.ilce !== 'Tümü' ? aktifFiltreler.ilce :
+                        aktifFiltreler.il   !== 'Tümü' ? aktifFiltreler.il   : 'Tum-Bölge';
+            a.href     = url;
+            a.download = 'kokarca-tarih-bazli-' + bolge + '-' + bugun + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Log kaydı
+            logEkle('Tarih Bazlı Excel İndirildi', 'Bölge: ' + bolge + ', Toplam: ' + (toplamYapiskanTuzak + toplamHuniTuzak) + ' tuzak');
         }
 
         // Delete Trap (Checks District Access)
@@ -1977,6 +2097,14 @@
                     itemAktif.onclick = function() { acAktifKullanicilarModal(); };
                     itemAktif.innerHTML = '<span>🟢</span> Sistemdekiler';
                     sideMenu.appendChild(itemAktif);
+
+                    // Tarih Bazlı Excel İndir
+                    var itemExcel = document.createElement("div");
+                    itemExcel.className = "menu-item";
+                    itemExcel.style = "border-left: 3px solid #0369a1; background: rgba(3,105,161,0.06);";
+                    itemExcel.onclick = function() { toggleMenu(); tarihBazliExcelIndir(); };
+                    itemExcel.innerHTML = '<span>📊</span> Tarih Bazlı Excel İndir';
+                    sideMenu.appendChild(itemExcel);
                 }
 
                 setTimeout(initMenuFilters, 50);
