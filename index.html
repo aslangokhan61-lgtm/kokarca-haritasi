@@ -213,8 +213,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Haritayı Başlat (Güneysu/Rize)
-        var map = L.map('harita').setView([40.9400, 40.6300], 13);
+        // Haritayı Başlat (Güneysu/Rize) ve Zoom butonlarını sağ alta al
+        var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
@@ -265,18 +267,20 @@
                     popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
                     popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
                     popupIcerik += "</div>";
-                    
-                    if (change.type === "added") {
-                        var marker = L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
-                        markerListesi[docId] = marker;
-                    } else if (change.type === "modified") {
-                        var marker = markerListesi[docId];
-                        if (marker) {
-                            marker.setLatLng([data.lat, data.lng]);
-                            marker.setPopupContent(popupIcerik);
+                    // Sadece geçerli koordinatı olanları haritaya ekle (Eksik veri çökmesini engeller)
+                    if (data.lat !== undefined && data.lng !== undefined) {
+                        if (change.type === "added") {
+                            var marker = L.marker([data.lat, data.lng]).addTo(map).bindPopup(popupIcerik);
+                            markerListesi[docId] = marker;
+                        } else if (change.type === "modified") {
+                            var marker = markerListesi[docId];
+                            if (marker) {
+                                marker.setLatLng([data.lat, data.lng]);
+                                marker.setPopupContent(popupIcerik);
+                            }
                         }
                     }
-                }
+                } // EKSİK OLAN PARANTEZ EKLENDİ
                 
                 if (change.type === "removed") {
                     var marker = markerListesi[docId];
@@ -287,6 +291,8 @@
                     }
                 }
             });
+        }, function(error) {
+            alert("Firebase Hatası (Noktalar yüklenemedi): " + error.message);
         });
 
         // Seçilen konumu geçici olarak tutacağımız değişken
@@ -324,7 +330,7 @@
             for (var k in koyIstatistik) {
                 raporArray.push({ koy: k, tuzak: koyIstatistik[k].tuzak, bocek: koyIstatistik[k].bocek });
             }
-            raporArray.sort((a,b) => b.bocek - a.bocek);
+            raporArray.sort(function(a, b) { return b.bocek - a.bocek; });
             
             document.getElementById('toplamTuzakTxt').innerText = "Toplam Tuzak: " + toplamTuzak;
             document.getElementById('toplamBocekTxt').innerText = "Toplam Böcek: " + toplamBocek;
