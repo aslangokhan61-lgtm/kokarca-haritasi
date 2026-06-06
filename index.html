@@ -670,6 +670,63 @@
     </div>
 
 
+    <!-- Tuzak Kayıtları Modal -->
+    <div id="tuzakKayitlariModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow-y: auto; border-top: 5px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);">📅 Tuzak Sayım Kayıtları</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatTuzakKayitlariModal()">&times;</span>
+            </div>
+            
+            <div id="tuzakKayitlariDetay" style="background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1.5px solid #f1f5f9; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: var(--text-dark);">
+                <!-- Filled dynamically -->
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">➕ Yeni Sayım Ekle</h4>
+            <div style="background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1.5px solid #e2e8f0; margin-bottom: 20px;">
+                <input type="hidden" id="kayitDetayDocId" value="">
+                <input type="hidden" id="duzenlenenKayitTarih" value="">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Sayım Tarihi</label>
+                        <input type="date" id="yeniKayitTarihi" class="form-control" style="padding: 8px 12px;" onchange="yeniKayitTarihiDegisti()">
+                        <span id="yeniKayitTarihiGunu" style="font-size: 11px; font-weight: 700; margin-top: 2px; min-height: 16px;"></span>
+                    </div>
+                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Yakalanan Böcek Sayısı</label>
+                        <input type="number" id="yeniKayitBocek" class="form-control" style="padding: 8px 12px;" placeholder="Örn: 5" min="0">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 12px; gap: 8px;">
+                    <button id="btnKayitIptal" class="btn btn-cancel" style="padding: 8px 16px; font-size: 13px; display: none;" onclick="iptalKayitFormu()">İptal</button>
+                    <button id="btnKayitEkle" class="btn btn-save" style="padding: 8px 16px; font-size: 13px;" onclick="kaydetTuzakKayiti()">Ekle</button>
+                </div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 800; color: var(--primary);">📋 Geçmiş Kayıtlar</h4>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); background: white;">
+                <table class="report-table" style="margin-top: 0;">
+                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
+                        <tr>
+                            <th>Tarih</th>
+                            <th style="text-align: center; width: 80px;">Böcek</th>
+                            <th>Kaydeden</th>
+                            <th style="width: 120px; text-align: center;">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tuzakKayitlariTabloGovde">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
+                <button class="btn btn-cancel" onclick="kapatTuzakKayitlariModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="tuzakModal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
@@ -1220,6 +1277,7 @@
                         }
 
                         popupIcerik += "<div class='popup-actions'>";
+                        popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
                         popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
                         popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
                         popupIcerik += "</div>";
@@ -1373,12 +1431,34 @@
                 if (aktifFiltreler.ilce !== "Tümü" && data.ilce !== aktifFiltreler.ilce) continue;
                 if (aktifFiltreler.koy  !== "Tümü" && data.koy  !== aktifFiltreler.koy)  continue;
 
-                // Tarih filtresi
-                if (baslangic || bitis) {
-                    var kayitTarih = parseTurkishDate(data.tarih);
-                    if (!kayitTarih) continue;
-                    if (baslangic && kayitTarih < baslangic) continue;
-                    if (bitis     && kayitTarih > bitis)     continue;
+                // Tarih filtresine ve tarihli kayıtlara göre böcek sayısı hesaplama
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0
+                    }];
+                }
+
+                var filtreliKayitlar = kayitlar.filter(function(k) {
+                    if (baslangic || bitis) {
+                        var kayitTarih = parseTurkishDate(k.tarih);
+                        if (!kayitTarih) return false;
+                        if (baslangic && kayitTarih < baslangic) return false;
+                        if (bitis     && kayitTarih > bitis)     return false;
+                    }
+                    return true;
+                });
+
+                if (filtreliKayitlar.length === 0) {
+                    if (baslangic || bitis) {
+                        continue;
+                    }
+                }
+
+                var bocekSaha = filtreliKayitlar.reduce(function(sum, k) { return sum + (parseInt(k.bocekSayisi) || 0); }, 0);
+                if (!baslangic && !bitis && filtreliKayitlar.length === 0) {
+                    bocekSaha = parseInt(data.bocekSayisi) || 0;
                 }
 
                 var tipVal = data.tuzakTipi || "Huni";
@@ -1389,12 +1469,11 @@
                 else if (analizSeviyesi === "İlçe") grupAnahtari = data.ilce || "Bilinmiyor";
                 else if (analizSeviyesi === "İl")   grupAnahtari = data.il   || "Bilinmiyor";
 
-                var bocek = parseInt(data.bocekSayisi) || 0;
-                toplamBocek += bocek;
+                toplamBocek += bocekSaha;
                 toplamTuzak++;
                 if (!istatistik[grupAnahtari]) istatistik[grupAnahtari] = { tuzak: 0, bocek: 0 };
                 istatistik[grupAnahtari].tuzak++;
-                istatistik[grupAnahtari].bocek += bocek;
+                istatistik[grupAnahtari].bocek += bocekSaha;
             }
 
             var raporArray = [];
@@ -1468,18 +1547,29 @@
             if (!canvas) return;
             if (currentTrendChart) currentTrendChart.destroy();
 
-            // Build date → {tuzak, bocek} map
+            // Build date → {tuzak, bocek} map using history readings
             var gunluk = {};
             for (var id in tuzakVerileri) {
                 var data = tuzakVerileri[id];
                 if (aktifFiltreler.il   !== "Tümü" && data.il   !== aktifFiltreler.il)   continue;
                 if (aktifFiltreler.ilce !== "Tümü" && data.ilce !== aktifFiltreler.ilce) continue;
                 if (aktifFiltreler.koy  !== "Tümü" && data.koy  !== aktifFiltreler.koy)  continue;
-                var tarih = data.tarih || data.sonGuncellemeTarihi;
-                if (!tarih) continue;
-                if (!gunluk[tarih]) gunluk[tarih] = { tuzak: 0, bocek: 0 };
-                gunluk[tarih].tuzak++;
-                gunluk[tarih].bocek += parseInt(data.bocekSayisi) || 0;
+                
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0
+                    }];
+                }
+
+                kayitlar.forEach(function(k) {
+                    var tarih = k.tarih;
+                    if (!tarih) return;
+                    if (!gunluk[tarih]) gunluk[tarih] = { tuzak: 0, bocek: 0 };
+                    gunluk[tarih].tuzak++;
+                    gunluk[tarih].bocek += parseInt(k.bocekSayisi) || 0;
+                });
             }
 
             // Sort by date
@@ -1618,20 +1708,28 @@
                 if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
                 if (aktifFiltreler.koy  !== 'Tümü' && data.koy  !== aktifFiltreler.koy)  continue;
 
-                var tarih = data.tarih || data.sonGuncellemeTarihi || 'Tarihsiz';
-                var tip   = data.tuzakTipi || 'Huni';
-                var bocek = parseInt(data.bocekSayisi) || 0;
                 var il    = data.il   || '-';
                 var ilce  = data.ilce || '-';
                 var koy   = data.koy  || data.ad || '-';
                 var tuzakNo = data.tuzakNo || '-';
+                var tip   = data.tuzakTipi || 'Huni';
 
-                // Bireysel satır için anahtar: tarih + docId
-                var key = tarih;
-                if (!gunluk[key]) gunluk[key] = [];
-                gunluk[key].push({
-                    il: il, ilce: ilce, koy: koy,
-                    tuzakNo: tuzakNo, tip: tip, bocek: bocek
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || 'Tarihsiz',
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0
+                    }];
+                }
+
+                kayitlar.forEach(function(k) {
+                    var tarih = k.tarih || 'Tarihsiz';
+                    var bocek = parseInt(k.bocekSayisi) || 0;
+                    if (!gunluk[tarih]) gunluk[tarih] = [];
+                    gunluk[tarih].push({
+                        il: il, ilce: ilce, koy: koy,
+                        tuzakNo: tuzakNo, tip: tip, bocek: bocek
+                    });
                 });
             }
 
@@ -1854,8 +1952,323 @@
             document.getElementById('bocekSayisi').value = "";
             document.getElementById('tuzakTipi').value = "Huni";
             document.getElementById('duzenlenenDocId').value = "";
-            
             secilenKonum = null;
+        }
+
+        // ─── TUZAK KAYITLARI / TARİH BAZLI GEÇMİŞ YÖNETİMİ ───
+
+        function getTurkishDayName(date) {
+            var days = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+            return days[date.getDay()];
+        }
+
+        function yeniKayitTarihiDegisti() {
+            var dateInput = document.getElementById("yeniKayitTarihi").value;
+            var daySpan = document.getElementById("yeniKayitTarihiGunu");
+            if (!dateInput) {
+                daySpan.innerText = "";
+                return;
+            }
+            var parts = dateInput.split('-');
+            var date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            var dayName = getTurkishDayName(date);
+            var dayIndex = date.getDay(); // 2: Salı, 5: Cuma
+
+            if (dayIndex === 2 || dayIndex === 5) {
+                daySpan.innerHTML = "✨ " + dayName + " (Kayıt Günü)";
+                daySpan.style.color = "var(--primary)";
+            } else {
+                daySpan.innerHTML = "⚠️ " + dayName + " (Salı veya Cuma değil)";
+                daySpan.style.color = "var(--danger)";
+            }
+        }
+
+        function turkishDateToInput(turkishDateStr) {
+            if (!turkishDateStr) return "";
+            var p = turkishDateStr.split('.');
+            if (p.length < 3) return "";
+            var day = p[0].padStart(2, '0');
+            var month = p[1].padStart(2, '0');
+            var year = p[2];
+            return year + '-' + month + '-' + day;
+        }
+
+        function dateInputToTurkish(dateInputVal) {
+            if (!dateInputVal) return "";
+            var p = dateInputVal.split('-');
+            if (p.length < 3) return "";
+            return parseInt(p[2]) + '.' + parseInt(p[1]) + '.' + p[0];
+        }
+
+        function kapatTuzakKayitlariModal() {
+            document.getElementById("tuzakKayitlariModal").classList.remove("active");
+            iptalKayitFormu();
+        }
+
+        function iptalKayitFormu() {
+            document.getElementById("yeniKayitTarihi").value = "";
+            document.getElementById("yeniKayitTarihi").disabled = false;
+            document.getElementById("yeniKayitBocek").value = "";
+            document.getElementById("yeniKayitTarihiGunu").innerHTML = "";
+            document.getElementById("duzenlenenKayitTarih").value = "";
+            document.getElementById("btnKayitIptal").style.display = "none";
+            document.getElementById("btnKayitEkle").innerText = "Ekle";
+        }
+
+        function tuzakKayitlariAc(docId) {
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var data = doc.data();
+                
+                var detayDiv = document.getElementById("tuzakKayitlariDetay");
+                var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
+                var koyStr = data.koy || data.ad || "-";
+                detayDiv.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
+                        <div><b>Köy:</b> ${koyStr}</div>
+                        <div><b>Tuzak Tipi:</b> ${tipStr}</div>
+                        <div><b>Tuzak No:</b> ${data.tuzakNo || "-"}</div>
+                    </div>
+                `;
+
+                document.getElementById("kayitDetayDocId").value = docId;
+                iptalKayitFormu();
+
+                var bugun = new Date();
+                var fmt = bugun.getFullYear() + '-' + String(bugun.getMonth()+1).padStart(2,'0') + '-' + String(bugun.getDate()).padStart(2,'0');
+                document.getElementById("yeniKayitTarihi").value = fmt;
+                yeniKayitTarihiDegisti();
+
+                guncelleTuzakKayitlariTablosu(data);
+                document.getElementById("tuzakKayitlariModal").classList.add("active");
+                
+                if (markerListesi[docId]) {
+                    markerListesi[docId].closePopup();
+                }
+            }).catch(function(err) {
+                alert("Kayıtlar yüklenirken hata oluştu: " + err.message);
+            });
+        }
+
+        function guncelleTuzakKayitlariTablosu(data) {
+            var tbody = document.getElementById("tuzakKayitlariTabloGovde");
+            tbody.innerHTML = "";
+
+            var kayitlar = data.kayitlar || [];
+            if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                kayitlar = [{
+                    tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                    bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                    kaydeden: data.adSoyad || 'Sistem',
+                    kaydedenUnvan: data.unvan || '',
+                    kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
+                }];
+            }
+
+            var siraliKayitlar = [...kayitlar].sort(function(a, b) {
+                var da = parseTurkishDate(a.tarih), db = parseTurkishDate(b.tarih);
+                return (da && db) ? db - da : 0;
+            });
+
+            if (siraliKayitlar.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:15px; color:var(--text-muted);'>Kayıtlı sayım bulunamadı.</td></tr>";
+                return;
+            }
+
+            siraliKayitlar.forEach(function(k) {
+                var tr = document.createElement("tr");
+                var kaydeden = k.kaydeden || "-";
+                if (k.kaydedenUnvan) kaydeden += " (" + k.kaydedenUnvan + ")";
+
+                var isAuthorized = true;
+                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    isAuthorized = false;
+                }
+
+                var islemButonlari = "";
+                if (isAuthorized) {
+                    islemButonlari = `
+                        <button class="popup-btn btn-edit" style="padding: 3px 6px; font-size: 11px; flex: none;" onclick="tuzakKayitDuzenle('${k.tarih}', ${k.bocekSayisi})">Düzelt</button>
+                        <button class="popup-btn btn-delete" style="padding: 3px 6px; font-size: 11px; flex: none;" onclick="tuzakKayitSil('${k.tarih}')">Sil</button>
+                    `;
+                } else {
+                    islemButonlari = `<span style="font-size:11px; color:var(--text-muted);">Yetki Yok</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td>${k.tarih}</td>
+                    <td style="text-align:center; font-weight:bold; color:var(--danger);">${k.bocekSayisi}</td>
+                    <td style="font-size:12px;">${kaydeden}</td>
+                    <td style="text-align:center; display:flex; gap:4px; justify-content:center;">${islemButonlari}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function tuzakKayitDuzenle(tarihStr, bocekSayisi) {
+            document.getElementById("duzenlenenKayitTarih").value = tarihStr;
+            document.getElementById("yeniKayitTarihi").value = turkishDateToInput(tarihStr);
+            document.getElementById("yeniKayitTarihi").disabled = true;
+            document.getElementById("yeniKayitBocek").value = bocekSayisi;
+            yeniKayitTarihiDegisti();
+            document.getElementById("btnKayitIptal").style.display = "inline-flex";
+            document.getElementById("btnKayitEkle").innerText = "Güncelle";
+        }
+
+        function kaydetTuzakKayiti() {
+            var docId = document.getElementById("kayitDetayDocId").value;
+            var inputTarih = document.getElementById("yeniKayitTarihi").value;
+            var bocekSayisiStr = document.getElementById("yeniKayitBocek").value.trim();
+            var duzenlenenTarih = document.getElementById("duzenlenenKayitTarih").value;
+
+            if (!inputTarih) {
+                alert("Lütfen sayım tarihini seçiniz.");
+                return;
+            }
+            if (bocekSayisiStr === "") {
+                alert("Lütfen böcek sayısını giriniz.");
+                return;
+            }
+
+            var secilenTarihStr = dateInputToTurkish(inputTarih);
+            var bocekSayisi = parseInt(bocekSayisiStr) || 0;
+
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var data = doc.data();
+
+                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    alert("Bu tuzağa kayıt ekleme yetkiniz yoktur!");
+                    return;
+                }
+
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                        kaydeden: data.adSoyad || 'Sistem',
+                        kaydedenTel: data.telefon || '',
+                        kaydedenUnvan: data.unvan || '',
+                        kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
+                    }];
+                }
+
+                if (duzenlenenTarih) {
+                    var index = kayitlar.findIndex(function(k) { return k.tarih === duzenlenenTarih; });
+                    if (index > -1) {
+                        kayitlar[index].bocekSayisi = bocekSayisi;
+                        kayitlar[index].sonGuncelleyen = aktifKullanici.adSoyad;
+                        kayitlar[index].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
+                    }
+                } else {
+                    var ayniTarihliIndex = kayitlar.findIndex(function(k) { return k.tarih === secilenTarihStr; });
+                    if (ayniTarihliIndex > -1) {
+                        if (confirm(secilenTarihStr + " tarihine ait bir kayıt zaten mevcut. Bu kaydı güncellemek istiyor musunuz?")) {
+                            kayitlar[ayniTarihliIndex].bocekSayisi = bocekSayisi;
+                            kayitlar[ayniTarihliIndex].sonGuncelleyen = aktifKullanici.adSoyad;
+                            kayitlar[ayniTarihliIndex].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
+                        } else {
+                            return;
+                        }
+                    } else {
+                        kayitlar.push({
+                            tarih: secilenTarihStr,
+                            bocekSayisi: bocekSayisi,
+                            kaydeden: aktifKullanici.adSoyad,
+                            kaydedenTel: aktifKullanici.telefon,
+                            kaydedenUnvan: aktifKullanici.unvan,
+                            kayitTarihiStr: new Date().toLocaleString('tr-TR')
+                        });
+                    }
+                }
+
+                kayitlar.sort(function(a, b) {
+                    var da = parseTurkishDate(a.tarih), db = parseTurkishDate(b.tarih);
+                    return (da && db) ? da - db : 0;
+                });
+
+                var enSonKayit = kayitlar[kayitlar.length - 1];
+
+                var guncelleData = {
+                    kayitlar: kayitlar,
+                    bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
+                    sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
+                    sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
+                    sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
+                    sonGuncelleyenUnvan: enSonKayit ? enSonKayit.kaydedenUnvan || aktifKullanici.unvan : aktifKullanici.unvan
+                };
+
+                db.collection("tuzaklar").doc(docId).update(guncelleData).then(function() {
+                    alert("Sayım kaydı başarıyla kaydedildi.");
+                    logEkle("Tuzak Sayımı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", No: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Böcek: " + bocekSayisi);
+                    
+                    tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
+                    guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
+                    iptalKayitFormu();
+                    kullaniciAktifliginiGuncelle();
+                }).catch(function(e) {
+                    alert("Kayıt güncellenirken hata oluştu: " + e.message);
+                });
+            });
+        }
+
+        function tuzakKayitSil(tarihStr) {
+            var docId = document.getElementById("kayitDetayDocId").value;
+            if (!confirm(tarihStr + " tarihli sayım kaydını silmek istediğinize emin misiniz?")) return;
+
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var data = doc.data();
+
+                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    alert("Bu kaydı silme yetkiniz yoktur!");
+                    return;
+                }
+
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                        kaydeden: data.adSoyad || 'Sistem',
+                        kaydedenTel: data.telefon || '',
+                        kaydedenUnvan: data.unvan || '',
+                        kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
+                    }];
+                }
+
+                kayitlar = kayitlar.filter(function(k) { return k.tarih !== tarihStr; });
+
+                kayitlar.sort(function(a, b) {
+                    var da = parseTurkishDate(a.tarih), db = parseTurkishDate(b.tarih);
+                    return (da && db) ? da - db : 0;
+                });
+
+                var enSonKayit = kayitlar[kayitlar.length - 1];
+
+                var guncelleData = {
+                    kayitlar: kayitlar,
+                    bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
+                    sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
+                    sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
+                    sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
+                    sonGuncelleyenUnvan: enSonKayit ? enSonKayit.kaydedenUnvan || aktifKullanici.unvan : aktifKullanici.unvan
+                };
+
+                db.collection("tuzaklar").doc(docId).update(guncelleData).then(function() {
+                    alert("Sayım kaydı silindi.");
+                    logEkle("Tuzak Sayımı Silindi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", No: " + data.tuzakNo + ", Tarih: " + tarihStr);
+                    
+                    tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
+                    guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
+                    iptalKayitFormu();
+                    kullaniciAktifliginiGuncelle();
+                }).catch(function(e) {
+                    alert("Kayıt güncellenirken hata oluştu: " + e.message);
+                });
+            });
         }
 
         // Save/Update database records
@@ -1897,24 +2310,54 @@
                 }
 
                 if (docId) {
-                    db.collection("tuzaklar").doc(docId).update(saveData).then(function() {
-                        alert("Kayıt başarıyla güncellendi.");
-                        logEkle("Tuzak Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
-                        kullaniciAktifliginiGuncelle();
-                        // Update local cache before closing so kapatModal won't revert it
-                        if (tuzakVerileri[docId]) {
-                            tuzakVerileri[docId].lat = saveData.lat;
-                            tuzakVerileri[docId].lng = saveData.lng;
+                    db.collection("tuzaklar").doc(docId).get().then(function(docSnap) {
+                        var existingData = docSnap.exists ? docSnap.data() : {};
+                        var kayitlar = existingData.kayitlar || [];
+                        var bocekCount = saveData.bocekSayisi;
+
+                        if (kayitlar.length > 0) {
+                            kayitlar[kayitlar.length - 1].bocekSayisi = bocekCount;
+                        } else {
+                            kayitlar = [{
+                                tarih: existingData.tarih || existingData.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                                bocekSayisi: bocekCount,
+                                kaydeden: existingData.adSoyad || aktifKullanici.adSoyad,
+                                kaydedenTel: existingData.telefon || aktifKullanici.telefon,
+                                kaydedenUnvan: existingData.unvan || aktifKullanici.unvan,
+                                kayitTarihiStr: existingData.tarih || new Date().toLocaleString('tr-TR')
+                            }];
                         }
-                        kapatModal();
+                        saveData.kayitlar = kayitlar;
+
+                        db.collection("tuzaklar").doc(docId).update(saveData).then(function() {
+                            alert("Kayıt başarıyla güncellendi.");
+                            logEkle("Tuzak Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
+                            kullaniciAktifliginiGuncelle();
+                            if (tuzakVerileri[docId]) {
+                                Object.assign(tuzakVerileri[docId], saveData);
+                            }
+                            kapatModal();
+                        }).catch(function(error) {
+                            alert("Güncelleme başarısız oldu: " + error.message);
+                        });
                     }).catch(function(error) {
-                        alert("Güncelleme başarısız oldu: " + error.message);
+                        alert("Veri okuma hatası: " + error.message);
                     });
                 } else {
                     saveData.adSoyad = aktifKullanici.adSoyad;
                     saveData.unvan = aktifKullanici.unvan;
                     saveData.telefon = aktifKullanici.telefon;
                     saveData.tarih = new Date().toLocaleDateString('tr-TR');
+                    
+                    var initialBocek = bocekSayisi ? parseInt(bocekSayisi) : 0;
+                    saveData.kayitlar = [{
+                        tarih: saveData.tarih,
+                        bocekSayisi: initialBocek,
+                        kaydeden: aktifKullanici.adSoyad,
+                        kaydedenTel: aktifKullanici.telefon,
+                        kaydedenUnvan: aktifKullanici.unvan,
+                        kayitTarihiStr: new Date().toLocaleString('tr-TR')
+                    }];
                     
                     db.collection("tuzaklar").add(saveData).then(function() {
                         alert("Kayıt başarıyla eklendi.");
@@ -2844,6 +3287,7 @@
                 kapatAktifKullanicilarModal();
                 kapatTopluYuklemeModal();
                 kapatLokasyonModal();
+                kapatTuzakKayitlariModal();
             }
         });
 
