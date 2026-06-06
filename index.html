@@ -76,6 +76,28 @@
             100% { transform: translateX(-50%) scale(1); }
         }
 
+        /* İlçe Sınırları Loading Badge */
+        .ilce-loading-badge {
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1000;
+            background: rgba(0, 142, 67, 0.95); backdrop-filter: blur(10px);
+            color: white; padding: 8px 18px; border-radius: 20px;
+            font-size: 13px; font-weight: 700; box-shadow: var(--shadow);
+            display: none; align-items: center; gap: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ilce-tooltip {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+            box-shadow: var(--shadow);
+        }
+
         /* Glassmorphic Side Menu Styles */
         .side-menu {
             position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
@@ -382,6 +404,11 @@
     <!-- Connection Status Badge -->
     <div id="offlineBadge" class="offline-badge">
         <span>🔴</span> İnternet Yok (Çevrimdışı Çalışıyor)
+    </div>
+
+    <!-- İlçe Sınırları Yükleme Badge -->
+    <div id="ilceLoadingBadge" class="ilce-loading-badge">
+        🗺️ İlçe sınırları yükleniyor...
     </div>
 
     <!-- Floating Active User Profile Card -->
@@ -966,7 +993,13 @@
             "🛰️ Uydu Görünümü": uyduHaritasi,
             "🗺️ Sokak Görünümü": sokakHaritasi
         };
-        L.control.layers(haritaTipleri, null, { position: 'topright' }).addTo(map);
+
+        var ilceSinirKatmani = L.featureGroup();
+        var overlays = {
+            "🗺️ İlçe Sınırları": ilceSinirKatmani
+        };
+
+        L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
 
         // Geolocation Find User
         map.locate({setView: true, maxZoom: 16});
@@ -978,6 +1011,132 @@
             L.circle(e.latlng, radius).addTo(map);
         }
         map.on('locationfound', onLocationFound);
+
+        // Rize District Boundaries Overlay
+        var rizeIlceleri = ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"];
+        var ilceSinirlariYuklendi = false;
+
+        map.on('overlayadd', function(event) {
+            if (event.name === "🗺️ İlçe Sınırları") {
+                yukleIlceSinirlari();
+            }
+        });
+
+        async function yukleIlceSinirlari() {
+            if (ilceSinirlariYuklendi) return;
+            
+            var loadingBadge = document.getElementById("ilceLoadingBadge");
+            if (loadingBadge) {
+                loadingBadge.style.display = 'flex';
+                loadingBadge.innerText = "🗺️ İlçe sınırları yükleniyor...";
+            }
+
+            var hataVar = false;
+            var yuklenenSayi = 0;
+
+            for (var i = 0; i < rizeIlceleri.length; i++) {
+                var ilce = rizeIlceleri[i];
+                var cached = localStorage.getItem("rize_geojson_" + ilce);
+                var geojson = null;
+
+                if (cached) {
+                    try {
+                        geojson = JSON.parse(cached);
+                    } catch (e) {
+                        console.error("Önbellekten geojson okuma hatası (" + ilce + "):", e);
+                    }
+                }
+
+                if (!geojson) {
+                    if (navigator.onLine) {
+                        if (loadingBadge) {
+                            loadingBadge.innerText = "🗺️ Sınırlar indiriliyor: " + ilce + " (" + (i + 1) + "/" + rizeIlceleri.length + ")";
+                        }
+
+                        var query = ilce === "Merkez" ? "Rize Merkez, Türkiye" : ilce + ", Rize, Türkiye";
+                        var url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(query) + "&polygon_geojson=1&format=json";
+
+                        try {
+                            if (yuklenenSayi > 0) {
+                                await new Promise(resolve => setTimeout(resolve, 1200));
+                            }
+                            
+                            var response = await fetch(url);
+                            if (!response.ok) throw new Error("HTTP " + response.status);
+                            
+                            var data = await response.json();
+                            yuklenenSayi++;
+
+                            if (data && data.length > 0) {
+                                var match = data.find(item => item.geojson && (item.geojson.type === "Polygon" || item.geojson.type === "MultiPolygon"));
+                                if (match) {
+                                    geojson = match.geojson;
+                                } else if (data[0].geojson) {
+                                    geojson = data[0].geojson;
+                                }
+                            }
+
+                            if (geojson) {
+                                localStorage.setItem("rize_geojson_" + ilce, JSON.stringify(geojson));
+                            } else {
+                                console.warn(ilce + " için GeoJSON verisi bulunamadı.");
+                            }
+                        } catch (err) {
+                            console.error(ilce + " sınırı indirilirken hata oluştu:", err);
+                            hataVar = true;
+                        }
+                    } else {
+                        hataVar = true;
+                    }
+                }
+
+                if (geojson) {
+                    cizIlceSiniri(ilce, geojson);
+                }
+            }
+
+            if (loadingBadge) {
+                loadingBadge.style.display = 'none';
+            }
+
+            if (!hataVar) {
+                ilceSinirlariYuklendi = true;
+            } else {
+                alert("Bazı ilçe sınırları indirilemedi. İnternet bağlantınızı kontrol edip tekrar deneyebilirsiniz.");
+            }
+        }
+
+        function cizIlceSiniri(ilce, geojson) {
+            var stilVarsayilan = {
+                color: "#008e43",
+                weight: 2,
+                opacity: 0.6,
+                fillColor: "#22c55e",
+                fillOpacity: 0.05
+            };
+
+            var katman = L.geoJSON(geojson, {
+                style: stilVarsayilan
+            });
+
+            katman.on('mouseover', function(e) {
+                e.target.setStyle({
+                    weight: 3,
+                    fillOpacity: 0.15
+                });
+            });
+
+            katman.on('mouseout', function(e) {
+                e.target.setStyle(stilVarsayilan);
+            });
+
+            katman.bindTooltip("<b>" + ilce + " İlçesi</b>", {
+                sticky: true,
+                className: "ilce-tooltip"
+            });
+
+            katman.addTo(ilceSinirKatmani);
+        }
 
         // Global Variables
         var markerListesi = {};
