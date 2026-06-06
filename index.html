@@ -1683,7 +1683,7 @@
             satirlar.push(['TOPLAM', toplamT, toplamB]);
 
             var csvIcerik = satirlar.map(function(s) {
-                return s.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+                return s.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(';');
             }).join('\r\n');
 
             var blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' });
@@ -1799,7 +1799,7 @@
             var csvIcerik = satirlar.map(function(satir) {
                 return satir.map(function(hucre) {
                     return '"' + String(hucre).replace(/"/g, '""') + '"';
-                }).join(',');
+                }).join(';');
             }).join('\r\n');
 
             // İndir
