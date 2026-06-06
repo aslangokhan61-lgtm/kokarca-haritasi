@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kokarca-haritasi-v32';
+const CACHE_NAME = 'kokarca-haritasi-v33';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
