@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuzak Takip Sistemi - Tanıtım ve Mobil Kurulum Broşürü</title>
+    
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #008e43;
+            --primary-light: #22c55e;
+            --primary-dark: #004d24;
+            --secondary-blue: #005fa6;
+            --secondary-light: #0284c7;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --bg-glass: rgba(255, 255, 255, 0.95);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --font: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font);
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        @media print {
+            body {
+                background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .container {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+        }
+
+        /* Hero Header */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary-blue));
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: var(--bg-glass);
+            clip-path: polygon(0 100%, 100% 100%, 100% 0);
+        }
+
+        .logo-wrap {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 3px solid var(--primary-light);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero h2 {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            font-weight: 600;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Content Sections */
+        .content {
+            padding: 40px;
+        }
+
+        .link-card {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border: 1.5px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 35px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+        .link-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-light);
+            box-shadow: 0 10px 30px rgba(0, 142, 67, 0.08);
+        }
+
+        .link-card p {
+            margin: 0 0 14px 0;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-dark);
+        }
+
+        .app-url {
+            display: inline-block;
+            font-size: 18px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 800;
+            padding: 12px 30px;
+            background: #f0fdf4;
+            border-radius: 30px;
+            border: 2px dashed var(--primary-light);
+            transition: all 0.2s;
+        }
+        .app-url:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            border: 1.5px solid #f1f5f9;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-1px);
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .feature-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .feature-info p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Installation Platforms */
+        .platform-section {
+            margin-bottom: 40px;
+        }
+
+        .platform-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .platform-card {
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1.5px solid #e2e8f0;
+            padding: 28px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.01);
+        }
+
+        .android-border { border-left: 6px solid #a4c639; }
+        .ios-border { border-left: 6px solid #000000; }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 18px;
+            font-size: 14.5px;
+            line-height: 1.6;
+        }
+        .step-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 22px;
+            height: 22px;
+            background: #f1f5f9;
+            color: var(--text-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1.5px solid #cbd5e1;
+        }
+
+        .android-border .step-number {
+            background: #f7fee7;
+            color: #4d7c0f;
+            border-color: #bef264;
+        }
+
+        .ios-border .step-number {
+            background: #fafafa;
+            color: #18181b;
+            border-color: #e4e4e7;
+        }
+
+        /* Footer Signature */
+        .footer {
+            background: #f8fafc;
+            border-top: 1.5px solid #f1f5f9;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        .signature {
+            display: inline-block;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 18px 32px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .sig-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 2px;
+        }
+
+        .sig-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .sig-dept {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--secondary-blue);
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 650px) {
+            .features {
+                grid-template-columns: 1fr;
+            }
+            .hero {
+                padding: 40px 20px;
+            }
+            .content {
+                padding: 24px;
+            }
+            .hero h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="hero">
+            <div class="logo-wrap">
+                <!-- Stink Bug SVG Logo -->
+                <svg viewBox="0 0 100 100" style="width: 55px; height: 55px;">
+                    <path d="M44,22 L38,10 L28,7" stroke="#005fa6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M56,22 L62,10 L72,7" stroke="#005fa6" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M30,35 L16,30 L10,20" stroke="#005fa6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M70,35 L84,30 L90,20" stroke="#005fa6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M26,50 L12,52 L8,60" stroke="#005fa6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M74,50 L88,52 L92,60" stroke="#005fa6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M42,26 L58,26 L55,16 L45,16 Z" fill="#004d24"/>
+                    <path d="M30,42 C30,22 70,22 70,42 L72,68 C72,82 28,82 28,68 Z" fill="#008e43" stroke="#004d24" stroke-width="2"/>
+                    <path d="M50,26 L50,78" stroke="#004d24" stroke-width="2" stroke-dasharray="4 3"/>
+                </svg>
+            </div>
+            <h1>KAHVERENGİ KOKARCA TUZAK TAKİP SİSTEMİ</h1>
+            <h2>Mobil Tanıtım ve Kurulum Broşürü</h2>
+        </div>
+
+        <div class="content">
+            
+            <!-- Link Card -->
+            <div class="link-card">
+                <p>Uygulamayı telefonunuza kurmak için tarayıcınızdan aşağıdaki adrese gidin:</p>
+                <a href="https://aslangokhan61-lgtm.github.io/Kokarca/" class="app-url" target="_blank">aslangokhan61-lgtm.github.io/Kokarca</a>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="features">
+                <div class="feature-card">
+                    <span class="feature-icon">📡</span>
+                    <div class="feature-info">
+                        <h3>İnternetsiz (Offline) Çalışma</h3>
+                        <p>Dağlık arazilerde internet olmasa dahi veri ekleyebilir, sayımları kaydedebilirsiniz. Bağlantı gelince veriler otomatik buluta yüklenir.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🧭</span>
+                    <div class="feature-info">
+                        <h3>Hızlı Yol Tarifi</h3>
+                        <p>Haritadaki tuzak markerına tıklayıp "Yol Tarifi" butonuna basarak arazideki tarlaya doğrudan navigasyon alabilirsiniz.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🏨</span>
+                    <div class="feature-info">
+                        <h3>Otomatik Köy Tespiti</h3>
+                        <p>Haritada tıkladığınız yerin köy/mahalle sınır idari bilgileri, sistem tarafından otomatik taranarak eşleştirilir.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-info">
+                        <h3>Dinamik Yoğunluk Analizi</h3>
+                        <p>Köy ve ilçe bazında toplanan böcek miktarlarını anlık grafik ve tablolara dökerek popülasyon dağılımını gösterir.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Android Section -->
+            <div class="platform-section">
+                <h3 class="platform-title"><span style="font-size: 22px;">🤖</span> Android Cihazlara Kurulum</h3>
+                <div class="platform-card android-border">
+                    <ul class="step-list">
+                        <li><span class="step-number">1</span>Telefonunuzda <b>Google Chrome</b> tarayıcısını açın.</li>
+                        <li><span class="step-number">2</span>Adres çubuğuna <b>aslangokhan61-lgtm.github.io/Kokarca</b> yazarak siteye girin.</li>
+                        <li><span class="step-number">3</span>Ekranın altında çıkacak olan <b>"Ana Ekrana Ekle"</b> veya <b>"Uygulamayı Yükle"</b> bildirimine dokunun.</li>
+                        <li><span class="step-number">4</span>Bildirim çıkmazsa, sağ üstteki <b>üç noktaya (⋮)</b> basarak <b>"Uygulamayı Yükle"</b> seçeneğini seçin.</li>
+                        <li><span class="step-number">5</span>Onay penceresinde <b>"Yükle"</b> butonuna basarak kurulumu tamamlayın. Uygulama logonuz ekrana eklenecektir.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- iOS Section -->
+            <div class="platform-section">
+                <h3 class="platform-title"><span style="font-size: 22px;">🍏</span> iOS (Apple iPhone) Cihazlara Kurulum</h3>
+                <div class="platform-card ios-border">
+                    <ul class="step-list">
+                        <li><span class="step-number">1</span>iPhone cihazınızda mutlaka <b>Safari</b> tarayıcısını açın.</li>
+                        <li><span class="step-number">2</span>Adres alanına <b>aslangokhan61-lgtm.github.io/Kokarca</b> yazarak siteye gidin.</li>
+                        <li><span class="step-number">3</span>Safari alt çubuğunda ortada bulunan yukarı oklu <b>"Paylaş" (Share)</b> simgesine tıklayın.</li>
+                        <li><span class="step-number">4</span>Açılan paylaşım menüsünü aşağı kaydırıp <b>"Ana Ekrana Ekle" (Add to Home Screen)</b> seçeneğini seçin.</li>
+                        <li><span class="step-number">5</span>Sağ üst köşedeki <b>"Ekle" (Add)</b> butonuna basarak kurulumu bitirin. Uygulama telefon ana ekranına yerleşecektir.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="signature">
+                <div class="sig-name">Gökhan ASLAN</div>
+                <div class="sig-title">Ziraat Mühendisi</div>
+                <div class="sig-dept">Güneysu İlçe Tarım ve Orman Müdürlüğü</div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
