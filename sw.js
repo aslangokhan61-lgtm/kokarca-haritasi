@@ -1,7 +1,8 @@
-const CACHE_NAME = 'kokarca-haritasi-v40';
+const CACHE_NAME = 'kokarca-haritasi-v41';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './kurulum_brosuru.html',
   './manifest.json',
   './lokasyonlar.json',
   './icon.png',
