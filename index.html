@@ -1368,9 +1368,16 @@
                 dashArray: ""
             };
 
-            var katman = L.geoJSON(geojson, {
+            // Köy adını feature.properties.name içinde sakla → point-in-polygon arama için
+            var feature = {
+                type: "Feature",
+                properties: { name: koyAdi },
+                geometry: geojson
+            };
+
+            var katman = L.geoJSON(feature, {
                 style: stilVarsayilan,
-                onEachFeature: function(feature, layer) {
+                onEachFeature: function(f, layer) {
                     layer.options.cursor = 'pointer';
                 }
             });
@@ -1382,12 +1389,166 @@
                 e.target.setStyle(stilVarsayilan);
             });
 
-            katman.bindTooltip("<b>" + koyAdi + "</b>", {
+            // Tıklayınca köyü filtrele otomatik seç
+            katman.on('click', function(e) {
+                var koySelect = document.getElementById("menuFiltreKoy");
+                if (!koySelect) return;
+                var eslesenIndex = bulEnUygunKoyIndex(koyAdi, koySelect);
+                if (eslesenIndex > -1) {
+                    var eslesenDeger = koySelect.options[eslesenIndex].value;
+                    koySelect.selectedIndex = eslesenIndex;
+                    aktifFiltreler.koy = eslesenDeger;
+                    filtreleriUygula();
+                    var tiklanan = e.target;
+                    tiklanan.setStyle(stilSecili);
+                    setTimeout(function() { tiklanan.setStyle(stilVarsayilan); }, 1200);
+                } else {
+                    var tiklanan2 = e.target;
+                    tiklanan2.setStyle(stilSecili);
+                    setTimeout(function() { tiklanan2.setStyle(stilVarsayilan); }, 800);
+                }
+            });
+
+            katman.bindTooltip("<b>" + koyAdi + "</b><br><small style='color:#64748b'>👆 Tıkla: Filtrele</small>", {
                 sticky: true,
                 className: "ilce-tooltip"
             });
 
             katman.addTo(koySinirKatmani);
+        }
+
+        // ── Nokta-içinde-polygon kontrolü (ray-casting) ───────────────────────────────
+        function noktaPolygonIcindeMi(lat, lng, ring) {
+            var x = lng, y = lat, inside = false;
+            for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                var xi = ring[i][0], yi = ring[i][1];
+                var xj = ring[j][0], yj = ring[j][1];
+                if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        function noktaGeojsonIcindeMi(lat, lng, geom) {
+            if (!geom || !geom.coordinates) return false;
+            if (geom.type === 'Polygon') {
+                return noktaPolygonIcindeMi(lat, lng, geom.coordinates[0]);
+            }
+            if (geom.type === 'MultiPolygon') {
+                return geom.coordinates.some(function(poly) {
+                    return noktaPolygonIcindeMi(lat, lng, poly[0]);
+                });
+            }
+            return false;
+        }
+
+        // Turkish-friendly string normalization (removes suffixes, normalizes chars, leaves alphanumeric)
+        function turkceNormalize(str) {
+            if (!str) return "";
+            var ekSoyRegex = /\s*(köyü|mahallesi|köy|mahalle)\s*$/i;
+            var temiz = str.trim().toLowerCase().replace(ekSoyRegex, '').trim();
+            var map = {
+                'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c',
+                'â': 'a', 'î': 'i', 'û': 'a'
+            };
+            var res = "";
+            for (var i = 0; i < temiz.length; i++) {
+                var ch = temiz[i];
+                res += map[ch] || ch;
+            }
+            return res.replace(/[^a-z0-9]/g, '');
+        }
+
+        // Finds the best matching option index in a select element for a Turkish village name
+        function bulEnUygunKoyIndex(koyAdi, selectElement) {
+            if (!koyAdi || !selectElement) return -1;
+            var nSearch = turkceNormalize(koyAdi);
+            if (!nSearch) return -1;
+
+            var options = selectElement.options;
+            // 1. Exact match
+            for (var i = 0; i < options.length; i++) {
+                var optVal = options[i].value;
+                if (!optVal || optVal === "Tümü" || optVal === "Tümü (Tüm Köyler)") continue;
+                if (turkceNormalize(optVal) === nSearch) {
+                    return i;
+                }
+            }
+            // 2. Partial match
+            for (var i = 0; i < options.length; i++) {
+                var optVal = options[i].value;
+                if (!optVal || optVal === "Tümü" || optVal === "Tümü (Tüm Köyler)") continue;
+                var nOpt = turkceNormalize(optVal);
+                if (nOpt.includes(nSearch) || nSearch.includes(nOpt)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        // Background loader for village boundaries of a given district (no UI blockers or alerts)
+        async function arkaPlandaKoySinirlariniYukle(ilce) {
+            if (!ilce || ilce === "Tümü") return;
+            if (yuklenmisKoySinirlari[ilce]) return;
+
+            var cacheKey = "rize_koy_v2_" + ilce;
+            var cached = localStorage.getItem(cacheKey);
+
+            if (cached) {
+                try {
+                    var koyVerileri = JSON.parse(cached);
+                    koyVerileri.forEach(function(item) {
+                        if (item.name && item.geojson) cizKoySiniri(item.name, item.geojson);
+                    });
+                    yuklenmisKoySinirlari[ilce] = true;
+                } catch(e) {
+                    console.error("Köy önbellekten okuma hatası:", e);
+                    localStorage.removeItem(cacheKey);
+                }
+                return;
+            }
+
+            if (!navigator.onLine) return;
+
+            var overpassQuery =
+                '[out:json][timeout:60];\n' +
+                'area["name"="Rize"]["admin_level"="4"]->.il;\n' +
+                'area["name"="' + ilce + '"]["admin_level"="6"](area.il)->.searchArea;\n' +
+                '(\n' +
+                '  relation["admin_level"="8"]["boundary"="administrative"](area.searchArea);\n' +
+                ');\n' +
+                'out geom;';
+
+            try {
+                var response = await fetch("https://overpass-api.de/api/interpreter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "data=" + encodeURIComponent(overpassQuery)
+                });
+
+                if (response.ok) {
+                    var data = await response.json();
+                    var koyVerileri = [];
+
+                    if (data.elements && data.elements.length > 0) {
+                        data.elements.forEach(function(element) {
+                            if (element.type === "relation" && element.members) {
+                                var name = (element.tags && (element.tags.name || element.tags["name:tr"])) || "Bilinmiyor";
+                                var geojson = overpassRelasyonuGeoJSONYap(element);
+                                if (geojson) {
+                                    koyVerileri.push({ name: name, geojson: geojson });
+                                    cizKoySiniri(name, geojson);
+                                }
+                            }
+                        });
+                        localStorage.setItem(cacheKey, JSON.stringify(koyVerileri));
+                        yuklenmisKoySinirlari[ilce] = true;
+                    }
+                }
+            } catch(err) {
+                console.error("Arka planda köy sınırları yükleme hatası:", err);
+            }
         }
 
         // Global Variables
@@ -2339,21 +2500,47 @@
                 ilceSelect.disabled = false;
             }
 
-            // 📍 Koordinata göre köyü otomatik bul (Nominatim reverse geocoding)
+            // 📍 1. ÖNCE: Yüklenen köy sınırları içinde hangi polygon'da olduğumuzu bul (offline, TKGM-doğruluğunda)
             var koySelect = document.getElementById('koy');
-            if (koySelect && navigator.onLine) {
+            var koyBulundu = false;
+
+            if (koySelect && typeof koySinirKatmani !== 'undefined' && koySinirKatmani.getLayers().length > 0) {
+                var tiklananLat = e.latlng.lat;
+                var tiklananLng = e.latlng.lng;
+
+                koySinirKatmani.eachLayer(function(katman) {
+                    if (koyBulundu) return;
+                    katman.eachLayer(function(featureLayer) {
+                        if (koyBulundu) return;
+                        var feat = featureLayer.feature;
+                        if (!feat || !feat.properties || !feat.properties.name || !feat.geometry) return;
+
+                        if (noktaGeojsonIcindeMi(tiklananLat, tiklananLng, feat.geometry)) {
+                            // Bu polygon içindeyiz — dropdown'da eşleştir
+                            var eslesenIndex = bulEnUygunKoyIndex(feat.properties.name, koySelect);
+                            if (eslesenIndex > -1) {
+                                koySelect.selectedIndex = eslesenIndex;
+                                koyBulundu = true;
+                            }
+                        }
+                    });
+                });
+            }
+
+            // 📍 2. Polygon verisi yoksa: Nominatim yedek (internet gerektirir)
+            if (!koyBulundu && koySelect && navigator.onLine) {
                 var yukleniyorOpt = document.createElement('option');
                 yukleniyorOpt.value = '';
                 yukleniyorOpt.disabled = true;
                 yukleniyorOpt.selected = true;
                 yukleniyorOpt.style.color = '#64748b';
-                yukleniyorOpt.textContent = '(📍 Köy bulunuyor...)';
+                yukleniyorOpt.textContent = '(📍 Köy aranıyor...)';
                 koySelect.insertBefore(yukleniyorOpt, koySelect.firstChild);
                 koySelect.selectedIndex = 0;
 
                 var lat = e.latlng.lat.toFixed(6);
                 var lon = e.latlng.lng.toFixed(6);
-                var geoUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=15&accept-language=tr';
+                var geoUrl = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=18&accept-language=tr&addressdetails=1';
 
                 fetch(geoUrl)
                     .then(function(res) { return res.json(); })
@@ -2363,28 +2550,20 @@
                             geo.address && geo.address.village,
                             geo.address && geo.address.neighbourhood,
                             geo.address && geo.address.suburb,
+                            geo.address && geo.address.quarter,
                             geo.address && geo.address.town
                         ].filter(Boolean);
 
-                        var ekSoyRegex = /\s*(köyü|mahallesi|köy|mahalle)\s*$/i;
-                        var eslesenIndex = null;
-
-                        loop: for (var a = 0; a < adaylar.length; a++) {
-                            var aranan = adaylar[a].trim().toLowerCase().replace(ekSoyRegex, '').trim();
-                            for (var i = 0; i < koySelect.options.length; i++) {
-                                var optVal = koySelect.options[i].value;
-                                if (!optVal) continue;
-                                var optTemiz = optVal.trim().toLowerCase().replace(ekSoyRegex, '').trim();
-                                if (optTemiz === aranan) { eslesenIndex = i; break loop; }
-                            }
+                        var eslesenIndex = -1;
+                        for (var a = 0; a < adaylar.length; a++) {
+                            eslesenIndex = bulEnUygunKoyIndex(adaylar[a], koySelect);
+                            if (eslesenIndex > -1) break;
                         }
 
                         if (yukleniyorOpt.parentNode) koySelect.removeChild(yukleniyorOpt);
-                        if (eslesenIndex !== null) koySelect.selectedIndex = eslesenIndex;
-                        else console.log('Köy eşleşmedi. Adaylar:', adaylar);
+                        if (eslesenIndex > -1) koySelect.selectedIndex = eslesenIndex;
                     })
-                    .catch(function(err) {
-                        console.warn('Köy otomatik bulma hatası:', err);
+                    .catch(function() {
                         if (yukleniyorOpt.parentNode) koySelect.removeChild(yukleniyorOpt);
                     });
             }
@@ -2868,6 +3047,10 @@
                         tuzaklariDinle();
                         kullaniciAktifliginiGuncelle();
                         
+                        if (aktifKullanici && aktifKullanici.ilce) {
+                            arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                        }
+
                         if (isAdmin()) {
                             personelListesiniDinle();
                         }
@@ -2888,6 +3071,11 @@
                                 guncelleArayuzRolBazli();
                                 tuzaklariDinle();
                                 kullaniciAktifliginiGuncelle();
+                                
+                                if (aktifKullanici && aktifKullanici.ilce) {
+                                    arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                                }
+
                                 if (isAdmin()) {
                                     personelListesiniDinle();
                                 }
@@ -2902,6 +3090,9 @@
                             document.getElementById("girisModal").classList.remove("active");
                             guncelleArayuzRolBazli();
                             tuzaklariDinle();
+                            if (aktifKullanici && aktifKullanici.ilce) {
+                                arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                            }
                         });
                     }
                 }).catch(function(err) {
@@ -2910,6 +3101,9 @@
                     document.getElementById("girisModal").classList.remove("active");
                     guncelleArayuzRolBazli();
                     tuzaklariDinle();
+                    if (aktifKullanici && aktifKullanici.ilce) {
+                        arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                    }
                 });
             } else {
                 document.getElementById("girisModal").classList.add("active");
@@ -2964,6 +3158,10 @@
             tuzaklariDinle();
             kullaniciAktifliginiGuncelle();
             
+            if (aktifKullanici && aktifKullanici.ilce) {
+                arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+            }
+
             if (isAdmin()) {
                 personelListesiniDinle();
             }
@@ -3187,6 +3385,11 @@
             var secilenIl = ilSelect.value;
             var secilenIlce = ilceSelect.value;
             aktifFiltreler.ilce = secilenIlce;
+
+            // Background load village boundaries for selected district
+            if (secilenIlce !== "Tümü") {
+                arkaPlandaKoySinirlariniYukle(secilenIlce);
+            }
             
             if (!keepSelections) {
                 aktifFiltreler.koy = "Tümü";
