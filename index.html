@@ -3586,6 +3586,15 @@
             document.getElementById("pTelefon").value = "";
             document.getElementById("pRol").value = "Saha Personeli";
             
+            var pRolSelect = document.getElementById("pRol");
+            for (var i = 0; i < pRolSelect.options.length; i++) {
+                if (pRolSelect.options[i].value === "Süper Admin") {
+                    var isSuper = (aktifKullanici && aktifKullanici.rol === "Süper Admin");
+                    pRolSelect.options[i].disabled = !isSuper;
+                    pRolSelect.options[i].style.display = isSuper ? "" : "none";
+                }
+            }
+            
             var select = document.getElementById("pIlce");
             select.innerHTML = "";
             var ilceler = lokasyonDB && lokasyonDB.Rize ? Object.keys(lokasyonDB.Rize).sort(function(a, b) { return a.localeCompare(b, 'tr'); }) : [];
@@ -3611,6 +3620,11 @@
             var pers = personelListesi.find(function(p) { return p.telefon === tel || p.kullaniciAdi === tel; });
             if (!pers) return;
             
+            if (pers.rol === "Süper Admin" && aktifKullanici && aktifKullanici.rol !== "Süper Admin") {
+                alert("Süper Admin yetkisine sahip personelleri düzenleme yetkiniz yoktur!");
+                return;
+            }
+            
             document.getElementById("personelFormBaslik").innerText = "Personel Düzenle";
             document.getElementById("duzenlenenPersonelTel").value = pers.kullaniciAdi || pers.telefon || tel;
             document.getElementById("pAdSoyad").value = pers.adSoyad;
@@ -3619,6 +3633,15 @@
             document.getElementById("pTelefon").value = pers.telefon;
             document.getElementById("pTelefon").disabled = false;
             document.getElementById("pRol").value = pers.rol || "Saha Personeli";
+            
+            var pRolSelect = document.getElementById("pRol");
+            for (var i = 0; i < pRolSelect.options.length; i++) {
+                if (pRolSelect.options[i].value === "Süper Admin") {
+                    var isSuper = (aktifKullanici && aktifKullanici.rol === "Süper Admin");
+                    pRolSelect.options[i].disabled = !isSuper;
+                    pRolSelect.options[i].style.display = isSuper ? "" : "none";
+                }
+            }
             
             var select = document.getElementById("pIlce");
             select.innerHTML = "";
@@ -3682,6 +3705,12 @@
             if (!isAdmin()) return;
             if (aktifKullanici && (aktifKullanici.telefon === tel || aktifKullanici.kullaniciAdi === tel)) {
                 alert("Aktif kendi oturumunuzu silemezsiniz!");
+                return;
+            }
+            
+            var pers = personelListesi.find(function(p) { return p.telefon === tel || p.kullaniciAdi === tel; });
+            if (pers && pers.rol === "Süper Admin" && aktifKullanici && aktifKullanici.rol !== "Süper Admin") {
+                alert("Süper Admin yetkisine sahip personelleri silme yetkiniz yoktur!");
                 return;
             }
             
