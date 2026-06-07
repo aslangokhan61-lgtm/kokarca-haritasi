@@ -3591,6 +3591,7 @@
                 if (pRolSelect.options[i].value === "Süper Admin") {
                     var isSuper = (aktifKullanici && aktifKullanici.rol === "Süper Admin");
                     pRolSelect.options[i].disabled = !isSuper;
+                    pRolSelect.options[i].hidden = !isSuper;
                     pRolSelect.options[i].style.display = isSuper ? "" : "none";
                 }
             }
@@ -3639,6 +3640,7 @@
                 if (pRolSelect.options[i].value === "Süper Admin") {
                     var isSuper = (aktifKullanici && aktifKullanici.rol === "Süper Admin");
                     pRolSelect.options[i].disabled = !isSuper;
+                    pRolSelect.options[i].hidden = !isSuper;
                     pRolSelect.options[i].style.display = isSuper ? "" : "none";
                 }
             }
