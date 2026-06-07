@@ -1418,27 +1418,42 @@
         }
 
         // ── Nokta-içinde-polygon kontrolü (ray-casting) ───────────────────────────────
-        function noktaPolygonIcindeMi(lat, lng, ring) {
-            var x = lng, y = lat, inside = false;
-            for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-                var xi = ring[i][0], yi = ring[i][1];
-                var xj = ring[j][0], yj = ring[j][1];
-                if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-                    inside = !inside;
-                }
-            }
-            return inside;
-        }
+        function noktaGeometrisiIcindeMi(lat, lng, source) {
+            if (!source || source.length === 0) return false;
 
-        function noktaGeojsonIcindeMi(lat, lng, geom) {
-            if (!geom || !geom.coordinates) return false;
-            if (geom.type === 'Polygon') {
-                return noktaPolygonIcindeMi(lat, lng, geom.coordinates[0]);
+            // 1. Leaflet L.LatLng nesneleri içeren düz dizi
+            if (source[0] && typeof source[0] === 'object' && source[0].lat !== undefined) {
+                var x = lng, y = lat, inside = false;
+                var len = source.length;
+                for (var i = 0, j = len - 1; i < len; j = i++) {
+                    var xi = source[i].lng, yi = source[i].lat;
+                    var xj = source[j].lng, yj = source[j].lat;
+                    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+                        inside = !inside;
+                    }
+                }
+                return inside;
             }
-            if (geom.type === 'MultiPolygon') {
-                return geom.coordinates.some(function(poly) {
-                    return noktaPolygonIcindeMi(lat, lng, poly[0]);
-                });
+
+            // 2. GeoJSON sayı ikilileri [lng, lat] içeren düz dizi
+            if (Array.isArray(source[0]) && typeof source[0][0] === 'number') {
+                var x = lng, y = lat, inside = false;
+                var len = source.length;
+                for (var i = 0, j = len - 1; i < len; j = i++) {
+                    var xi = source[i][0], yi = source[i][1];
+                    var xj = source[j][0], yj = source[j][1];
+                    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+                        inside = !inside;
+                    }
+                }
+                return inside;
+            }
+
+            // 3. İçiçe diziler (MultiPolygon, GeoJSON coordinates veya Leaflet delikli halkaları)
+            for (var i = 0; i < source.length; i++) {
+                if (noktaGeometrisiIcindeMi(lat, lng, source[i])) {
+                    return true;
+                }
             }
             return false;
         }
@@ -2513,9 +2528,17 @@
                     katman.eachLayer(function(featureLayer) {
                         if (koyBulundu) return;
                         var feat = featureLayer.feature;
-                        if (!feat || !feat.properties || !feat.properties.name || !feat.geometry) return;
+                        if (!feat || !feat.properties || !feat.properties.name) return;
 
-                        if (noktaGeojsonIcindeMi(tiklananLat, tiklananLng, feat.geometry)) {
+                        var icindeMi = false;
+                        if (typeof featureLayer.getLatLngs === 'function') {
+                            icindeMi = noktaGeometrisiIcindeMi(tiklananLat, tiklananLng, featureLayer.getLatLngs());
+                        }
+                        if (!icindeMi && feat.geometry && feat.geometry.coordinates) {
+                            icindeMi = noktaGeometrisiIcindeMi(tiklananLat, tiklananLng, feat.geometry.coordinates);
+                        }
+
+                        if (icindeMi) {
                             // Bu polygon içindeyiz — dropdown'da eşleştir
                             var eslesenIndex = bulEnUygunKoyIndex(feat.properties.name, koySelect);
                             if (eslesenIndex > -1) {
