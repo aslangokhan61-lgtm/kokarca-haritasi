@@ -654,6 +654,48 @@
         </div>
     </div>
 
+    <!-- Kullanım Kılavuzu Modal -->
+    <div id="kilavuzModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto; font-family: var(--font);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 22px; font-weight: 800; color: var(--primary-dark); display: flex; align-items: center; gap: 8px;">📖 Kullanım Kılavuzu</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatKilavuzModal()">&times;</span>
+            </div>
+            
+            <div class="kilavuz-body" style="font-size: 14px; line-height: 1.65; color: var(--text-dark); text-align: left;">
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">👥 1. Kullanıcı Rolleri ve Yetkiler</h4>
+                <p style="margin-top: 0; margin-bottom: 12px;">Sistemde 3 farklı yetki seviyesi bulunur:</p>
+                <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
+                    <li style="margin-bottom: 6px;"><b>Saha Personeli:</b> Yalnızca sorumlu olduğu ilçeyi görür. Tuzak ekleme ve sayım kayıtlarını sadece kendi bölgesinde yapabilir.</li>
+                    <li style="margin-bottom: 6px;"><b>Yönetici (Admin):</b> Tüm Rize genelinde işlem yapabilir. Personel yönetimi, toplu tuzak yükleme ve lokasyon ekleme yetkilerine sahiptir.</li>
+                    <li style="margin-bottom: 6px;"><b>Süper Admin:</b> Yönetici yetkilerine ek olarak detaylı tarihçe Excel dökümü alabilir ve sistem log kayıtlarını inceleyebilir.</li>
+                </ul>
+
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">🗺️ 2. Harita Arayüzü ve Katmanlar</h4>
+                <p style="margin-top: 0; margin-bottom: 20px;">Sağ üst köşedeki katman butonunu kullanarak <b>🛰️ Google Uydu</b> veya <b>🗺️ Sokak Görünümü</b> haritalarına geçebilir; ilçe ve köy sınır çizgilerini açıp kapatabilirsiniz. Sağ alttaki GPS butonu arazideki anlık konumunuza odaklanmanızı sağlar.</p>
+
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">🏺 3. Tuzak Ekleme ve Taşıma</h4>
+                <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
+                    <li style="margin-bottom: 6px;"><b>Tuzak Ekleme:</b> Haritada tuzağı astığınız konuma tıklayın. Açılan formda köy alanı, tıkladığınız yerin köy sınırları taranarak <b>otomatik seçilir</b>. Bilgileri girip kaydedin.</li>
+                    <li style="margin-bottom: 6px;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından "Düzenle" butonuna tıklayıp, haritadaki iğneyi basılı tutarak sürükleyip yeni yerine bırakabilirsiniz.</li>
+                </ul>
+
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📅 4. Haftalık Böcek Sayım Kayıtları</h4>
+                <p style="margin-top: 0; margin-bottom: 20px;">Tuzak popup'ındaki <b>"📅 Kayıtlar"</b> butonuna basarak geçmiş sayımları görebilir ve yeni sayım ekleyebilirsiniz. Sistem, kontrol günleri olan <b>Salı ve Cuma</b> günlerini yeşil yıldız işaretiyle vurgular. Eklenen her yeni sayım, tuzağın güncel durumunu otomatik olarak günceller.</p>
+
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📊 5. Raporlar ve Excel/CSV Dökümü</h4>
+                <p style="margin-top: 0; margin-bottom: 20px;">Sol menüdeki Raporlar sekmesinden tarih aralığı vererek köy bazında böcek yoğunluğunu sorgulayabilir, köy grafiklerini inceleyebilirsiniz. Yöneticiler günlük aktivite trend grafiklerine ulaşabilir. Rapor altındaki butonlarla CSV veya tarihli detaylı Excel dökümleri indirilebilir.</p>
+
+                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📡 6. Çevrimdışı (Offline) Çalışma</h4>
+                <p style="margin-top: 0; margin-bottom: 12px;">Arazide internetiniz çekmese dahi uygulama açılır ve çalışır. İnternet yokken eklediğiniz tuzaklar ve sayım verileri telefon hafızasında tutulur; internet bağlantısı kurulduğu an Firestore veritabanına otomatik olarak eşitlenir.</p>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                <button class="btn btn-cancel" onclick="kapatKilavuzModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Lokasyon Yönetimi Modal -->
     <div id="lokasyonModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px; max-height: 88vh; overflow-y: auto;">
@@ -3354,6 +3396,17 @@
                 item1.innerHTML = '<span>📊</span> Bölge Raporları';
                 sideMenu.appendChild(item1);
             }
+
+            // Ortak Kullanım Kılavuzu Menüsü (Tüm Roller İçin)
+            var kilavuzMenu = document.createElement("div");
+            kilavuzMenu.className = "menu-item";
+            kilavuzMenu.style.borderLeft = "3px solid var(--primary-light)";
+            kilavuzMenu.innerHTML = '<span>📖</span> Kullanım Kılavuzu';
+            kilavuzMenu.onclick = function() {
+                toggleMenu();
+                acKilavuzModal();
+            };
+            sideMenu.appendChild(kilavuzMenu);
         }
 
         function initMenuFilters() {
@@ -3484,6 +3537,14 @@
             guncellePersonelTablosu();
             iptalPersonelFormu();
             document.getElementById("personelModal").classList.add("active");
+        }
+
+        function acKilavuzModal() {
+            document.getElementById("kilavuzModal").classList.add("active");
+        }
+
+        function kapatKilavuzModal() {
+            document.getElementById("kilavuzModal").classList.remove("active");
         }
 
         function kapatRapor() {
