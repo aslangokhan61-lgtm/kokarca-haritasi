@@ -995,8 +995,10 @@
         };
 
         var ilceSinirKatmani = L.featureGroup();
+        var koySinirKatmani = L.featureGroup();
         var overlays = {
-            "🗺️ İlçe Sınırları": ilceSinirKatmani
+            "🗺️ İlçe Sınırları": ilceSinirKatmani,
+            "🏨️ Köy Sınırları": koySinirKatmani
         };
 
         L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
@@ -1015,10 +1017,22 @@
         // Rize District Boundaries Overlay
         var rizeIlceleri = ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"];
         var ilceSinirlariYuklendi = false;
+        var koySinirLayerAktif = false;
+        var yuklenmisKoySinirlari = {}; // { "Güneysu": true }
 
         map.on('overlayadd', function(event) {
             if (event.name === "🗺️ İlçe Sınırları") {
                 yukleIlceSinirlari();
+            }
+            if (event.name === "🏨️ Köy Sınırları") {
+                koySinirLayerAktif = true;
+                yukleKoySinirlari();
+            }
+        });
+
+        map.on('overlayremove', function(event) {
+            if (event.name === "🏨️ Köy Sınırları") {
+                koySinirLayerAktif = false;
             }
         });
 
@@ -1136,6 +1150,147 @@
             });
 
             katman.addTo(ilceSinirKatmani);
+        }
+
+        // ── Köy / Mahalle Sınırları (Overpass API) ────────────────────────────────
+
+        async function yukleKoySinirlari() {
+            var ilce = aktifFiltreler.ilce;
+
+            if (ilce === "Tümü") {
+                alert("🏨️ Köy sınırlarını görmek için önce sol menüden bir ilçe seçiniz.");
+                return;
+            }
+
+            if (yuklenmisKoySinirlari[ilce]) return;
+
+            var cacheKey = "rize_koy_geojson_" + ilce;
+            var cached = localStorage.getItem(cacheKey);
+
+            if (cached) {
+                try {
+                    var koyVerileri = JSON.parse(cached);
+                    koyVerileri.forEach(function(item) {
+                        if (item.name && item.geojson) cizKoySiniri(item.name, item.geojson);
+                    });
+                    yuklenmisKoySinirlari[ilce] = true;
+                } catch(e) {
+                    console.error("Köy önbellekten okuma hatası:", e);
+                    localStorage.removeItem(cacheKey);
+                }
+                return;
+            }
+
+            if (!navigator.onLine) {
+                alert("Köy sınırları için internet bağlantısı gerekmektedir.");
+                return;
+            }
+
+            var loadingBadge = document.getElementById("ilceLoadingBadge");
+            if (loadingBadge) {
+                loadingBadge.style.display = 'flex';
+                loadingBadge.innerText = "🏨️ " + ilce + " köy/mahalle sınırları indiriliyor...";
+            }
+
+            // Tek bir Overpass sorgusu ile ilçenin tüm köy/mahalle (admin_level=8) sınırlarını çek
+            var overpassQuery = '[out:json][timeout:60];\narea["name"="' + ilce + '"]["admin_level"="6"]->.searchArea;\n(\n  relation["admin_level"="8"]["boundary"="administrative"](area.searchArea);\n);\nout geom;';
+
+            try {
+                var response = await fetch("https://overpass-api.de/api/interpreter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: "data=" + encodeURIComponent(overpassQuery)
+                });
+
+                if (!response.ok) throw new Error("HTTP " + response.status);
+
+                var data = await response.json();
+                var koyVerileri = [];
+
+                if (data.elements && data.elements.length > 0) {
+                    data.elements.forEach(function(element) {
+                        if (element.type === "relation" && element.members) {
+                            var name = (element.tags && (element.tags.name || element.tags["name:tr"])) || "Bilinmiyor";
+                            var geojson = overpassRelasyonuGeoJSONYap(element);
+                            if (geojson) {
+                                koyVerileri.push({ name: name, geojson: geojson });
+                                cizKoySiniri(name, geojson);
+                            }
+                        }
+                    });
+                    localStorage.setItem(cacheKey, JSON.stringify(koyVerileri));
+                    yuklenmisKoySinirlari[ilce] = true;
+                    if (koyVerileri.length === 0) {
+                        console.warn(ilce + " için köy sınırı bulunamadı.");
+                    }
+                } else {
+                    alert(ilce + " için köy/mahalle sınırı verisi bulunamadı.\nOpenStreetMap'te bu ilçe için yeterli veri olmayabilir.");
+                }
+            } catch(err) {
+                console.error("Köy sınırları yükleme hatası:", err);
+                alert("Köy sınırları yüklenirken hata oluştu: " + err.message);
+            } finally {
+                if (loadingBadge) loadingBadge.style.display = 'none';
+            }
+        }
+
+        function overpassRelasyonuGeoJSONYap(element) {
+            var outerWays = element.members.filter(function(m) {
+                return m.role === 'outer' && m.geometry && m.geometry.length > 0;
+            });
+            var innerWays = element.members.filter(function(m) {
+                return m.role === 'inner' && m.geometry && m.geometry.length > 0;
+            });
+
+            if (outerWays.length === 0) return null;
+
+            function wayToRing(way) {
+                var coords = way.geometry.map(function(pt) { return [pt.lon, pt.lat]; });
+                if (coords.length > 0) {
+                    var first = coords[0], last = coords[coords.length - 1];
+                    if (first[0] !== last[0] || first[1] !== last[1]) coords.push(coords[0]);
+                }
+                return coords;
+            }
+
+            if (outerWays.length === 1) {
+                var rings = [wayToRing(outerWays[0])];
+                innerWays.forEach(function(w) { rings.push(wayToRing(w)); });
+                return { type: "Polygon", coordinates: rings };
+            } else {
+                var polygons = outerWays.map(function(w) { return [wayToRing(w)]; });
+                if (innerWays.length > 0) innerWays.forEach(function(w) { polygons[0].push(wayToRing(w)); });
+                return polygons.length === 1
+                    ? { type: "Polygon", coordinates: polygons[0] }
+                    : { type: "MultiPolygon", coordinates: polygons };
+            }
+        }
+
+        function cizKoySiniri(koyAdi, geojson) {
+            var stilVarsayilan = {
+                color: "#0369a1",
+                weight: 1.5,
+                opacity: 0.55,
+                fillColor: "#0ea5e9",
+                fillOpacity: 0.04,
+                dashArray: "5 4"
+            };
+
+            var katman = L.geoJSON(geojson, { style: stilVarsayilan });
+
+            katman.on('mouseover', function(e) {
+                e.target.setStyle({ weight: 2.5, fillOpacity: 0.14, dashArray: "" });
+            });
+            katman.on('mouseout', function(e) {
+                e.target.setStyle(stilVarsayilan);
+            });
+
+            katman.bindTooltip("<b>" + koyAdi + "</b>", {
+                sticky: true,
+                className: "ilce-tooltip"
+            });
+
+            katman.addTo(koySinirKatmani);
         }
 
         // Global Variables
@@ -2901,6 +3056,12 @@
             }
             
             menuFiltreKoySecildi();
+
+            // Köy sınırları katmanı aktifse yeni ilçe için yenile
+            if (koySinirLayerAktif && aktifFiltreler.ilce !== "Tümü") {
+                koySinirKatmani.clearLayers();
+                yukleKoySinirlari();
+            }
         }
 
         function menuFiltreKoySecildi() {
