@@ -662,32 +662,70 @@
                 <span class="close-btn" style="color: #64748b;" onclick="kapatKilavuzModal()">&times;</span>
             </div>
             
-            <div class="kilavuz-body" style="font-size: 14px; line-height: 1.65; color: var(--text-dark); text-align: left;">
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">👥 1. Kullanıcı Rolleri ve Yetkiler</h4>
-                <p style="margin-top: 0; margin-bottom: 12px;">Sistemde 2 farklı yetki seviyesi bulunur:</p>
-                <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
-                    <li style="margin-bottom: 6px;"><b>Saha Personeli:</b> Yalnızca sorumlu olduğu ilçeyi görür. Tuzak ekleme ve sayım kayıtlarını sadece kendi bölgesinde yapabilir.</li>
-                    <li style="margin-bottom: 6px;"><b>Yönetici (Admin):</b> Tüm Rize genelinde işlem yapabilir. Personel yönetimi, toplu tuzak yükleme ve lokasyon ekleme yetkilerine sahiptir.</li>
-                </ul>
-
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">🗺️ 2. Harita Arayüzü ve Katmanlar</h4>
-                <p style="margin-top: 0; margin-bottom: 20px;">Sağ üst köşedeki katman butonunu kullanarak <b>🛰️ Google Uydu</b> veya <b>🗺️ Sokak Görünümü</b> haritalarına geçebilir; ilçe ve köy sınır çizgilerini açıp kapatabilirsiniz. Sağ alttaki GPS butonu arazideki anlık konumunuza odaklanmanızı sağlar.</p>
-
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">🏺 3. Tuzak Ekleme ve Taşıma</h4>
-                <ul style="margin-top: 0; margin-bottom: 20px; padding-left: 20px;">
-                    <li style="margin-bottom: 6px;"><b>Tuzak Ekleme:</b> Haritada tuzağı astığınız konuma tıklayın. Açılan formda köy alanı, tıkladığınız yerin köy sınırları taranarak <b>otomatik seçilir</b>. Bilgileri girip kaydedin.</li>
-                    <li style="margin-bottom: 6px;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından "Düzenle" butonuna tıklayıp, haritadaki iğneyi basılı tutarak sürükleyip yeni yerine bırakabilirsiniz.</li>
-                </ul>
-
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📅 4. Haftalık Böcek Sayım Kayıtları</h4>
-                <p style="margin-top: 0; margin-bottom: 20px;">Tuzak popup'ındaki <b>"📅 Kayıtlar"</b> butonuna basarak geçmiş sayımları görebilir ve yeni sayım ekleyebilirsiniz. Sistem, kontrol günleri olan <b>Salı ve Cuma</b> günlerini yeşil yıldız işaretiyle vurgular. Eklenen her yeni sayım, tuzağın güncel durumunu otomatik olarak günceller.</p>
-
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📊 5. Raporlar ve Excel/CSV Dökümü</h4>
-                <p style="margin-top: 0; margin-bottom: 20px;">Sol menüdeki Raporlar sekmesinden tarih aralığı vererek köy bazında böcek yoğunluğunu sorgulayabilir, köy grafiklerini inceleyebilirsiniz. Yöneticiler günlük aktivite trend grafiklerine ulaşabilir. Rapor altındaki butonlarla CSV veya tarihli detaylı Excel dökümleri indirilebilir.</p>
-
-                <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 20px; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px;">📡 6. Çevrimdışı (Offline) Çalışma</h4>
-                <p style="margin-top: 0; margin-bottom: 12px;">Arazide internetiniz çekmese dahi uygulama açılır ve çalışır. İnternet yokken eklediğiniz tuzaklar ve sayım verileri telefon hafızasında tutulur; internet bağlantısı kurulduğu an Firestore veritabanına otomatik olarak eşitlenir.</p>
+            <div class="kilavuz-body" style="font-size: 14px; line-height: 1.5; color: var(--text-dark); text-align: left;">
                 
+                <!-- Section 1 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/manager.png" alt="Yetkiler" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">1. Kullanıcı Rolleri ve Yetkiler</h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Sistemde 2 farklı yetki seviyesi bulunur:</p>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>Saha Personeli:</b> Yalnızca sorumlu olduğu ilçeyi görür. Tuzak ekleme ve sayım kayıtlarını sadece kendi bölgesinde yapabilir.</li>
+                            <li style="margin-bottom: 0;"><b>Yönetici (Admin):</b> Tüm Rize genelinde işlem yapabilir. Personel yönetimi, toplu tuzak yükleme ve lokasyon ekleme yetkilerine sahiptir.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/map.png" alt="Harita" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">2. Harita Arayüzü ve Katmanlar</h4>
+                        <p style="margin-top: 0; margin-bottom: 0;">Sağ üst köşedeki katman butonunu kullanarak <b>Google Uydu</b> veya <b>Sokak Görünümü</b> haritalarına geçebilir; ilçe ve köy sınır çizgilerini açıp kapatabilirsiniz. Sağ alttaki GPS butonu arazideki anlık konumunuza odaklanmanızı sağlar.</p>
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/map-marker.png" alt="Tuzak Ekleme" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">3. Tuzak Ekleme ve Taşıma</h4>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>Tuzak Ekleme:</b> Haritada tuzağı astığınız konuma tıklayın. Açılan formda köy alanı, tıkladığınız yerin köy sınırları taranarak <b>otomatik seçilir</b>. Bilgileri girip kaydedin.</li>
+                            <li style="margin-bottom: 0;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından "Düzenle" butonuna tıklayıp, haritadaki iğneyi basılı tutarak sürükleyip yeni yerine bırakabilirsiniz.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 4 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/calendar.png" alt="Sayım Kayıtları" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">4. Haftalık Böcek Sayım Kayıtları</h4>
+                        <p style="margin-top: 0; margin-bottom: 0;">Tuzak popup'ındaki <b>"Kayıtlar"</b> butonuna basarak geçmiş sayımları görebilir ve yeni sayım ekleyebilirsiniz. Sistem, kontrol günleri olan <b>Salı ve Cuma</b> günlerini yeşil yıldız işaretiyle vurgular. Eklenen her yeni sayım, tuzağın güncel durumunu otomatik olarak günceller.</p>
+                    </div>
+                </div>
+
+                <!-- Section 5 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/combo-chart--v1.png" alt="Raporlar" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">5. Raporlar ve Excel/CSV Dökümü</h4>
+                        <p style="margin-top: 0; margin-bottom: 0;">Sol menüdeki Raporlar sekmesinden tarih aralığı vererek köy bazında böcek yoğunluğunu sorgulayabilir, köy grafiklerini inceleyebilirsiniz. Yöneticiler günlük aktivite trend grafiklerine ulaşabilir. Rapor altındaki butonlarla CSV veya tarihli detaylı Excel dökümleri indirilebilir.</p>
+                    </div>
+                </div>
+
+                <!-- Section 6 -->
+                <div style="display: flex; gap: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/cloud-sync.png" alt="Çevrimdışı Çalışma" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">6. Çevrimdışı (Offline) Çalışma</h4>
+                        <p style="margin-top: 0; margin-bottom: 0;">Arazide internetiniz çekmese dahi uygulama açılır ve çalışır. İnternet yokken eklediğiniz tuzaklar ve sayım verileri telefon hafızasında tutulur; internet bağlantısı kurulduğu an veritabanına otomatik olarak eşitlenir.</p>
+                    </div>
+                </div>
+                
+                <!-- Signature -->
                 <div style="margin-top: 30px; text-align: right; padding-right: 20px;">
                     <div style="display: inline-block; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 8px;">
                         <div style="font-size: 15px; font-weight: 800; color: var(--primary-dark); margin-bottom: 2px;">Gökhan ASLAN</div>
