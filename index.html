@@ -10,6 +10,10 @@
     <!-- Google Fonts - Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -406,6 +410,83 @@
         .leaflet-top.leaflet-right {
             margin-top: 68px;
         }
+
+        /* Mini Stats Panel */
+        .mini-stats-panel {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: none;
+            background: var(--bg-glass); backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass); border-radius: 50px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            padding: 10px 20px;
+            display: none; align-items: center; gap: 20px;
+            font-size: 13px; font-weight: 700;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        .mini-stats-panel.visible { display: flex; }
+        .mini-stat {
+            display: flex; align-items: center; gap: 7px;
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .mini-stat-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .mini-stat-val { font-size: 15px; font-weight: 800; }
+        .mini-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .mini-stat-divider { width: 1px; height: 28px; background: rgba(0,0,0,0.08); }
+
+        /* GPS Konumum Butonu */
+        .gps-btn {
+            position: absolute; bottom: 100px; right: 20px; z-index: 1000;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--bg-glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--shadow); cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+            font-size: 22px; transition: all 0.3s ease;
+        }
+        .gps-btn.visible { display: flex; }
+        .gps-btn:hover { transform: scale(1.1); background: #fff; }
+        .gps-btn.loading { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Arama Kutusu */
+        .harita-arama-kutusu {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: none; align-items: center;
+            background: var(--bg-glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass); border-radius: 30px;
+            box-shadow: var(--shadow);
+            padding: 0 16px 0 14px;
+            transition: all 0.3s ease;
+        }
+        .harita-arama-kutusu.visible { display: flex; }
+        .harita-arama-kutusu input {
+            border: none; background: transparent; outline: none;
+            font-family: var(--font); font-size: 14px; font-weight: 600;
+            color: var(--text-dark); padding: 10px 8px;
+            width: 200px;
+        }
+        .harita-arama-kutusu input::placeholder { color: var(--text-muted); font-weight: 500; }
+        .harita-arama-sonuc {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border-radius: 16px; margin-top: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            max-height: 200px; overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: none;
+        }
+        .arama-sonuc-item {
+            padding: 10px 16px; cursor: pointer; font-size: 13px;
+            font-weight: 600; color: var(--text-dark);
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s;
+        }
+        .arama-sonuc-item:last-child { border-bottom: none; }
+        .arama-sonuc-item:hover { background: #f0fdf4; color: var(--primary); }
+        .arama-sonuc-item .arama-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
     </style>
 </head>
 <body>
@@ -428,7 +509,7 @@
         <button style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);" onclick="oturumKapat()">Çıkış</button>
     </div>
 
-    <!-- Login Modal (Username Only) -->
+    <!-- Login Modal -->
     <div id="girisModal" class="modal-overlay" style="z-index: 100000;">
         <div class="modal-content" style="max-width: 400px; text-align: center; border-top: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
             <!-- Rizespor Green-Blue Custom Shield Bug Logo (Stink Bug / Kokarca) -->
@@ -469,15 +550,91 @@
             </div>
             
             <h3 style="margin-top: 15px; margin-bottom: 8px; font-size: 21px; font-weight: 800; color: var(--primary-dark);">Rize Kokarca Tuzak Haritası</h3>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Devam etmek için kullanıcı adınızı giriniz</p>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Kullanıcı adınız ve şifrenizle giriş yapınız</p>
             
             <div class="form-group" style="text-align: left;">
                 <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Kullanıcı Adı</label>
                 <input type="text" id="girisKullanici" class="form-control" style="text-align: center; font-size: 15px; font-weight: 600;" placeholder="Örn: gokhan.aslan" onkeydown="if(event.key === 'Enter') girisYap()">
             </div>
+            <div class="form-group" style="text-align: left; margin-top: 12px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Şifre</label>
+                <div style="position: relative;">
+                    <input type="password" id="girisSifre" class="form-control" style="text-align: center; font-size: 15px; font-weight: 600; padding-right: 44px;" placeholder="Şifrenizi giriniz" onkeydown="if(event.key === 'Enter') girisYap()">
+                    <button type="button" onclick="sifreGoster('girisSifre', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                </div>
+            </div>
             
             <div class="modal-actions" style="margin-top: 24px;">
                 <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700;" onclick="girisYap()">Giriş Yap</button>
+            </div>
+            <div style="margin-top: 14px; text-align: center;">
+                <button onclick="acSifreSifirlaModal()" style="background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; font-family: var(--font);">🔑 Şifremi Unuttum</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Şifre Belirleme Modalı (İlk Giriş) -->
+    <div id="sifreBelirleModal" class="modal-overlay" style="z-index: 100001;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-top: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <div style="font-size: 48px; margin-bottom: 12px;">🔐</div>
+            <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 20px; font-weight: 800; color: var(--primary-dark);">Şifre Belirleyin</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Hesabınıza ilk kez giriş yapıyorsunuz. Lütfen kendinize bir şifre belirleyin.</p>
+            <div class="form-group" style="text-align: left;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Yeni Şifre</label>
+                <div style="position: relative;">
+                    <input type="password" id="yeniSifre1" class="form-control" placeholder="En az 6 karakter" style="padding-right: 44px;">
+                    <button type="button" onclick="sifreGoster('yeniSifre1', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                </div>
+            </div>
+            <div class="form-group" style="text-align: left; margin-top: 12px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Şifre Tekrar</label>
+                <div style="position: relative;">
+                    <input type="password" id="yeniSifre2" class="form-control" placeholder="Şifrenizi tekrar giriniz" style="padding-right: 44px;">
+                    <button type="button" onclick="sifreGoster('yeniSifre2', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700;" onclick="sifreBelirleKaydet()">Şifremi Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Şifre Sıfırlama Modalı (Şifremi Unuttum) -->
+    <div id="sifreSifirlaModal" class="modal-overlay" style="z-index: 100002;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-top: 5px solid var(--secondary-blue); box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <div style="font-size: 48px; margin-bottom: 12px;">📱</div>
+            <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 20px; font-weight: 800; color: var(--primary-dark);">Şifre Sıfırlama</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Kullanıcı adınızı ve kayıtlı telefon numaranızı girin. Eşleşirse yeni şifre belirleyebilirsiniz.</p>
+            <div class="form-group" style="text-align: left;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Kullanıcı Adı</label>
+                <input type="text" id="sifirlaKullanici" class="form-control" placeholder="Kullanıcı adınız">
+            </div>
+            <div class="form-group" style="text-align: left; margin-top: 12px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Telefon Numarası</label>
+                <input type="text" id="sifirlasTelefon" class="form-control" placeholder="Örn: +905xxxxxxxxx">
+            </div>
+            <div id="yeniSifreAlani" style="display:none; margin-top: 16px;">
+                <div class="form-group" style="text-align: left;">
+                    <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Yeni Şifre</label>
+                    <div style="position: relative;">
+                        <input type="password" id="sifirlaYeniSifre1" class="form-control" placeholder="En az 6 karakter" style="padding-right: 44px;">
+                        <button type="button" onclick="sifreGoster('sifirlaYeniSifre1', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 12px;">
+                    <label style="font-weight: 700; color: var(--text-dark); font-size: 13px;">Şifre Tekrar</label>
+                    <div style="position: relative;">
+                        <input type="password" id="sifirlaYeniSifre2" class="form-control" placeholder="Şifrenizi tekrar giriniz" style="padding-right: 44px;">
+                        <button type="button" onclick="sifreGoster('sifirlaYeniSifre2', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                    </div>
+                </div>
+                <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700; margin-top: 16px;" onclick="sifreSifirlaKaydet()">Şifremi Güncelle</button>
+            </div>
+            <div id="sifirlaDogrulaBtn" style="margin-top: 16px;">
+                <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700;" onclick="sifreDogrula()">Doğrula</button>
+            </div>
+            <div style="margin-top: 14px;">
+                <button onclick="kapatSifreSifirlaModal()" style="background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font);">← Giriş Ekranına Dön</button>
             </div>
         </div>
     </div>
@@ -549,6 +706,7 @@
                     <label>Telefon Numarası</label>
                     <input type="text" id="pTelefon" class="form-control" placeholder="Örn: +905xxxxxxxxx">
                 </div>
+                
                 <div class="form-group">
                     <label>Rolü</label>
                     <select id="pRol" class="form-control">
@@ -556,6 +714,13 @@
                         <option value="Yönetici">Yönetici (Admin)</option>
                         <option value="Süper Admin">Süper Admin</option>
                     </select>
+                </div>
+                <div class="form-group" id="pSifreGrubu">
+                    <label>Şifre <span style="color: var(--text-muted); font-size: 11px; font-weight: 500;">(Yeni personelde zorunlu — düzenlemede boş bırakılırsa değişmez)</span></label>
+                    <div style="position: relative;">
+                        <input type="password" id="pSifre" class="form-control" placeholder="Şifre belirleyin">
+                        <button type="button" onclick="sifreGoster('pSifre', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:18px; line-height:1;">👁</button>
+                    </div>
                 </div>
                 
                 <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
@@ -938,6 +1103,7 @@
                 <button id="tabYapiskan" class="tab-btn active" onclick="setRaporFiltre('Yapışkan')">🟨 Yapışkan</button>
                 <button id="tabHuni"     class="tab-btn"        onclick="setRaporFiltre('Huni')">🏺 Huni</button>
                 <button id="tabTumu"     class="tab-btn"        onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
+                <button id="tabListe"    class="tab-btn"        onclick="setRaporFiltre('Liste')">📋 Tuzak Listesi</button>
                 <button id="tabTrend"    class="tab-btn admin-only" style="display:none;" onclick="setRaporFiltre('Trend')">📈 Trend</button>
             </div>
 
@@ -950,6 +1116,14 @@
                 <div class="stat-card">
                     <span class="stat-label">Toplam Böcek</span>
                     <span id="toplamBocekTxt" class="stat-value text-danger">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Ort. Böcek / Tuzak</span>
+                    <span id="ortBocekTxt" class="stat-value" style="color:#f59e0b;">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">En Yüksek Bölge</span>
+                    <span id="enYuksekBolgeTxt" class="stat-value" style="font-size:13px; color:var(--primary);">-</span>
                 </div>
             </div>
 
@@ -965,6 +1139,23 @@
                     </thead>
                     <tbody id="raporTabloGovde"></tbody>
                     <tfoot id="raporTabloAyak" style="position: sticky; bottom: 0; z-index: 10;"></tfoot>
+                </table>
+            </div>
+
+            <!-- Tuzak Listesi Tablosu (Liste Sekmesi) -->
+            <div id="tuzakListesiKapsayici" style="display:none; max-height: 380px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: var(--radius-md); margin-bottom: 16px;">
+                <table class="report-table" style="font-size:12px;">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th style="min-width:60px">No</th>
+                            <th>Köy</th>
+                            <th style="min-width:70px">Tip</th>
+                            <th style="text-align:center; min-width:55px">Böcek</th>
+                            <th style="min-width:140px">Ondalık (DD)</th>
+                            <th style="min-width:160px">DMS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tuzakListesiGovde"></tbody>
                 </table>
             </div>
 
@@ -984,17 +1175,71 @@
 
             <!-- Actions -->
             <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 20px; flex-wrap: wrap;">
+                <button id="koordinatliCsvBtn" class="btn-csv" style="display:none; background: linear-gradient(135deg,#7c3aed,#9333ea);" onclick="koordinatliCsvIndir()">
+                    📍 Koordinatlı CSV
+                </button>
                 <button id="csvIndirBtn" class="btn-csv" style="display:none;" onclick="csvIndir()">
                     📥 CSV İndir
                 </button>
                 <button id="tarihliExcelBtn" class="btn-csv" style="display:none; background: linear-gradient(135deg,#0369a1,#0284c7); color:white; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:700; font-family:var(--font); cursor:pointer; display:none; align-items:center; gap:6px;" onclick="tarihBazliExcelIndir()">
                     📊 Tarihli Excel
                 </button>
+                <button id="raporYazdirBtn" class="btn-csv" style="background: linear-gradient(135deg,#374151,#4b5563);" onclick="raporYazdir()">
+                    🖨️ Yazdır
+                </button>
                 <button class="btn btn-cancel" onclick="kapatRapor()">Kapat</button>
             </div>
         </div>
     </div>
 
+
+    <!-- GPS Konumum Butonu -->
+    <button id="gpsBtn" class="gps-btn" onclick="gpsKonumunuGoster()" title="Konumumu Göster">
+        📍
+    </button>
+
+    <!-- Mini İstatistik Paneli -->
+    <div id="miniStatsPanel" class="mini-stats-panel">
+        <div class="mini-stat">
+            <div class="mini-stat-dot" style="background:#10b981;"></div>
+            <div>
+                <div class="mini-stat-val" id="statYesil">0</div>
+                <div class="mini-stat-lbl">Düşük</div>
+            </div>
+        </div>
+        <div class="mini-stat-divider"></div>
+        <div class="mini-stat">
+            <div class="mini-stat-dot" style="background:#f59e0b;"></div>
+            <div>
+                <div class="mini-stat-val" id="statSari">0</div>
+                <div class="mini-stat-lbl">Orta</div>
+            </div>
+        </div>
+        <div class="mini-stat-divider"></div>
+        <div class="mini-stat">
+            <div class="mini-stat-dot" style="background:#ef4444;"></div>
+            <div>
+                <div class="mini-stat-val" id="statKirmizi">0</div>
+                <div class="mini-stat-lbl">Yüksek</div>
+            </div>
+        </div>
+        <div class="mini-stat-divider"></div>
+        <div class="mini-stat">
+            <div style="font-size:18px;">📍</div>
+            <div>
+                <div class="mini-stat-val" id="statToplam">0</div>
+                <div class="mini-stat-lbl">Toplam Tuzak</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Harita Arama Kutusu -->
+    <div id="haritaAramaKutusu" class="harita-arama-kutusu">
+        <span style="font-size:16px; color:var(--text-muted);">🔍</span>
+        <input type="text" id="haritaAramaInput" placeholder="Tuzak No veya Köy Ara..." oninput="haritaAramaYap(this.value)" onkeydown="if(event.key==='Escape'){this.value='';haritaAramaSonucKapat();}">
+        <button onclick="document.getElementById('haritaAramaInput').value='';haritaAramaSonucKapat();" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px;">&times;</button>
+        <div class="harita-arama-sonuc" id="haritaAramaSonuclar"></div>
+    </div>
 
     <!-- Map container -->
     <div id="harita"></div>
@@ -1005,654 +1250,114 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-
     <script>
-        // FIREBASE CONFIGURATION
+        // API CONFIGURATION & MOCK DB INTERFACE
+        const API_URL = ""; 
+
+        function getHeaders() {
+            var token = localStorage.getItem("jwt_token");
+            return {
+                "Content-Type": "application/json",
+                "Authorization": token ? "Bearer " + token : ""
+            };
+        }
+
+        // Offline Synchronization Queue Manager
+        function kuyrugaEkle(type, collection, id, data) {
+            var queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+            queue.push({
+                type: type,
+                collection: collection,
+                id: id,
+                data: data,
+                timestamp: Date.now()
+            });
+            localStorage.setItem("offline_queue", JSON.stringify(queue));
+            console.log("Çevrimdışı işlem sıraya eklendi:", type, collection, id);
+        }
+
+        async function cevrimdisiKuyruguEsitle() {
+            if (!navigator.onLine) return;
+            var queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+            if (queue.length === 0) return;
+
+            console.log("Çevrimdışı işlemler sunucu ile senkronize ediliyor...", queue.length);
+            var token = localStorage.getItem("jwt_token");
+            if (!token) return; 
+
+            var remains = [];
+            for (var action of queue) {
+                try {
+                    var endpoint = "";
+                    var method = "";
+                    var bodyObj = action.data;
+
+                    if (action.collection === "tuzaklar") {
+                        if (action.type === "ADD") {
+                            endpoint = "/api/tuzaklar";
+                            method = "POST";
+                        } else if (action.type === "UPDATE") {
+                            if (action.data.kayitlar !== undefined) {
+                                endpoint = "/api/tuzaklar/" + action.id + "/kayitlar";
+                                method = "POST";
+                            } else {
+                                endpoint = "/api/tuzaklar/" + action.id;
+                                method = "PUT";
+                            }
+                        } else if (action.type === "DELETE") {
+                            endpoint = "/api/tuzaklar/" + action.id;
+                            method = "DELETE";
+                        }
+                    }
+
+                    if (endpoint) {
+                        var res = await fetch(API_URL + endpoint, {
+                            method: method,
+                            headers: getHeaders(),
+                            body: bodyObj ? JSON.stringify(bodyObj) : undefined
+                        });
+                        if (!res.ok) throw new Error("Sync status " + res.status);
+                    }
+                } catch (err) {
+                    console.error("Senkronizasyon başarısız (işlem sırada kalacak):", action, err);
+                    remains.push(action);
+                }
+            }
+
+            localStorage.setItem("offline_queue", JSON.stringify(remains));
+            if (remains.length === 0) {
+                console.log("Tüm çevrimdışı işlemler başarıyla eşitlendi!");
+                var res = await fetch(API_URL + "/api/tuzaklar", { headers: getHeaders() });
+                if (res.ok) {
+                    tuzakVerileri = await res.json();
+                    tuzaklariYenileLocal();
+                }
+            }
+        }
+
+        window.addEventListener('online', cevrimdisiKuyruguEsitle);
+
+        // Firebase Firestore Initialization
         const firebaseConfig = {
             apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
             authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
             projectId: "kokarca-tuzak-takip-sist-99696",
             storageBucket: "kokarca-tuzak-takip-sist-99696.firebasestorage.app",
             messagingSenderId: "125586984500",
-            appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461",
-            measurementId: "G-WXJQ4DJLJX"
+            appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461"
         };
-
-        // Initialize Firebase Firestore and Offline Persistence
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        db.enablePersistence()
-            .then(function() {
-                console.log("Firestore çevrimdışı önbellek desteği başarıyla etkinleştirildi.");
-            })
-            .catch(function(err) {
-                if (err.code == 'failed-precondition') {
-                    console.warn("Çevrimdışı önbellek etkinleştirilemedi: Çoklu sekme açık.");
-                } else if (err.code == 'unimplemented') {
-                    console.warn("Çevrimdışı önbellek etkinleştirilemedi: Tarayıcı desteklemiyor.");
-                }
-            });
-
-        // Register Service Worker and reload on update
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js').then(function(reg) {
-                    console.log('ServiceWorker başarıyla kaydedildi, kapsam: ', reg.scope);
-                }).catch(function(err) {
-                    console.error('ServiceWorker kaydı başarısız: ', err);
-                });
-            });
-
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', function() {
-                if (!refreshing) {
-                    refreshing = true;
-                    window.location.reload();
-                }
-            });
-        }
-
-        // Internet Connection Status Check
-        window.addEventListener('online', guncelleBaglantiDurumu);
-        window.addEventListener('offline', guncelleBaglantiDurumu);
-
-        function guncelleBaglantiDurumu() {
-            var badge = document.getElementById('offlineBadge');
-            if (navigator.onLine) {
-                badge.style.display = 'none';
-            } else {
-                badge.style.display = 'flex';
-            }
-        }
-        guncelleBaglantiDurumu();
-
-        // Initialize Map (Güneysu/Rize Focus)
-        var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        var sokakHaritasi = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        });
-
-        var uyduHaritasi = L.tileLayer('https://mt0.google.com/vt/lyrs=y&hl=tr&x={x}&y={y}&z={z}', {
-            attribution: '© Google',
-            maxZoom: 20
-        });
-
-        uyduHaritasi.addTo(map);
-
-        var haritaTipleri = {
-            "🛰️ Uydu Görünümü": uyduHaritasi,
-            "🗺️ Sokak Görünümü": sokakHaritasi
-        };
-
-        var ilceSinirKatmani = L.featureGroup();
-        var koySinirKatmani = L.featureGroup();
-        var overlays = {
-            "🗺️ İlçe Sınırları": ilceSinirKatmani,
-            "🏨️ Köy Sınırları": koySinirKatmani
-        };
-
-        L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
-
-        // Geolocation Find User
-        map.locate({setView: true, maxZoom: 16});
-
-        function onLocationFound(e) {
-            var radius = e.accuracy / 2;
-            L.marker(e.latlng).addTo(map)
-                .bindPopup("Şu an buradasınız").openPopup();
-            L.circle(e.latlng, radius).addTo(map);
-        }
-        map.on('locationfound', onLocationFound);
-
-        // Rize District Boundaries Overlay
-        var rizeIlceleri = ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"];
-        var ilceSinirlariYuklendi = false;
-        var koySinirLayerAktif = false;
-        var yuklenmisKoySinirlari = {}; // { "Güneysu": true }
-
-        map.on('overlayadd', function(event) {
-            if (event.name === "🗺️ İlçe Sınırları") {
-                yukleIlceSinirlari();
-            }
-            if (event.name === "🏨️ Köy Sınırları") {
-                koySinirLayerAktif = true;
-                yukleKoySinirlari();
+        // Enable offline persistence
+        db.enablePersistence().catch(function(err) {
+            if (err.code == 'failed-precondition') {
+                console.warn("Persistence failed: Multiple tabs open");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Persistence failed: Browser doesn't support it");
             }
         });
-
-        map.on('overlayremove', function(event) {
-            if (event.name === "🏨️ Köy Sınırları") {
-                koySinirLayerAktif = false;
-            }
-        });
-
-        async function yukleIlceSinirlari() {
-            if (ilceSinirlariYuklendi) return;
-            
-            var loadingBadge = document.getElementById("ilceLoadingBadge");
-            if (loadingBadge) {
-                loadingBadge.style.display = 'flex';
-                loadingBadge.innerText = "🗺️ İlçe sınırları yükleniyor...";
-            }
-
-            var hataVar = false;
-            var yuklenenSayi = 0;
-
-            for (var i = 0; i < rizeIlceleri.length; i++) {
-                var ilce = rizeIlceleri[i];
-                var cached = localStorage.getItem("rize_geojson_" + ilce);
-                var geojson = null;
-
-                if (cached) {
-                    try {
-                        geojson = JSON.parse(cached);
-                    } catch (e) {
-                        console.error("Önbellekten geojson okuma hatası (" + ilce + "):", e);
-                    }
-                }
-
-                if (!geojson) {
-                    if (navigator.onLine) {
-                        if (loadingBadge) {
-                            loadingBadge.innerText = "🗺️ Sınırlar indiriliyor: " + ilce + " (" + (i + 1) + "/" + rizeIlceleri.length + ")";
-                        }
-
-                        var query = ilce === "Merkez" ? "Rize Merkez, Türkiye" : ilce + ", Rize, Türkiye";
-                        var url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(query) + "&polygon_geojson=1&format=json";
-
-                        try {
-                            if (yuklenenSayi > 0) {
-                                await new Promise(resolve => setTimeout(resolve, 1200));
-                            }
-                            
-                            var response = await fetch(url);
-                            if (!response.ok) throw new Error("HTTP " + response.status);
-                            
-                            var data = await response.json();
-                            yuklenenSayi++;
-
-                            if (data && data.length > 0) {
-                                var match = data.find(item => item.geojson && (item.geojson.type === "Polygon" || item.geojson.type === "MultiPolygon"));
-                                if (match) {
-                                    geojson = match.geojson;
-                                } else if (data[0].geojson) {
-                                    geojson = data[0].geojson;
-                                }
-                            }
-
-                            if (geojson) {
-                                localStorage.setItem("rize_geojson_" + ilce, JSON.stringify(geojson));
-                            } else {
-                                console.warn(ilce + " için GeoJSON verisi bulunamadı.");
-                            }
-                        } catch (err) {
-                            console.error(ilce + " sınırı indirilirken hata oluştu:", err);
-                            hataVar = true;
-                        }
-                    } else {
-                        hataVar = true;
-                    }
-                }
-
-                if (geojson) {
-                    cizIlceSiniri(ilce, geojson);
-                }
-            }
-
-            if (loadingBadge) {
-                loadingBadge.style.display = 'none';
-            }
-
-            if (!hataVar) {
-                ilceSinirlariYuklendi = true;
-            } else {
-                alert("Bazı ilçe sınırları indirilemedi. İnternet bağlantınızı kontrol edip tekrar deneyebilirsiniz.");
-            }
-        }
-
-        function cizIlceSiniri(ilce, geojson) {
-            var stilVarsayilan = {
-                color: "#008e43",
-                weight: 2,
-                opacity: 0.6,
-                fillColor: "#22c55e",
-                fillOpacity: 0.05
-            };
-
-            var katman = L.geoJSON(geojson, {
-                style: stilVarsayilan
-            });
-
-            katman.on('mouseover', function(e) {
-                e.target.setStyle({
-                    weight: 3,
-                    fillOpacity: 0.15
-                });
-            });
-
-            katman.on('mouseout', function(e) {
-                e.target.setStyle(stilVarsayilan);
-            });
-
-            katman.bindTooltip("<b>" + ilce + " İlçesi</b>", {
-                sticky: true,
-                className: "ilce-tooltip"
-            });
-
-            katman.addTo(ilceSinirKatmani);
-        }
-
-        // ── Köy / Mahalle Sınırları (Overpass API) ────────────────────────────────
-
-        async function yukleKoySinirlari() {
-            var ilce = aktifFiltreler.ilce;
-
-            if (ilce === "Tümü") {
-                alert("🏨 Köy sınırlarını görmek için önce sol menüden bir ilçe seçiniz.");
-                return;
-            }
-
-            if (yuklenmisKoySinirlari[ilce]) return;
-
-            // v2 prefix: geçersiz önceki önbellekleri otomatik yok say
-            var cacheKey = "rize_koy_v2_" + ilce;
-            var cached = localStorage.getItem(cacheKey);
-
-            if (cached) {
-                try {
-                    var koyVerileri = JSON.parse(cached);
-                    koyVerileri.forEach(function(item) {
-                        if (item.name && item.geojson) cizKoySiniri(item.name, item.geojson);
-                    });
-                    yuklenmisKoySinirlari[ilce] = true;
-                } catch(e) {
-                    console.error("Köy önbellekten okuma hatası:", e);
-                    localStorage.removeItem(cacheKey);
-                }
-                return;
-            }
-
-            if (!navigator.onLine) {
-                alert("Köy sınırları için internet bağlantısı gerekmektedir.");
-                return;
-            }
-
-            var loadingBadge = document.getElementById("ilceLoadingBadge");
-            if (loadingBadge) {
-                loadingBadge.style.display = 'flex';
-                loadingBadge.innerText = "🏨 " + ilce + " köy/mahalle sınırları indiriliyor...";
-            }
-
-            // Rize ili içinde filtrele → aynı adlı diğer ilçelerle karışmaz
-            var overpassQuery =
-                '[out:json][timeout:60];\n' +
-                'area["name"="Rize"]["admin_level"="4"]->.il;\n' +
-                'area["name"="' + ilce + '"]["admin_level"="6"](area.il)->.searchArea;\n' +
-                '(\n' +
-                '  relation["admin_level"="8"]["boundary"="administrative"](area.searchArea);\n' +
-                ');\n' +
-                'out geom;';
-
-            try {
-                var response = await fetch("https://overpass-api.de/api/interpreter", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: "data=" + encodeURIComponent(overpassQuery)
-                });
-
-                if (!response.ok) throw new Error("HTTP " + response.status);
-
-                var data = await response.json();
-                var koyVerileri = [];
-
-                if (data.elements && data.elements.length > 0) {
-                    data.elements.forEach(function(element) {
-                        if (element.type === "relation" && element.members) {
-                            var name = (element.tags && (element.tags.name || element.tags["name:tr"])) || "Bilinmiyor";
-                            var geojson = overpassRelasyonuGeoJSONYap(element);
-                            if (geojson) {
-                                koyVerileri.push({ name: name, geojson: geojson });
-                                cizKoySiniri(name, geojson);
-                            }
-                        }
-                    });
-                    localStorage.setItem(cacheKey, JSON.stringify(koyVerileri));
-                    yuklenmisKoySinirlari[ilce] = true;
-                    if (koyVerileri.length === 0) {
-                        console.warn(ilce + " için köy sınırı bulunamadı.");
-                    }
-                } else {
-                    alert(ilce + " için köy/mahalle sınırı verisi bulunamadı.\nOpenStreetMap'te bu ilçe için yeterli veri olmayabilir.");
-                }
-            } catch(err) {
-                console.error("Köy sınırları yükleme hatası:", err);
-                alert("Köy sınırları yüklenirken hata oluştu: " + err.message);
-            } finally {
-                if (loadingBadge) loadingBadge.style.display = 'none';
-            }
-        }
-
-        function overpassRelasyonuGeoJSONYap(element) {
-            var outerWays = element.members.filter(function(m) {
-                return m.role === 'outer' && m.geometry && m.geometry.length > 0;
-            });
-            var innerWays = element.members.filter(function(m) {
-                return m.role === 'inner' && m.geometry && m.geometry.length > 0;
-            });
-
-            if (outerWays.length === 0) return null;
-
-            // Way geometrisini [lon, lat] dizisine çevir
-            function wayToCoords(way) {
-                return way.geometry.map(function(pt) { return [pt.lon, pt.lat]; });
-            }
-
-            // OSM ilişkisindeki way segmentlerini uç-uca zincirleyerek kapalı halka oluştur
-            // Way'ler herhangi bir sırayla ve yönde gelebilir
-            function assembleRing(ways) {
-                if (ways.length === 0) return null;
-
-                var segments = ways.map(function(w) { return wayToCoords(w); });
-
-                if (segments.length === 1) {
-                    var c = segments[0];
-                    var f = c[0], l = c[c.length - 1];
-                    if (f[0] !== l[0] || f[1] !== l[1]) c.push(c[0]);
-                    return c;
-                }
-
-                // Zincir başlat
-                var ring = segments.shift().slice();
-                var maxIter = segments.length * 2;
-                var iter = 0;
-
-                while (segments.length > 0 && iter < maxIter) {
-                    iter++;
-                    var ringEnd = ring[ring.length - 1];
-                    var connected = false;
-
-                    for (var i = 0; i < segments.length; i++) {
-                        var seg = segments[i];
-                        var segStart = seg[0];
-                        var segEnd = seg[seg.length - 1];
-                        var eps = 1e-6; // koordinat toleransı
-
-                        var matchStart = (Math.abs(segStart[0] - ringEnd[0]) < eps &&
-                                         Math.abs(segStart[1] - ringEnd[1]) < eps);
-                        var matchEnd   = (Math.abs(segEnd[0]   - ringEnd[0]) < eps &&
-                                         Math.abs(segEnd[1]   - ringEnd[1]) < eps);
-
-                        if (matchStart) {
-                            // Doğrudan bağla (ilk nokta zaten aynı, atla)
-                            ring = ring.concat(seg.slice(1));
-                            segments.splice(i, 1);
-                            connected = true;
-                            break;
-                        } else if (matchEnd) {
-                            // Ters çevirerek bağla
-                            var reversed = seg.slice().reverse();
-                            ring = ring.concat(reversed.slice(1));
-                            segments.splice(i, 1);
-                            connected = true;
-                            break;
-                        }
-                    }
-
-                    if (!connected) {
-                        // Bağlanamayan segment → mevcut halkayı kapat, yeni başlat
-                        var first = ring[0], last = ring[ring.length - 1];
-                        if (first[0] !== last[0] || first[1] !== last[1]) ring.push(ring[0]);
-                        ring = ring.concat(segments.shift());
-                    }
-                }
-
-                // Haldayı kapat
-                var rf = ring[0], rl = ring[ring.length - 1];
-                if (rf[0] !== rl[0] || rf[1] !== rl[1]) ring.push(ring[0]);
-
-                return ring;
-            }
-
-            // Outer halkaları oluştur
-            // Eğer birden fazla outer way var ama hepsi tek bir halka oluşturursa Polygon, aksi halde MultiPolygon
-            var outerRing = assembleRing(outerWays.slice());
-            if (!outerRing || outerRing.length < 4) return null;
-
-            var rings = [outerRing];
-
-            // Inner (delik) halkaları ekle
-            innerWays.forEach(function(way) {
-                var innerCoords = wayToCoords(way);
-                var f = innerCoords[0], l = innerCoords[innerCoords.length - 1];
-                if (f[0] !== l[0] || f[1] !== l[1]) innerCoords.push(innerCoords[0]);
-                rings.push(innerCoords);
-            });
-
-            return { type: "Polygon", coordinates: rings };
-        }
-
-        function cizKoySiniri(koyAdi, geojson) {
-            var stilVarsayilan = {
-                color: "#0369a1",
-                weight: 1.5,
-                opacity: 0.55,
-                fillColor: "#0ea5e9",
-                fillOpacity: 0.04,
-                dashArray: "5 4"
-            };
-            var stilSecili = {
-                color: "#0369a1",
-                weight: 3,
-                opacity: 0.9,
-                fillColor: "#0ea5e9",
-                fillOpacity: 0.22,
-                dashArray: ""
-            };
-
-            // Köy adını feature.properties.name içinde sakla → point-in-polygon arama için
-            var feature = {
-                type: "Feature",
-                properties: { name: koyAdi },
-                geometry: geojson
-            };
-
-            var katman = L.geoJSON(feature, {
-                style: stilVarsayilan,
-                onEachFeature: function(f, layer) {
-                    layer.options.cursor = 'pointer';
-                }
-            });
-
-            katman.on('mouseover', function(e) {
-                e.target.setStyle({ weight: 2.5, fillOpacity: 0.14, dashArray: "" });
-            });
-            katman.on('mouseout', function(e) {
-                e.target.setStyle(stilVarsayilan);
-            });
-
-            // Tıklayınca köyü filtrele otomatik seç
-            katman.on('click', function(e) {
-                var koySelect = document.getElementById("menuFiltreKoy");
-                if (!koySelect) return;
-                var eslesenIndex = bulEnUygunKoyIndex(koyAdi, koySelect);
-                if (eslesenIndex > -1) {
-                    var eslesenDeger = koySelect.options[eslesenIndex].value;
-                    koySelect.selectedIndex = eslesenIndex;
-                    aktifFiltreler.koy = eslesenDeger;
-                    filtreleriUygula();
-                    var tiklanan = e.target;
-                    tiklanan.setStyle(stilSecili);
-                    setTimeout(function() { tiklanan.setStyle(stilVarsayilan); }, 1200);
-                } else {
-                    var tiklanan2 = e.target;
-                    tiklanan2.setStyle(stilSecili);
-                    setTimeout(function() { tiklanan2.setStyle(stilVarsayilan); }, 800);
-                }
-            });
-
-            katman.bindTooltip("<b>" + koyAdi + "</b><br><small style='color:#64748b'>👆 Tıkla: Filtrele</small>", {
-                sticky: true,
-                className: "ilce-tooltip"
-            });
-
-            katman.addTo(koySinirKatmani);
-        }
-
-        // ── Nokta-içinde-polygon kontrolü (ray-casting) ───────────────────────────────
-        function noktaGeometrisiIcindeMi(lat, lng, source) {
-            if (!source || source.length === 0) return false;
-
-            // 1. Leaflet L.LatLng nesneleri içeren düz dizi
-            if (source[0] && typeof source[0] === 'object' && source[0].lat !== undefined) {
-                var x = lng, y = lat, inside = false;
-                var len = source.length;
-                for (var i = 0, j = len - 1; i < len; j = i++) {
-                    var xi = source[i].lng, yi = source[i].lat;
-                    var xj = source[j].lng, yj = source[j].lat;
-                    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-                        inside = !inside;
-                    }
-                }
-                return inside;
-            }
-
-            // 2. GeoJSON sayı ikilileri [lng, lat] içeren düz dizi
-            if (Array.isArray(source[0]) && typeof source[0][0] === 'number') {
-                var x = lng, y = lat, inside = false;
-                var len = source.length;
-                for (var i = 0, j = len - 1; i < len; j = i++) {
-                    var xi = source[i][0], yi = source[i][1];
-                    var xj = source[j][0], yj = source[j][1];
-                    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-                        inside = !inside;
-                    }
-                }
-                return inside;
-            }
-
-            // 3. İçiçe diziler (MultiPolygon, GeoJSON coordinates veya Leaflet delikli halkaları)
-            for (var i = 0; i < source.length; i++) {
-                if (noktaGeometrisiIcindeMi(lat, lng, source[i])) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Turkish-friendly string normalization (removes suffixes, normalizes chars, leaves alphanumeric)
-        function turkceNormalize(str) {
-            if (!str) return "";
-            var ekSoyRegex = /\s*(köyü|mahallesi|köy|mahalle)\s*$/i;
-            var temiz = str.trim().toLowerCase().replace(ekSoyRegex, '').trim();
-            var map = {
-                'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c',
-                'â': 'a', 'î': 'i', 'û': 'a'
-            };
-            var res = "";
-            for (var i = 0; i < temiz.length; i++) {
-                var ch = temiz[i];
-                res += map[ch] || ch;
-            }
-            return res.replace(/[^a-z0-9]/g, '');
-        }
-
-        // Finds the best matching option index in a select element for a Turkish village name
-        function bulEnUygunKoyIndex(koyAdi, selectElement) {
-            if (!koyAdi || !selectElement) return -1;
-            var nSearch = turkceNormalize(koyAdi);
-            if (!nSearch) return -1;
-
-            var options = selectElement.options;
-            // 1. Exact match
-            for (var i = 0; i < options.length; i++) {
-                var optVal = options[i].value;
-                if (!optVal || optVal === "Tümü" || optVal === "Tümü (Tüm Köyler)") continue;
-                if (turkceNormalize(optVal) === nSearch) {
-                    return i;
-                }
-            }
-            // 2. Partial match
-            for (var i = 0; i < options.length; i++) {
-                var optVal = options[i].value;
-                if (!optVal || optVal === "Tümü" || optVal === "Tümü (Tüm Köyler)") continue;
-                var nOpt = turkceNormalize(optVal);
-                if (nOpt.includes(nSearch) || nSearch.includes(nOpt)) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        // Background loader for village boundaries of a given district (no UI blockers or alerts)
-        async function arkaPlandaKoySinirlariniYukle(ilce) {
-            if (!ilce || ilce === "Tümü") return;
-            if (yuklenmisKoySinirlari[ilce]) return;
-
-            var cacheKey = "rize_koy_v2_" + ilce;
-            var cached = localStorage.getItem(cacheKey);
-
-            if (cached) {
-                try {
-                    var koyVerileri = JSON.parse(cached);
-                    koyVerileri.forEach(function(item) {
-                        if (item.name && item.geojson) cizKoySiniri(item.name, item.geojson);
-                    });
-                    yuklenmisKoySinirlari[ilce] = true;
-                } catch(e) {
-                    console.error("Köy önbellekten okuma hatası:", e);
-                    localStorage.removeItem(cacheKey);
-                }
-                return;
-            }
-
-            if (!navigator.onLine) return;
-
-            var overpassQuery =
-                '[out:json][timeout:60];\n' +
-                'area["name"="Rize"]["admin_level"="4"]->.il;\n' +
-                'area["name"="' + ilce + '"]["admin_level"="6"](area.il)->.searchArea;\n' +
-                '(\n' +
-                '  relation["admin_level"="8"]["boundary"="administrative"](area.searchArea);\n' +
-                ');\n' +
-                'out geom;';
-
-            try {
-                var response = await fetch("https://overpass-api.de/api/interpreter", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: "data=" + encodeURIComponent(overpassQuery)
-                });
-
-                if (response.ok) {
-                    var data = await response.json();
-                    var koyVerileri = [];
-
-                    if (data.elements && data.elements.length > 0) {
-                        data.elements.forEach(function(element) {
-                            if (element.type === "relation" && element.members) {
-                                var name = (element.tags && (element.tags.name || element.tags["name:tr"])) || "Bilinmiyor";
-                                var geojson = overpassRelasyonuGeoJSONYap(element);
-                                if (geojson) {
-                                    koyVerileri.push({ name: name, geojson: geojson });
-                                    cizKoySiniri(name, geojson);
-                                }
-                            }
-                        });
-                        localStorage.setItem(cacheKey, JSON.stringify(koyVerileri));
-                        yuklenmisKoySinirlari[ilce] = true;
-                    }
-                }
-            } catch(err) {
-                console.error("Arka planda köy sınırları yükleme hatası:", err);
-            }
-        }
-
+        
         // Global Variables
         var markerListesi = {};
         var tuzakVerileri = {};
@@ -1718,32 +1423,27 @@
             for (var docId in markerListesi) {
                 markerGosterGizle(docId);
             }
+            miniStatsGuncelle();
         }
 
-        // Real-Time Personnel Listener - Robust default personnel checking and seeding
+        // ── Ondalık → Derece Dakika Saniye Dönüştürücü ──
+        function decimalToDMS(decimal, type) {
+            var absolute = Math.abs(decimal);
+            var degrees  = Math.floor(absolute);
+            var minutesFull = (absolute - degrees) * 60;
+            var minutes  = Math.floor(minutesFull);
+            var seconds  = ((minutesFull - minutes) * 60).toFixed(2);
+            var direction = '';
+            if (type === 'lat') {
+                direction = decimal >= 0 ? 'K' : 'G';
+            } else {
+                direction = decimal >= 0 ? 'D' : 'B';
+            }
+            return degrees + '\u00b0' + minutes + '\'' + seconds + '\" ' + direction;
+        }
+
         function dinleVeTohumlaPersoneller() {
-            var varsayilanlar = [
-                { adSoyad: "Gökhan ASLAN", kullaniciAdi: "gokhan.aslan", unvan: "Yönetici", ilce: "Güneysu", telefon: "+905555555555", rol: "Süper Admin" },
-                { adSoyad: "Dursun Ali AZAKLI", kullaniciAdi: "dursunali.azakli", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905444444444", rol: "Saha Personeli" },
-                { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905333333333", rol: "Saha Personeli" }
-            ];
-
-            var checks = varsayilanlar.map(function(p) {
-                return db.collection("personeller").doc(p.kullaniciAdi).get().then(function(doc) {
-                    if (!doc.exists || doc.data().adSoyad !== p.adSoyad) {
-                        console.log(p.kullaniciAdi + " veritabanında güncelleniyor/tohumlanıyor...");
-                        return db.collection("personeller").doc(p.kullaniciAdi).set(p);
-                    }
-                });
-            });
-
-            Promise.all(checks).then(function() {
-                console.log("Personel kontrol ve tohumlama tamamlandı.");
-                oturumKontrol();
-            }).catch(function(err) {
-                console.warn("Personel kontrol/tohumlama hatası:", err);
-                oturumKontrol();
-            });
+            // Tohumlama ve ilk kontrol backend (init_db.js) tarafında güvenli bir şekilde yapılmaktadır.
         }
 
         // Load Locations from Firestore → localStorage → lokasyonlar.json fallback
@@ -1842,7 +1542,7 @@
 
         // Initialize lists and start listening to personnel
         lokasyonlariYukle();
-        dinleVeTohumlaPersoneller();
+        oturumKontrol();
 
         // Custom DivIcon Marker Builder (Offline compliant)
         function createCustomMarkerIcon(tuzakTipi, bocekSayisi) {
@@ -1877,6 +1577,142 @@
             });
         }
 
+        function guncelleHaritaTuzakMarkers(changes) {
+            changes.forEach(function(change) {
+                var data = change.doc.data();
+                var docId = change.doc.id;
+                
+                // ROLE-BASED DISTRICT ISOLATION (Only managers can see other districts)
+                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    if (markerListesi[docId]) {
+                        map.removeLayer(markerListesi[docId]);
+                        delete markerListesi[docId];
+                        delete tuzakVerileri[docId];
+                    }
+                    return;
+                }
+                
+                if (change.type === "added" || change.type === "modified") {
+                    tuzakVerileri[docId] = data;
+                    
+                    var popupIcerik = "";
+                    var koyIsmi = data.koy || data.ad || "Bilinmiyor";
+                    var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
+                    
+                    popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
+                    popupIcerik += "<b>Tuzak Tipi:</b> " + tipStr + "<br>";
+                    if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
+                    if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
+                    
+                    var ekleyenStr = "";
+                    if (aktifKullanici) {
+                        if (isAdmin()) {
+                            ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
+                            if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
+                        } else if (data.telefon === aktifKullanici.telefon) {
+                            ekleyenStr = data.adSoyad || "Kendi Kaydınız";
+                            if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
+                        } else {
+                            ekleyenStr = data.unvan ? "Saha Personeli (" + data.unvan + ")" : "Saha Personeli";
+                        }
+                    } else {
+                        ekleyenStr = "Saha Personeli";
+                    }
+                    popupIcerik += "<b>Ekleyen:</b> " + ekleyenStr + "<br>";
+
+                    if (data.sonGuncelleyen) {
+                        var guncelleyenStr = "";
+                        if (aktifKullanici) {
+                            if (isAdmin()) {
+                                guncelleyenStr = data.sonGuncelleyen;
+                                if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
+                            } else if (data.sonGuncelleyenTel === aktifKullanici.telefon) {
+                                guncelleyenStr = data.sonGuncelleyen;
+                                if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
+                            } else {
+                                guncelleyenStr = data.sonGuncelleyenUnvan ? "Saha Personeli (" + data.sonGuncelleyenUnvan + ")" : "Saha Personeli";
+                            }
+                        } else {
+                            guncelleyenStr = "Saha Personeli";
+                        }
+                        popupIcerik += "<b>Son Güncelleyen:</b> " + guncelleyenStr + "<br>";
+                        if (data.sonGuncellemeTarihi) popupIcerik += "<b>Güncelleme Tarihi:</b> " + data.sonGuncellemeTarihi + "<br>";
+                    }
+
+                    // — Koordinat bilgisi (DD + DMS) —
+                    if (data.lat !== undefined && data.lng !== undefined) {
+                        var ddLat  = data.lat.toFixed(6);
+                        var ddLng  = data.lng.toFixed(6);
+                        var dmsLat = decimalToDMS(data.lat, 'lat');
+                        var dmsLng = decimalToDMS(data.lng, 'lng');
+                        popupIcerik +=
+                            "<div style='margin-top:8px; padding:7px 10px; background:#f0fdf4; border-radius:8px; border-left:3px solid var(--primary); font-size:12px;'>" +
+                            "<div style='font-weight:700; color:var(--primary); margin-bottom:4px;'>📍 Koordinatlar</div>" +
+                            "<div style='font-family:monospace; color:var(--text-dark);'>" +
+                            "<div><b>Ondalık:</b> " + ddLat + "&deg;N, " + ddLng + "&deg;E</div>" +
+                            "<div style='margin-top:2px;'><b>DMS:</b> " + dmsLat + ", " + dmsLng + "</div>" +
+                            "</div>" +
+                            "<button onclick=\"navigator.clipboard.writeText('" + ddLat + ", " + ddLng + "');this.textContent='✓ Kopyalandı!';setTimeout(()=>this.textContent='📋 Kopyala',1500);\" style='margin-top:5px; font-size:10px; padding:2px 8px; border:1px solid #bbf7d0; border-radius:10px; background:white; color:var(--primary); font-weight:700; cursor:pointer; font-family:var(--font);'>📋 Kopyala</button>" +
+                            "</div>";
+                    }
+
+                    popupIcerik += "<div class='popup-actions'>";
+                    popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
+                    popupIcerik += "<a class='popup-btn' style='background: linear-gradient(135deg, #ea4335, #ff6b6b); color: white; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;' href='https://www.google.com/maps/dir/?api=1&destination=" + data.lat + "," + data.lng + "' target='_blank'>🧭 Yol Tarifi</a>";
+                    popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
+                    popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
+                    popupIcerik += "</div>";
+                    
+                    if (data.lat !== undefined && data.lng !== undefined) {
+                        var customIcon = createCustomMarkerIcon(data.tuzakTipi, data.bocekSayisi);
+
+                        if (change.type === "added") {
+                            var marker = L.marker([data.lat, data.lng], {icon: customIcon}).bindPopup(popupIcerik);
+                            markerListesi[docId] = marker;
+                            markerGosterGizle(docId);
+                        } else if (change.type === "modified") {
+                            var marker = markerListesi[docId];
+                            if (marker) {
+                                marker.setLatLng([data.lat, data.lng]);
+                                marker.setPopupContent(popupIcerik);
+                                marker.setIcon(customIcon);
+                                markerGosterGizle(docId);
+                            }
+                        }
+                    }
+                }
+                
+                if (change.type === "removed") {
+                    var marker = markerListesi[docId];
+                    if (marker) {
+                        map.removeLayer(marker);
+                        delete markerListesi[docId];
+                        delete tuzakVerileri[docId];
+                    }
+                }
+            });
+        }
+
+        function tuzaklariYenileLocal() {
+            var fakeChanges = [];
+            for (var docId in tuzakVerileri) {
+                var data = tuzakVerileri[docId];
+                fakeChanges.push({
+                    type: markerListesi[docId] ? "modified" : "added",
+                    doc: { id: docId, data: function() { return data; } }
+                });
+            }
+            for (var markerId in markerListesi) {
+                if (!tuzakVerileri[markerId]) {
+                    fakeChanges.push({
+                        type: "removed",
+                        doc: { id: markerId }
+                    });
+                }
+            }
+            guncelleHaritaTuzakMarkers(fakeChanges);
+        }
+
         // Setup real-time listeners for traps
         function tuzaklariDinle() {
             if (tuzakListener) {
@@ -1891,102 +1727,7 @@
             tuzakVerileri = {};
 
             tuzakListener = db.collection("tuzaklar").onSnapshot(function(querySnapshot) {
-                querySnapshot.docChanges().forEach(function(change) {
-                    var data = change.doc.data();
-                    var docId = change.doc.id;
-                    
-                    // ROLE-BASED DISTRICT ISOLATION (Only managers can see other districts)
-                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
-                        if (markerListesi[docId]) {
-                            map.removeLayer(markerListesi[docId]);
-                            delete markerListesi[docId];
-                            delete tuzakVerileri[docId];
-                        }
-                        return;
-                    }
-                    
-                    if (change.type === "added" || change.type === "modified") {
-                        tuzakVerileri[docId] = data;
-                        
-                        var popupIcerik = "";
-                        var koyIsmi = data.koy || data.ad || "Bilinmiyor";
-                        var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
-                        
-                        popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
-                        popupIcerik += "<b>Tuzak Tipi:</b> " + tipStr + "<br>";
-                        if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
-                        if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
-                        
-                        var ekleyenStr = "";
-                        if (aktifKullanici) {
-                            if (isAdmin()) {
-                                ekleyenStr = data.adSoyad || "Sistem (Toplu Kayıt)";
-                                if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
-                            } else if (data.telefon === aktifKullanici.telefon) {
-                                ekleyenStr = data.adSoyad || "Kendi Kaydınız";
-                                if (data.unvan) ekleyenStr += " (" + data.unvan + ")";
-                            } else {
-                                ekleyenStr = data.unvan ? "Saha Personeli (" + data.unvan + ")" : "Saha Personeli";
-                            }
-                        } else {
-                            ekleyenStr = "Saha Personeli";
-                        }
-                        popupIcerik += "<b>Ekleyen:</b> " + ekleyenStr + "<br>";
-
-                        if (data.sonGuncelleyen) {
-                            var guncelleyenStr = "";
-                            if (aktifKullanici) {
-                                if (isAdmin()) {
-                                    guncelleyenStr = data.sonGuncelleyen;
-                                    if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
-                                } else if (data.sonGuncelleyenTel === aktifKullanici.telefon) {
-                                    guncelleyenStr = data.sonGuncelleyen;
-                                    if (data.sonGuncelleyenUnvan) guncelleyenStr += " (" + data.sonGuncelleyenUnvan + ")";
-                                } else {
-                                    guncelleyenStr = data.sonGuncelleyenUnvan ? "Saha Personeli (" + data.sonGuncelleyenUnvan + ")" : "Saha Personeli";
-                                }
-                            } else {
-                                guncelleyenStr = "Saha Personeli";
-                            }
-                            popupIcerik += "<b>Son Güncelleyen:</b> " + guncelleyenStr + "<br>";
-                            if (data.sonGuncellemeTarihi) popupIcerik += "<b>Güncelleme Tarihi:</b> " + data.sonGuncellemeTarihi + "<br>";
-                        }
-
-                        popupIcerik += "<div class='popup-actions'>";
-                        popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
-                        popupIcerik += "<a class='popup-btn' style='background: linear-gradient(135deg, #ea4335, #ff6b6b); color: white; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;' href='https://www.google.com/maps/dir/?api=1&destination=" + data.lat + "," + data.lng + "' target='_blank'>🧭 Yol Tarifi</a>";
-                        popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
-                        popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
-                        popupIcerik += "</div>";
-                        
-                        if (data.lat !== undefined && data.lng !== undefined) {
-                            var customIcon = createCustomMarkerIcon(data.tuzakTipi, data.bocekSayisi);
-
-                            if (change.type === "added") {
-                                var marker = L.marker([data.lat, data.lng], {icon: customIcon}).bindPopup(popupIcerik);
-                                markerListesi[docId] = marker;
-                                markerGosterGizle(docId);
-                            } else if (change.type === "modified") {
-                                var marker = markerListesi[docId];
-                                if (marker) {
-                                    marker.setLatLng([data.lat, data.lng]);
-                                    marker.setPopupContent(popupIcerik);
-                                    marker.setIcon(customIcon);
-                                    markerGosterGizle(docId);
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (change.type === "removed") {
-                        var marker = markerListesi[docId];
-                        if (marker) {
-                            map.removeLayer(marker);
-                            delete markerListesi[docId];
-                            delete tuzakVerileri[docId];
-                        }
-                    }
-                });
+                guncelleHaritaTuzakMarkers(querySnapshot.docChanges());
             }, function(error) {
                 console.error("Tuzak dinleme hatası: " + error.message);
             });
@@ -2776,12 +2517,33 @@
                 var detayDiv = document.getElementById("tuzakKayitlariDetay");
                 var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
                 var koyStr = data.koy || data.ad || "-";
+                var koordinatHtml = '';
+                if (data.lat !== undefined && data.lng !== undefined) {
+                    var ddLatK = data.lat.toFixed(6);
+                    var ddLngK = data.lng.toFixed(6);
+                    var dmsLatK = decimalToDMS(data.lat, 'lat');
+                    var dmsLngK = decimalToDMS(data.lng, 'lng');
+                    koordinatHtml = `
+                        <div style="grid-column:1/-1; margin-top:4px; padding:7px 10px; background:#f0fdf4; border-radius:8px; border-left:3px solid var(--primary); font-size:12px;">
+                            <div style="font-weight:700; color:var(--primary); margin-bottom:3px;">📍 Koordinatlar</div>
+                            <div style="font-family:monospace;">
+                                <div><b>Ondalık:</b> ${ddLatK}°N, ${ddLngK}°E</div>
+                                <div style="margin-top:2px;"><b>DMS:</b> ${dmsLatK}, ${dmsLngK}</div>
+                            </div>
+                            <button onclick="navigator.clipboard.writeText('${ddLatK}, ${ddLngK}');this.textContent='✓ Kopyalandı!';setTimeout(()=>this.textContent='📋 Kopyala',1500);"
+                                style="margin-top:5px; font-size:10px; padding:2px 8px; border:1px solid #bbf7d0; border-radius:10px; background:white; color:var(--primary); font-weight:700; cursor:pointer; font-family:var(--font);">
+                                📋 Kopyala
+                            </button>
+                        </div>
+                    `;
+                }
                 detayDiv.innerHTML = `
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
                         <div><b>Köy:</b> ${koyStr}</div>
                         <div><b>Tuzak Tipi:</b> ${tipStr}</div>
                         <div><b>Tuzak No:</b> ${data.tuzakNo || "-"}</div>
+                        ${koordinatHtml}
                     </div>
                 `;
 
@@ -3144,150 +2906,230 @@
 
         function oturumKontrol() {
             var cached = localStorage.getItem("aktifPersonel");
-            if (cached) {
-                var cachedUser = JSON.parse(cached);
-                var docId = cachedUser.kullaniciAdi || cachedUser.telefon;
-                db.collection("personeller").doc(docId).get().then(function(doc) {
-                    if (doc.exists) {
-                        var user = doc.data();
-                        aktifKullanici = user;
-                        localStorage.setItem("aktifPersonel", JSON.stringify(user));
-                        document.getElementById("girisModal").classList.remove("active");
-                        guncelleArayuzRolBazli();
-                        tuzaklariDinle();
-                        kullaniciAktifliginiGuncelle();
-                        
-                        if (aktifKullanici && aktifKullanici.ilce) {
-                            arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
-                        }
+            var cachedToken = localStorage.getItem("jwt_token");
+            if (cached && cachedToken) {
+                aktifKullanici = JSON.parse(cached);
+                document.getElementById("girisModal").classList.remove("active");
+                guncelleArayuzRolBazli();
+                tuzaklariDinle();
+                
+                if (aktifKullanici && aktifKullanici.ilce) {
+                    arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                }
 
-                        if (isAdmin()) {
-                            personelListesiniDinle();
-                        }
-                    } else {
-                        // Try fallback querying all personeller
-                        db.collection("personeller").get().then(function(qs) {
-                            var foundUser = null;
-                            qs.forEach(function(d) {
-                                var p = d.data();
-                                if ((p.kullaniciAdi && p.kullaniciAdi === cachedUser.kullaniciAdi) || (p.telefon && p.telefon === cachedUser.telefon)) {
-                                    foundUser = p;
-                                }
-                            });
-                            if (foundUser) {
-                                aktifKullanici = foundUser;
-                                localStorage.setItem("aktifPersonel", JSON.stringify(foundUser));
-                                document.getElementById("girisModal").classList.remove("active");
-                                guncelleArayuzRolBazli();
-                                tuzaklariDinle();
-                                kullaniciAktifliginiGuncelle();
-                                
-                                if (aktifKullanici && aktifKullanici.ilce) {
-                                    arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
-                                }
+                if (isAdmin()) {
+                    personelListesiniDinle();
+                }
 
-                                if (isAdmin()) {
-                                    personelListesiniDinle();
-                                }
-                            } else {
-                                localStorage.removeItem("aktifPersonel");
-                                aktifKullanici = null;
-                                document.getElementById("girisModal").classList.add("active");
-                            }
-                        }).catch(function() {
-                            // Offline recovery: assume cached is fine
-                            aktifKullanici = cachedUser;
-                            document.getElementById("girisModal").classList.remove("active");
-                            guncelleArayuzRolBazli();
-                            tuzaklariDinle();
-                            if (aktifKullanici && aktifKullanici.ilce) {
-                                arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
-                            }
-                        });
+                // Firestore'dan güncel kullanıcı bilgilerini arka planda yenile
+                db.collection("personeller").doc(aktifKullanici.kullaniciAdi || aktifKullanici.telefon).get().then(function(doc) {
+                    if (!doc.exists) {
+                        localStorage.removeItem("aktifPersonel");
+                        localStorage.removeItem("jwt_token");
+                        window.location.reload();
                     }
                 }).catch(function(err) {
-                    console.warn("Firestore bağlantı hatası, yerel önbellekten oturum açılıyor:", err);
-                    aktifKullanici = cachedUser;
-                    document.getElementById("girisModal").classList.remove("active");
-                    guncelleArayuzRolBazli();
-                    tuzaklariDinle();
-                    if (aktifKullanici && aktifKullanici.ilce) {
-                        arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
-                    }
+                    console.log("Kullanıcı doğrulama başarısız (çevrimdışı olabilir):", err);
                 });
             } else {
                 document.getElementById("girisModal").classList.add("active");
             }
         }
 
+        // --- SHA-256 Hash Yardımcısı ---
+        async function sha256hex(mesaj) {
+            var msgBuffer = new TextEncoder().encode(mesaj);
+            var hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            var hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+        }
+
+        // --- Şifre göster/gizle ---
+        function sifreGoster(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        }
+
+        // --- Giriş başarılı ortak işlemler ---
+        function girisBasarili(kullanici) {
+            aktifKullanici = kullanici;
+            localStorage.setItem("aktifPersonel", JSON.stringify(kullanici));
+            localStorage.setItem("jwt_token", "firestore_auth_" + kullanici.kullaniciAdi);
+            document.getElementById("girisModal").classList.remove("active");
+            document.getElementById("girisSifre").value = "";
+            document.getElementById("girisKullanici").value = "";
+            guncelleArayuzRolBazli();
+            tuzaklariDinle();
+            kullaniciAktifliginiGuncelle();
+            if (aktifKullanici && aktifKullanici.ilce) {
+                arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+            }
+            if (isAdmin()) {
+                personelListesiniDinle();
+            }
+            setTimeout(cevrimdisiKuyruguEsitle, 1000);
+        }
+
+        // Global: şifre sıfırlama sırasında bulunan kullanıcı
+        var _sifirlamaKullanicisi = null;
+        // Global: ilk giriş için bulunan kullanıcı (şifresiz kayıt)
+        var _ilkGirisKullanicisi = null;
+
         function girisYap() {
             var userInput = document.getElementById("girisKullanici").value.trim().toLowerCase();
+            var passwordInput = document.getElementById("girisSifre").value;
+
             if (userInput === "") {
                 alert("Lütfen kullanıcı adınızı giriniz.");
                 return;
             }
-            
-            // Try fetching by username doc ID directly
-            db.collection("personeller").doc(userInput).get().then(function(doc) {
-                if (doc.exists) {
-                    var user = doc.data();
-                    oturumAc(user);
-                } else {
-                    // Fallback: search all users for matching username or phone number
-                    db.collection("personeller").get().then(function(qs) {
-                        var foundUser = null;
-                        qs.forEach(function(d) {
-                            var p = d.data();
-                            var pKullanici = p.kullaniciAdi ? p.kullaniciAdi.trim().toLowerCase() : '';
-                            var pTel = p.telefon ? p.telefon.replace(/\s+/g, '') : '';
-                            if (pKullanici === userInput || pTel === userInput) {
-                                foundUser = p;
-                            }
-                        });
-                        
-                        if (foundUser) {
-                            oturumAc(foundUser);
-                        } else {
-                            alert("Kayıtlı personel bulunamadı! Lütfen kullanıcı adınızı doğru yazdığınızdan emin olun.");
-                        }
-                    }).catch(function(err) {
-                        alert("Giriş sırasında hata oluştu: " + err.message);
-                    });
+            if (passwordInput === "") {
+                alert("Lütfen şifrenizi giriniz.");
+                return;
+            }
+
+            db.collection("personeller").doc(userInput).get().then(async function(doc) {
+                if (!doc.exists) {
+                    alert("Kullanıcı bulunamadı. Kullanıcı adınızı kontrol ediniz.");
+                    return;
                 }
+                var pers = doc.data();
+
+                // Şifresi hiç belirlenmemiş → ilk giriş akışı
+                if (!pers.sifre) {
+                    // Şifresiz hesap: direkt giriş yapıp şifre belirle
+                    _ilkGirisKullanicisi = pers;
+                    document.getElementById("girisModal").classList.remove("active");
+                    document.getElementById("sifreBelirleModal").classList.add("active");
+                    document.getElementById("yeniSifre1").value = "";
+                    document.getElementById("yeniSifre2").value = "";
+                    return;
+                }
+
+                // Şifre hash karşılaştır
+                var girilensHash = await sha256hex(passwordInput);
+                if (girilensHash !== pers.sifre) {
+                    alert("Şifre hatalı. Lütfen tekrar deneyiniz.");
+                    return;
+                }
+
+                girisBasarili(pers);
+                alert("Giriş başarılı! Hoş geldiniz, " + pers.adSoyad);
             }).catch(function(err) {
-                alert("Giriş yaparken hata oluştu. Lütfen internet bağlantınızı kontrol edin.");
+                alert("Giriş hatası: " + err.message);
             });
         }
 
-        function oturumAc(user) {
-            localStorage.setItem("aktifPersonel", JSON.stringify(user));
-            aktifKullanici = user;
-            
-            document.getElementById("girisModal").classList.remove("active");
-            guncelleArayuzRolBazli();
-            tuzaklariDinle();
-            kullaniciAktifliginiGuncelle();
-            
-            if (aktifKullanici && aktifKullanici.ilce) {
-                arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+        // --- İlk giriş şifre belirleme ---
+        function sifreBelirleKaydet() {
+            var s1 = document.getElementById("yeniSifre1").value;
+            var s2 = document.getElementById("yeniSifre2").value;
+            if (s1.length < 6) { alert("Şifre en az 6 karakter olmalıdır."); return; }
+            if (s1 !== s2) { alert("Şifreler eşleşmiyor."); return; }
+            if (!_ilkGirisKullanicisi) { alert("Hata: kullanıcı bilgisi bulunamadı."); return; }
+
+            var kullanici = _ilkGirisKullanicisi;
+            sha256hex(s1).then(function(hash) {
+                db.collection("personeller").doc(kullanici.kullaniciAdi || kullanici.telefon).update({ sifre: hash })
+                .then(function() {
+                    document.getElementById("sifreBelirleModal").classList.remove("active");
+                    _ilkGirisKullanicisi = null;
+                    kullanici.sifre = hash;
+                    girisBasarili(kullanici);
+                    alert("Şifreniz başarıyla belirlendi! Hoş geldiniz, " + kullanici.adSoyad);
+                }).catch(function(err) {
+                    alert("Şifre kaydedilemedi: " + err.message);
+                });
+            });
+        }
+
+        // --- Şifremi Unuttum Modal ---
+        function acSifreSifirlaModal() {
+            document.getElementById("sifirlaKullanici").value = "";
+            document.getElementById("sifirlasTelefon").value = "";
+            document.getElementById("sifirlaYeniSifre1").value = "";
+            document.getElementById("sifirlaYeniSifre2").value = "";
+            document.getElementById("yeniSifreAlani").style.display = "none";
+            document.getElementById("sifirlaDogrulaBtn").style.display = "block";
+            _sifirlamaKullanicisi = null;
+            document.getElementById("sifreSifirlaModal").classList.add("active");
+        }
+
+        function kapatSifreSifirlaModal() {
+            document.getElementById("sifreSifirlaModal").classList.remove("active");
+            _sifirlamaKullanicisi = null;
+        }
+
+        function sifreDogrula() {
+            var kullaniciAdi = document.getElementById("sifirlaKullanici").value.trim().toLowerCase();
+            var telefon = document.getElementById("sifirlasTelefon").value.trim();
+
+            if (!kullaniciAdi || !telefon) {
+                alert("Lütfen kullanıcı adı ve telefon numarasını giriniz.");
+                return;
             }
 
-            if (isAdmin()) {
-                personelListesiniDinle();
-            }
-            
-            alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
+            db.collection("personeller").doc(kullaniciAdi).get().then(function(doc) {
+                if (!doc.exists) {
+                    alert("Kullanıcı bulunamadı.");
+                    return;
+                }
+                var pers = doc.data();
+                // Telefon karşılaştır (boşluk/tire toleransı)
+                var kayitliTel = (pers.telefon || "").replace(/\s|-/g, "");
+                var girilenTel = telefon.replace(/\s|-/g, "");
+                if (kayitliTel !== girilenTel) {
+                    alert("Telefon numarası eşleşmedi. Lütfen kayıtlı numaranızı giriniz.");
+                    return;
+                }
+                _sifirlamaKullanicisi = pers;
+                document.getElementById("yeniSifreAlani").style.display = "block";
+                document.getElementById("sifirlaDogrulaBtn").style.display = "none";
+                document.getElementById("sifirlaKullanici").disabled = true;
+                document.getElementById("sifirlasTelefon").disabled = true;
+            }).catch(function(err) {
+                alert("Doğrulama hatası: " + err.message);
+            });
+        }
+
+        function sifreSifirlaKaydet() {
+            var s1 = document.getElementById("sifirlaYeniSifre1").value;
+            var s2 = document.getElementById("sifirlaYeniSifre2").value;
+            if (s1.length < 6) { alert("Şifre en az 6 karakter olmalıdır."); return; }
+            if (s1 !== s2) { alert("Şifreler eşleşmiyor."); return; }
+            if (!_sifirlamaKullanicisi) { alert("Hata: önce doğrulama yapınız."); return; }
+
+            var kullanici = _sifirlamaKullanicisi;
+            sha256hex(s1).then(function(hash) {
+                db.collection("personeller").doc(kullanici.kullaniciAdi || kullanici.telefon).update({ sifre: hash })
+                .then(function() {
+                    alert("Şifreniz başarıyla güncellendi! Lütfen giriş yapınız.");
+                    document.getElementById("sifirlaKullanici").disabled = false;
+                    document.getElementById("sifirlasTelefon").disabled = false;
+                    kapatSifreSifirlaModal();
+                }).catch(function(err) {
+                    alert("Şifre güncellenemedi: " + err.message);
+                });
+            });
         }
 
         function oturumKapat() {
             if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
                 localStorage.removeItem("aktifPersonel");
+                localStorage.removeItem("jwt_token");
                 aktifKullanici = null;
                 
                 document.getElementById("userProfileCard").style.display = "none";
                 document.getElementById("sideMenu").innerHTML = "";
                 document.getElementById("girisModal").classList.add("active");
                 document.getElementById("girisKullanici").value = "";
+                if (document.getElementById("girisSifre")) document.getElementById("girisSifre").value = "";
                 
                 if (tuzakListener) {
                     tuzakListener();
@@ -3306,6 +3148,11 @@
                 personelListesi = [];
                 
                 alert("Oturum kapatıldı.");
+
+                // Gizle: GPS, stats, arama
+                document.getElementById("gpsBtn").classList.remove("visible");
+                document.getElementById("miniStatsPanel").classList.remove("visible");
+                document.getElementById("haritaAramaKutusu").classList.remove("visible");
             }
         }
 
@@ -3315,6 +3162,12 @@
             // Show active profile card
             var userCard = document.getElementById("userProfileCard");
             userCard.style.display = "flex";
+
+            // Göster: GPS butonu, mini stats, arama kutusu
+            document.getElementById("gpsBtn").classList.add("visible");
+            document.getElementById("miniStatsPanel").classList.add("visible");
+            document.getElementById("haritaAramaKutusu").classList.add("visible");
+            miniStatsGuncelle();
             
             document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
             document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
@@ -3659,6 +3512,7 @@
             document.getElementById("pKullaniciAdi").value = "";
             document.getElementById("pUnvan").value = "";
             document.getElementById("pTelefon").value = "";
+            if (document.getElementById("pSifre")) document.getElementById("pSifre").value = "";
         }
 
         function personelDuzenle(tel) {
@@ -3678,6 +3532,7 @@
             document.getElementById("pUnvan").value = pers.unvan;
             document.getElementById("pTelefon").value = pers.telefon;
             document.getElementById("pTelefon").disabled = false;
+            if (document.getElementById("pSifre")) document.getElementById("pSifre").value = "";
             document.getElementById("pRol").value = pers.rol || "Saha Personeli";
             
             var pRolSelect = document.getElementById("pRol");
@@ -3709,6 +3564,7 @@
             var telefon = document.getElementById("pTelefon").value.trim();
             var ilce = document.getElementById("pIlce").value;
             var rol = document.getElementById("pRol").value;
+            var password = document.getElementById("pSifre") ? document.getElementById("pSifre").value : "";
             var duzenlenenTel = document.getElementById("duzenlenenPersonelTel").value;
             
             if (adSoyad === "") {
@@ -3730,10 +3586,31 @@
                 ilce: ilce,
                 rol: rol
             };
+
+            if (password && password.trim() !== "") {
+                if (password.trim().length < 6) {
+                    alert("Şifre en az 6 karakter olmalıdır!");
+                    return;
+                }
+                // SHA-256 hash ile kaydet
+                sha256hex(password.trim()).then(function(hash) {
+                    data.sifre = hash;
+                    _kaydetPersonelDevam(data, kullaniciAdi, silinecekEskiDoc, duzenlenenTel);
+                });
+                return;
+            } else if (!duzenlenenTel) {
+                alert("Yeni personel için şifre girmek zorunludur!");
+                return;
+            }
             
             var silinecekEskiDoc = (duzenlenenTel && duzenlenenTel !== kullaniciAdi) ? duzenlenenTel : null;
-            
-            db.collection("personeller").doc(kullaniciAdi).set(data).then(function() {
+
+            // Şifre girilmemişse (düzenleme) direkt kaydet
+            _kaydetPersonelDevam(data, kullaniciAdi, silinecekEskiDoc, duzenlenenTel);
+        }
+
+        function _kaydetPersonelDevam(data, kullaniciAdi, silinecekEskiDoc, duzenlenenTel) {
+            db.collection("personeller").doc(kullaniciAdi).set(data, { merge: true }).then(function() {
                 if (silinecekEskiDoc) {
                     db.collection("personeller").doc(silinecekEskiDoc).delete().catch(function(e){
                         console.warn("Eski kullanıcı dokümanı silinemedi:", e);
@@ -4121,6 +3998,123 @@
                 kapatTopluYuklemeModal();
                 kapatLokasyonModal();
                 kapatTuzakKayitlariModal();
+                haritaAramaSonucKapat();
+            }
+        });
+
+        // ── Mini İstatistik Paneli Güncelleme ──
+        function miniStatsGuncelle() {
+            var yesil = 0, sari = 0, kirmizi = 0, toplam = 0;
+            for (var docId in markerListesi) {
+                if (!map.hasLayer(markerListesi[docId])) continue; // sadece görünenleri say
+                var data = tuzakVerileri[docId];
+                if (!data) continue;
+                var bocek = parseInt(data.bocekSayisi) || 0;
+                var isYapiskan = (data.tuzakTipi === "Yapışkan");
+                toplam++;
+                if (isYapiskan) {
+                    if (bocek >= 50) kirmizi++;
+                    else if (bocek >= 20) sari++;
+                    else yesil++;
+                } else {
+                    if (bocek >= 50) kirmizi++;
+                    else if (bocek >= 20) sari++;
+                    else yesil++;
+                }
+            }
+            var el = function(id) { return document.getElementById(id); };
+            if (el('statYesil')) el('statYesil').textContent = yesil;
+            if (el('statSari'))  el('statSari').textContent  = sari;
+            if (el('statKirmizi')) el('statKirmizi').textContent = kirmizi;
+            if (el('statToplam')) el('statToplam').textContent = toplam;
+        }
+
+        // ── GPS Konumum ──
+        var _gpsMarker = null;
+        function gpsKonumunuGoster() {
+            var btn = document.getElementById('gpsBtn');
+            if (!navigator.geolocation) {
+                alert('Tarayıcınız konum servisi desteklemiyor.');
+                return;
+            }
+            btn.textContent = '⏳';
+            btn.style.animation = 'spin 1s linear infinite';
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                btn.textContent = '📍';
+                btn.style.animation = '';
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                var accuracy = Math.round(pos.coords.accuracy);
+
+                if (_gpsMarker) map.removeLayer(_gpsMarker);
+                _gpsMarker = L.circleMarker([lat, lng], {
+                    radius: 12, fillColor: '#005fa6', color: '#ffffff',
+                    weight: 3, fillOpacity: 0.9
+                }).addTo(map);
+                _gpsMarker.bindPopup('📍 <b>Konumunuz</b><br><small>Doğruluk: ±' + accuracy + ' m</small>').openPopup();
+                map.setView([lat, lng], 15, { animate: true });
+            }, function(err) {
+                btn.textContent = '📍';
+                btn.style.animation = '';
+                alert('Konum alınamadı: ' + err.message);
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        // ── Harita Arama ──
+        function haritaAramaYap(sorgu) {
+            var sonucDiv = document.getElementById('haritaAramaSonuclar');
+            sorgu = (sorgu || '').trim().toLowerCase();
+            if (sorgu.length < 2) {
+                sonucDiv.style.display = 'none';
+                return;
+            }
+            var sonuclar = [];
+            for (var docId in tuzakVerileri) {
+                var data = tuzakVerileri[docId];
+                var koy = (data.koy || data.ad || '').toLowerCase();
+                var no  = (data.tuzakNo || '').toLowerCase();
+                if (koy.includes(sorgu) || no.includes(sorgu)) {
+                    sonuclar.push({ docId: docId, data: data });
+                    if (sonuclar.length >= 8) break;
+                }
+            }
+            if (sonuclar.length === 0) {
+                sonucDiv.innerHTML = '<div class="arama-sonuc-item" style="color:var(--text-muted);">Sonuç bulunamadı.</div>';
+                sonucDiv.style.display = 'block';
+                return;
+            }
+            sonucDiv.innerHTML = '';
+            sonuclar.forEach(function(s) {
+                var item = document.createElement('div');
+                item.className = 'arama-sonuc-item';
+                var tip = s.data.tuzakTipi === 'Yapışkan' ? '🟨' : '🎺';
+                item.innerHTML = tip + ' <b>No: ' + (s.data.tuzakNo || '-') + '</b> &mdash; ' + (s.data.koy || s.data.ad || '-') +
+                    '<br><span class="arama-sub">' + (s.data.ilce || '') + ' / Böcek: ' + (s.data.bocekSayisi || 0) + '</span>';
+                item.onclick = (function(id, dat) {
+                    return function() {
+                        haritaAramaSonucKapat();
+                        document.getElementById('haritaAramaInput').value = '';
+                        if (markerListesi[id]) {
+                            map.setView([dat.lat, dat.lng], 17, { animate: true });
+                            markerListesi[id].openPopup();
+                        }
+                    };
+                })(s.docId, s.data);
+                sonucDiv.appendChild(item);
+            });
+            sonucDiv.style.display = 'block';
+        }
+
+        function haritaAramaSonucKapat() {
+            var sonucDiv = document.getElementById('haritaAramaSonuclar');
+            if (sonucDiv) sonucDiv.style.display = 'none';
+        }
+
+        // Harita tıklamasında arama sonucu kapat
+        document.addEventListener('click', function(e) {
+            var aramaKutu = document.getElementById('haritaAramaKutusu');
+            if (aramaKutu && !aramaKutu.contains(e.target)) {
+                haritaAramaSonucKapat();
             }
         });
 
