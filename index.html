@@ -857,11 +857,17 @@
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
             <input type="hidden" id="duzenlenenDocId" value="">
             
+            <div id="koordinatBilgi" style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 6px; font-size: 13px; color: #495057;">
+                <strong>Ondalık:</strong> <span id="koordDecimal">-</span><br>
+                <strong>DMS:</strong> <span id="koordDMS">-</span>
+            </div>
+
             <div class="form-group">
-                <label>Tuzak Tipi</label>
-                <select id="tuzakTipi" class="form-control">
+                <label>Kayıt Türü (Tuzak Tipi)</label>
+                <select id="tuzakTipi" class="form-control" onchange="kayitTuruDegisti()">
                     <option value="Huni" selected>Huni (Funnel) Tuzak</option>
                     <option value="Yapışkan">Yapışkan Tuzak</option>
+                    <option value="Samuray Arısı Salımı">Samuray Arısı Salımı</option>
                 </select>
             </div>
 
@@ -883,13 +889,21 @@
                     <option value="" disabled selected>Önce İlçe Seçiniz</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Tuzak No</label>
-                <input type="text" id="tuzakNo" class="form-control" placeholder="Örn: 105">
+            <div id="tuzakAlanlari">
+                <div class="form-group">
+                    <label>Tuzak No</label>
+                    <input type="text" id="tuzakNo" class="form-control" placeholder="Örn: 105">
+                </div>
+                <div class="form-group">
+                    <label>Yakalanan Böcek Sayısı</label>
+                    <input type="number" id="bocekSayisi" class="form-control" placeholder="Örn: 15" min="0">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Yakalanan Böcek Sayısı</label>
-                <input type="number" id="bocekSayisi" class="form-control" placeholder="Örn: 15" min="0">
+            <div id="ariSalimiAlanlari" style="display: none;">
+                <div class="form-group">
+                    <label>Salınan Tüp Sayısı</label>
+                    <input type="number" id="tupSayisi" class="form-control" placeholder="Örn: 5" min="1">
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="kapatModal()">İptal</button>
@@ -951,6 +965,10 @@
                     <span class="stat-label">Toplam Böcek</span>
                     <span id="toplamBocekTxt" class="stat-value text-danger">0</span>
                 </div>
+                <div class="stat-card">
+                    <span class="stat-label">Salınan Tüp</span>
+                    <span id="toplamTupTxt" class="stat-value" style="color:var(--secondary-blue);">0</span>
+                </div>
             </div>
 
             <!-- Scrollable Table Wrap -->
@@ -959,8 +977,9 @@
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
                             <th id="raporTabloIlkSutun">Köy / Mahalle</th>
-                            <th style="text-align: center; width: 90px;">Tuzak</th>
-                            <th style="text-align: center; width: 90px;">Böcek</th>
+                            <th style="text-align: center; width: 60px;">Tuzak</th>
+                            <th style="text-align: center; width: 60px;">Böcek</th>
+                            <th style="text-align: center; width: 60px;">Tüp</th>
                         </tr>
                     </thead>
                     <tbody id="raporTabloGovde"></tbody>
@@ -1910,12 +1929,19 @@
                         
                         var popupIcerik = "";
                         var koyIsmi = data.koy || data.ad || "Bilinmiyor";
-                        var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🏺 Huni (Funnel) Tuzak";
+                        var tipStr = "🟢 Huni (Funnel) Tuzak";
+                        if (data.tuzakTipi === "Yapışkan") tipStr = "🟨 Yapışkan Tuzak";
+                        else if (data.tuzakTipi === "Samuray Arısı Salımı") tipStr = "🔵 Samuray Arısı Salımı";
                         
                         popupIcerik += "<b>Köy:</b> " + koyIsmi + "<br>";
-                        popupIcerik += "<b>Tuzak Tipi:</b> " + tipStr + "<br>";
-                        if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
-                        if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
+                        popupIcerik += "<b>Kayıt Türü:</b> " + tipStr + "<br>";
+                        
+                        if (data.tuzakTipi !== "Samuray Arısı Salımı") {
+                            if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
+                            if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
+                        } else {
+                            if (data.tupSayisi !== undefined) popupIcerik += "<b>Salınan Tüp:</b> " + data.tupSayisi + " adet<br>";
+                        }
                         
                         var ekleyenStr = "";
                         if (aktifKullanici) {
@@ -1952,8 +1978,16 @@
                             if (data.sonGuncellemeTarihi) popupIcerik += "<b>Güncelleme Tarihi:</b> " + data.sonGuncellemeTarihi + "<br>";
                         }
 
+                        if (data.lat !== undefined && data.lng !== undefined) {
+                            popupIcerik += "<hr style='margin:5px 0;'/>";
+                            popupIcerik += "<div style='font-size:11px; color:#555;'><b>Ondalık:</b> " + parseFloat(data.lat).toFixed(6) + ", " + parseFloat(data.lng).toFixed(6) + "<br>";
+                            popupIcerik += "<b>DMS:</b> " + toDMS(data.lat, data.lng) + "</div>";
+                        }
+
                         popupIcerik += "<div class='popup-actions'>";
-                        popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
+                        if (data.tuzakTipi !== "Samuray Arısı Salımı") {
+                            popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
+                        }
                         popupIcerik += "<a class='popup-btn' style='background: linear-gradient(135deg, #ea4335, #ff6b6b); color: white; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;' href='https://www.google.com/maps/dir/?api=1&destination=" + data.lat + "," + data.lng + "' target='_blank'>🧭 Yol Tarifi</a>";
                         popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
                         popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + docId + "\")'>Sil</button>";
@@ -2098,6 +2132,7 @@
 
             var toplamBocek = 0;
             var toplamTuzak = 0;
+            var toplamTup   = 0;
             var istatistik  = {};
 
             for (var id in tuzakVerileri) {
@@ -2137,6 +2172,11 @@
                 if (!baslangic && !bitis && filtreliKayitlar.length === 0) {
                     bocekSaha = parseInt(data.bocekSayisi) || 0;
                 }
+                
+                var tupSaha = 0;
+                if (data.tuzakTipi === "Samuray Arısı Salımı") {
+                    tupSaha = parseInt(data.tupSayisi) || 0;
+                }
 
                 var tipVal = data.tuzakTipi || "Huni";
                 if (seciliRaporFiltre !== "Tümü" && tipVal !== seciliRaporFiltre) continue;
@@ -2147,14 +2187,16 @@
                 else if (analizSeviyesi === "İl")   grupAnahtari = data.il   || "Bilinmiyor";
 
                 toplamBocek += bocekSaha;
+                toplamTup += tupSaha;
                 toplamTuzak++;
-                if (!istatistik[grupAnahtari]) istatistik[grupAnahtari] = { tuzak: 0, bocek: 0 };
+                if (!istatistik[grupAnahtari]) istatistik[grupAnahtari] = { tuzak: 0, bocek: 0, tup: 0 };
                 istatistik[grupAnahtari].tuzak++;
                 istatistik[grupAnahtari].bocek += bocekSaha;
+                istatistik[grupAnahtari].tup += tupSaha;
             }
 
             var raporArray = [];
-            for (var k in istatistik) raporArray.push({ ad: k, tuzak: istatistik[k].tuzak, bocek: istatistik[k].bocek });
+            for (var k in istatistik) raporArray.push({ ad: k, tuzak: istatistik[k].tuzak, bocek: istatistik[k].bocek, tup: istatistik[k].tup });
             raporArray.sort(function(a, b) { return a.ad.localeCompare(b.ad, 'tr'); });
 
             // Sonucu sakla (CSV için)
@@ -2163,12 +2205,14 @@
 
             document.getElementById('toplamTuzakTxt').innerText = toplamTuzak;
             document.getElementById('toplamBocekTxt').innerText = toplamBocek;
+            var totalTupElem = document.getElementById('toplamTupTxt');
+            if (totalTupElem) totalTupElem.innerText = toplamTup;
 
             var tbody = document.getElementById('raporTabloGovde');
             tbody.innerHTML = "";
             raporArray.forEach(function(item) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = "<td>" + item.ad + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
+                tr.innerHTML = "<td>" + item.ad + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td><td style='text-align:center; color:var(--secondary-blue); font-weight:bold;'>" + item.tup + "</td>";
                 tbody.appendChild(tr);
             });
 
@@ -2177,6 +2221,7 @@
                               "<td>TOPLAM</td>" +
                               "<td style='text-align:center;'>" + toplamTuzak + "</td>" +
                               "<td style='text-align:center; color:#ef4444;'>" + toplamBocek + "</td>" +
+                              "<td style='text-align:center; color:var(--secondary-blue);'>" + toplamTup + "</td>" +
                               "</tr>";
 
             cizGrafik(raporArray, analizSeviyesi);
@@ -2564,12 +2609,20 @@
 
                     document.getElementById('tuzakNo').value = data.tuzakNo || "";
                     document.getElementById('bocekSayisi').value = data.bocekSayisi !== undefined ? data.bocekSayisi : "";
+                    var tSayisiElem = document.getElementById('tupSayisi');
+                    if(tSayisiElem) tSayisiElem.value = data.tupSayisi !== undefined ? data.tupSayisi : "";
 
                     secilenKonum = marker.getLatLng();
+                    
+                    document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
+                    document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
+                    kayitTuruDegisti();
 
                     marker.dragging.enable();
                     marker.on('dragend', function(e) {
                         secilenKonum = e.target.getLatLng();
+                        document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
+                        document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
                     });
 
                     document.getElementById('tuzakModal').classList.add('active');
@@ -2585,6 +2638,10 @@
             document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
             document.getElementById('duzenlenenDocId').value = "";
             secilenKonum = e.latlng;
+            
+            document.getElementById('koordDecimal').innerText = parseFloat(e.latlng.lat).toFixed(6) + ", " + parseFloat(e.latlng.lng).toFixed(6);
+            document.getElementById('koordDMS').innerText = toDMS(e.latlng.lat, e.latlng.lng);
+            kayitTuruDegisti();
             
             var ilSelect = document.getElementById('il');
             var ilceSelect = document.getElementById('ilce');
@@ -2680,6 +2737,20 @@
 
             document.getElementById('tuzakModal').classList.add('active');
         });
+
+        function kayitTuruDegisti() {
+            var tur = document.getElementById("tuzakTipi").value;
+            var tuzakAlanlari = document.getElementById("tuzakAlanlari");
+            var ariSalimiAlanlari = document.getElementById("ariSalimiAlanlari");
+            
+            if (tur === "Samuray Arısı Salımı") {
+                if(tuzakAlanlari) tuzakAlanlari.style.display = "none";
+                if(ariSalimiAlanlari) ariSalimiAlanlari.style.display = "block";
+            } else {
+                if(tuzakAlanlari) tuzakAlanlari.style.display = "block";
+                if(ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+            }
+        }
 
         function kapatModal() {
             document.getElementById('tuzakModal').classList.remove('active');
@@ -3032,6 +3103,7 @@
             var tuzakNo = document.getElementById('tuzakNo').value.trim();
             var bocekSayisi = document.getElementById('bocekSayisi').value.trim();
             var tuzakTipi = document.getElementById('tuzakTipi').value;
+            var tupSayisiStr = document.getElementById('tupSayisi') ? document.getElementById('tupSayisi').value.trim() : "";
             var docId = document.getElementById('duzenlenenDocId').value;
 
             if (koy === "") {
@@ -3045,8 +3117,6 @@
                     ilce: ilce,
                     koy: koy,
                     ad: koy, // Compatibility
-                    tuzakNo: tuzakNo,
-                    bocekSayisi: bocekSayisi ? parseInt(bocekSayisi) : 0,
                     tuzakTipi: tuzakTipi,
                     lat: secilenKonum.lat,
                     lng: secilenKonum.lng,
@@ -3055,6 +3125,15 @@
                     sonGuncelleyenUnvan: aktifKullanici.unvan,
                     sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR')
                 };
+                
+                if (tuzakTipi === "Samuray Arısı Salımı") {
+                    saveData.tupSayisi = tupSayisiStr ? parseInt(tupSayisiStr) : 0;
+                    saveData.tuzakNo = "";
+                    saveData.bocekSayisi = 0;
+                } else {
+                    saveData.tuzakNo = tuzakNo;
+                    saveData.bocekSayisi = bocekSayisi ? parseInt(bocekSayisi) : 0;
+                }
 
                 // Standart kullanıcıların kendi ilçesi dışına kayıt yapması engellenir
                 if (aktifKullanici && !isAdmin()) {
