@@ -1100,6 +1100,15 @@
         var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+        // GPS Konum Butonu
+        var gpsControl = L.control({ position: 'bottomright' });
+        gpsControl.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            div.innerHTML = '<a href="#" title="Konumumu Bul" style="background-color: white; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px; line-height: 30px;" onclick="map.locate({setView: true, maxZoom: 16}); event.preventDefault();">📍</a>';
+            return div;
+        };
+        gpsControl.addTo(map);
+
         var sokakHaritasi = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         });
@@ -1126,15 +1135,30 @@
         L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
 
         // Geolocation Find User
-        map.locate({setView: true, maxZoom: 16});
+        var userMarker = null;
+        var userCircle = null;
 
         function onLocationFound(e) {
             var radius = e.accuracy / 2;
-            L.marker(e.latlng).addTo(map)
-                .bindPopup("Şu an buradasınız").openPopup();
-            L.circle(e.latlng, radius).addTo(map);
+            if (userMarker) {
+                userMarker.setLatLng(e.latlng);
+                userCircle.setLatLng(e.latlng);
+                userCircle.setRadius(radius);
+            } else {
+                userMarker = L.marker(e.latlng).addTo(map)
+                    .bindPopup("Şu an buradasınız");
+                userCircle = L.circle(e.latlng, radius).addTo(map);
+            }
         }
         map.on('locationfound', onLocationFound);
+
+        // İlk konum bulma (odaklanarak)
+        map.locate({setView: true, maxZoom: 16});
+
+        // Her 10 saniyede bir konumu arka planda güncelle (odaklanmadan)
+        setInterval(function() {
+            map.locate({setView: false, maxZoom: 16});
+        }, 10000);
 
         // Rize District Boundaries Overlay
         var rizeIlceleri = ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"];
@@ -3875,7 +3899,8 @@
             }
         }
 
-        // LÖG MODAL İŞLEMLERİ
+        var logListener = null;
+
         function acLogModal() {
             if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
                 alert("Bu modüle erişim yetkiniz yoktur!");
@@ -3888,17 +3913,24 @@
 
         function kapatLogModal() {
             document.getElementById("logModal").classList.remove("active");
+            if (logListener) {
+                logListener();
+                logListener = null;
+            }
         }
 
         function guncelleLogTablosu() {
             var tbody = document.getElementById("logTabloGovde");
             tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
             
-            db.collection("loglar")
+            if (logListener) {
+                logListener();
+            }
+
+            logListener = db.collection("loglar")
               .orderBy("tarih", "desc")
               .limit(100)
-              .get()
-              .then(function(querySnapshot) {
+              .onSnapshot(function(querySnapshot) {
                   tbody.innerHTML = "";
                   if (querySnapshot.empty) {
                       tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Kayıtlı log bulunamadı.</td></tr>";
@@ -3906,17 +3938,19 @@
                   }
                   querySnapshot.forEach(function(doc) {
                       var log = doc.data();
-                      var tarihStr = log.tarihStr || (log.tarih ? log.tarih.toDate().toLocaleString('tr-TR') : "-");
+                      var tarihStr = log.tarihStr || "-";
+                      if (tarihStr === "-" && log.tarih && typeof log.tarih.toDate === 'function') {
+                          tarihStr = log.tarih.toDate().toLocaleString('tr-TR');
+                      }
                       var tr = document.createElement("tr");
                       tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
                       tr.innerHTML = "<td style='padding: 10px; font-size:12px; color: var(--text-muted); white-space:nowrap;'>" + tarihStr + "</td>" +
-                                     "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + log.kullanici + " (" + log.rol + ")</td>" +
-                                     "<td style='padding: 10px; font-size:13px; color: var(--primary); font-weight:700;'>" + log.islem + "</td>" +
-                                     "<td style='padding: 10px; font-size:12px; color: var(--text-dark);'>" + log.detay + "</td>";
+                                     "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + (log.kullanici || "Bilinmiyor") + " (" + (log.rol || "-") + ")</td>" +
+                                     "<td style='padding: 10px; font-size:13px; color: var(--primary); font-weight:700;'>" + (log.islem || "-") + "</td>" +
+                                     "<td style='padding: 10px; font-size:12px; color: var(--text-dark);'>" + (log.detay || "-") + "</td>";
                       tbody.appendChild(tr);
                   });
-              })
-              .catch(function(err) {
+              }, function(err) {
                   tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
               });
         }
