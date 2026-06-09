@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kokarca Haritası — Geliştirme Planı</title>
+    <meta name="description" content="Kokarca (Halyomorpha halys) Tuzak Takip Sistemi geliştirme yol haritası ve planlanan özellikler.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-light: #a78bfa;
+            --primary-dark: #5b21b6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 30%, #0ea5e9 100%);
+            color: white;
+            padding: 60px 24px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.08) 0%, transparent 50%);
+            animation: shimmer 15s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(5%, 3%); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 900;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 36px;
+            font-weight: 900;
+            display: block;
+        }
+
+        .hero-stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+
+        /* Section Title */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            margin-top: 48px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .section-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .section-title h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .section-title .count {
+            font-size: 12px;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1.5px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            border-color: var(--primary-light);
+        }
+
+        .card-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .status-planned {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .status-done {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .card-emoji {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text);
+            padding-right: 70px;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Completed Section */
+        .completed-section {
+            margin-top: 48px;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-radius: 20px;
+            padding: 32px;
+            border: 1.5px solid #a7f3d0;
+        }
+
+        .completed-section h2 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #065f46;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .completed-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+
+        .completed-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .completed-check {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #10b981;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .completed-text {
+            flex: 1;
+        }
+
+        .completed-text strong {
+            font-size: 14px;
+            color: #065f46;
+            display: block;
+        }
+
+        .completed-text span {
+            font-size: 12px;
+            color: #047857;
+        }
+
+        .completed-date {
+            font-size: 11px;
+            color: #6ee7b7;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+
+        .footer-card {
+            display: inline-block;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 40px;
+            text-align: center;
+        }
+
+        .footer-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+
+        .footer-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .footer-org {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--info);
+            font-style: italic;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .hero { padding: 40px 16px 35px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-value { font-size: 28px; }
+            .container { padding: 24px 16px 40px; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .section-title h2 { font-size: 18px; }
+            .completed-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">🐛 Kokarca Haritası</div>
+            <h1>Geliştirme Yol Haritası</h1>
+            <p>Halyomorpha halys (Kahverengi Kokarca) Tuzak Takip Sistemi için planlanan özellikler ve iyileştirmeler</p>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value">18</span>
+                    <span class="hero-stat-label">Planlanan Özellik</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">3</span>
+                    <span class="hero-stat-label">Tamamlanan</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">5</span>
+                    <span class="hero-stat-label">Kategori</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+
+        <!-- 1. Analiz & Görselleştirme -->
+        <div class="section-title">
+            <div class="section-icon" style="background: #ede9fe; color: #7c3aed;">📊</div>
+            <h2>Analiz & Görselleştirme</h2>
+            <span class="count">4 özellik</span>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🌡️</span>
+                <h3>Isı Haritası (Heatmap)</h3>
+                <p>Böcek yoğunluğunu renk geçişleriyle harita üzerinde gösterme. Kırmızı bölgeler en yoğun, yeşil bölgeler en az yoğun alanları temsil eder.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">📈</span>
+                <h3>Haftalık Trend Grafiği</h3>
+                <p>Her tuzağın zaman içindeki böcek sayısı değişimini çizgi grafikle gösterme. Artış ve azalış trendleri bir bakışta görülür.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">⚖️</span>
+                <h3>İlçe Karşılaştırma</h3>
+                <p>İlçeler arası böcek yoğunluğunu yan yana karşılaştırma grafikleri. Hangi ilçede mücadele daha başarılı, hemen görülür.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🎯</span>
+                <h3>Dashboard Paneli</h3>
+                <p>Giriş sonrası özet kartlar: toplam tuzak sayısı, toplam böcek, en yoğun ilçe, haftalık değişim yüzdesi bir bakışta.</p>
+            </div>
+        </div>
+
+        <!-- 2. Saha Geliştirmeleri -->
+        <div class="section-title">
+            <div class="section-icon" style="background: #fef3c7; color: #d97706;">📸</div>
+            <h2>Saha Geliştirmeleri</h2>
+            <span class="count">4 özellik</span>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">📷</span>
+                <h3>Fotoğraf Ekleme</h3>
+                <p>Tuzak veya böcek fotoğrafı çekip doğrudan kayda ekleme. Arazide hızlı belgeleme ve raporlama imkânı.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🔍</span>
+                <h3>Tuzak Arama</h3>
+                <p>İsim, numara veya köy adı ile hızlı tuzak arama çubuğu. Binlerce tuzak arasından saniyeler içinde bulma.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🔔</span>
+                <h3>Bildirim Sistemi</h3>
+                <p>Böcek sayısı eşik değeri aştığında otomatik uyarı. Örneğin 50+ böcek = 🔴 kırmızı alarm bildirimi.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🌤️</span>
+                <h3>Hava Durumu Entegrasyonu</h3>
+                <p>Sayım günlerinde bölgesel hava durumu bilgisi gösterme. Sıcaklık ve nem ile böcek popülasyonu ilişkisi.</p>
+            </div>
+        </div>
+
+        <!-- 3. Kullanıcı Deneyimi -->
+        <div class="section-title">
+            <div class="section-icon" style="background: #dbeafe; color: #2563eb;">📱</div>
+            <h2>Kullanıcı Deneyimi</h2>
+            <span class="count">4 özellik</span>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🌙</span>
+                <h3>Karanlık Mod</h3>
+                <p>Gece ve arazi kullanımı için göz yormayan koyu tema. Tek tuşla açılıp kapanabilir.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">📲</span>
+                <h3>Gelişmiş Mobil Tasarım</h3>
+                <p>Telefonda menü, popup ve formların daha rahat kullanımı. Parmak dokunuşuna optimize butonlar.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">✨</span>
+                <h3>Akıcı Animasyonlar</h3>
+                <p>Marker geçişleri, modal açılışları ve buton efektleri ile profesyonel ve akıcı deneyim.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">💾</span>
+                <h3>Otomatik Yedekleme</h3>
+                <p>Tüm verilerin JSON formatında tek tuşla indirilebilmesi. Felaket kurtarma için güvenlik katmanı.</p>
+            </div>
+        </div>
+
+        <!-- 4. Yönetim & Raporlama -->
+        <div class="section-title">
+            <div class="section-icon" style="background: #fce7f3; color: #db2777;">📈</div>
+            <h2>Yönetim & Raporlama</h2>
+            <span class="count">4 özellik</span>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">📅</span>
+                <h3>Otomatik Haftalık Rapor</h3>
+                <p>Her Cuma günü otomatik olarak oluşturulan özet rapor. İlçe bazlı tuzak ve böcek istatistikleri.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">👤</span>
+                <h3>Personel Performansı</h3>
+                <p>Kim kaç tuzak ekledi, kaç sayım yaptı, kaç gün aktif oldu gibi personel bazlı istatistikler.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🖨️</span>
+                <h3>Yazdırılabilir Rapor</h3>
+                <p>A4 formatında düzgün çıktı alınabilecek profesyonel rapor şablonu. Resmi yazışmalara uygun.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">📆</span>
+                <h3>Tarih Aralığı Filtresi</h3>
+                <p>Raporlarda "şu tarihten şu tarihe" filtresi ile belirli dönemlere ait verilerin analizi.</p>
+            </div>
+        </div>
+
+        <!-- 5. Teknik İyileştirmeler -->
+        <div class="section-title">
+            <div class="section-icon" style="background: #fee2e2; color: #dc2626;">🔧</div>
+            <h2>Teknik İyileştirmeler</h2>
+            <span class="count">2 özellik</span>
+        </div>
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🧩</span>
+                <h3>Kod Modülerliği</h3>
+                <p>Tek dosyalı yapının ayrı CSS ve JavaScript modüllerine bölünmesi. Bakım ve geliştirme kolaylığı.</p>
+            </div>
+            <div class="card">
+                <span class="card-status status-planned">Planlandı</span>
+                <span class="card-emoji">🔒</span>
+                <h3>Firestore Güvenlik Kuralları</h3>
+                <p>Yetki kontrolünün sunucu tarafında da doğrulanması. Veri güvenliği için ek koruma katmanı.</p>
+            </div>
+        </div>
+
+        <!-- Tamamlananlar -->
+        <div class="completed-section">
+            <h2>✅ Tamamlanan Özellikler</h2>
+
+            <div class="completed-item">
+                <div class="completed-check">✓</div>
+                <div class="completed-text">
+                    <strong>Oturum Geçmişi Modülü</strong>
+                    <span>Kim ne zaman girdi, kaç dakika kaldı — detaylı oturum takibi</span>
+                </div>
+                <span class="completed-date">10 Haziran 2026</span>
+            </div>
+
+            <div class="completed-item">
+                <div class="completed-check">✓</div>
+                <div class="completed-text">
+                    <strong>Kullanım Kılavuzu Güncelleme</strong>
+                    <span>11 bölümlük detaylı, ikonlu ve kategorize edilmiş kullanım kılavuzu</span>
+                </div>
+                <span class="completed-date">10 Haziran 2026</span>
+            </div>
+
+            <div class="completed-item">
+                <div class="completed-check">✓</div>
+                <div class="completed-text">
+                    <strong>Harita Yükleme Hatası Düzeltme</strong>
+                    <span>MarkerCluster maxZoom hatası giderildi — harita artık sorunsuz açılıyor</span>
+                </div>
+                <span class="completed-date">10 Haziran 2026</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-card">
+                <div class="footer-name">Gökhan ASLAN</div>
+                <div class="footer-title">Ziraat Mühendisi</div>
+                <div class="footer-org">Güneysu İlçe Tarım ve Orman Müdürlüğü</div>
+            </div>
+            <br><br>
+            <a href="index.html" class="back-link">🗺️ Haritaya Dön</a>
+        </div>
+    </div>
+
+</body>
+</html>
