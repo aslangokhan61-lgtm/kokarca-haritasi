@@ -12,6 +12,8 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     
     <style>
         :root {
@@ -1032,6 +1034,7 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1104,6 +1107,14 @@
         // Initialize Map (Güneysu/Rize Focus)
         var map = L.map('harita', { zoomControl: false }).setView([40.9400, 40.6300], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        var markerKatmani = L.markerClusterGroup({
+            maxClusterRadius: 40,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+        });
+        map.addLayer(markerKatmani);
 
         // GPS Konum Butonu
         var gpsControl = L.control({ position: 'bottomright' });
@@ -1772,12 +1783,12 @@
             var koyUyumlu = (aktifFiltreler.koy === "Tümü" || data.koy === aktifFiltreler.koy);
 
             if (ilUyumlu && ilceUyumlu && koyUyumlu) {
-                if (!map.hasLayer(marker)) {
-                    marker.addTo(map);
+                if (!markerKatmani.hasLayer(marker)) {
+                    markerKatmani.addLayer(marker);
                 }
             } else {
-                if (map.hasLayer(marker)) {
-                    map.removeLayer(marker);
+                if (markerKatmani.hasLayer(marker)) {
+                    markerKatmani.removeLayer(marker);
                 }
             }
         }
@@ -2079,7 +2090,7 @@
                     if (change.type === "removed") {
                         var marker = markerListesi[docId];
                         if (marker) {
-                            map.removeLayer(marker);
+                            markerKatmani.removeLayer(marker);
                             delete markerListesi[docId];
                             delete tuzakVerileri[docId];
                         }
