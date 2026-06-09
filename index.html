@@ -645,6 +645,48 @@
         </div>
     </div>
 
+    <!-- Oturum Geçmişi Modal (Süper Admin) -->
+    <div id="oturumGecmisiModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px; width: 92%; max-height: 88vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; display:flex; align-items:center; gap:8px;">🕐 Oturum Geçmişi</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatOturumGecmisiModal()">&times;</span>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-dark);">Filtre:</span>
+                <select id="oturumFiltreGun" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px; height: auto;" onchange="guncelleOturumGecmisiTablosu()">
+                    <option value="0">Bugün</option>
+                    <option value="1">Dün</option>
+                    <option value="3" selected>Son 3 Gün</option>
+                    <option value="7">Son 7 Gün</option>
+                    <option value="30">Son 30 Gün</option>
+                </select>
+                <span id="oturumToplamTxt" style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-left: auto;"></span>
+            </div>
+
+            <div style="max-height: 450px; overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);">
+                <table class="report-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;">
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Kullanıcı</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">İlçe</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Giriş Zamanı</th>
+                            <th style="padding: 12px; text-align: center; font-size: 13px;">Süre</th>
+                            <th style="padding: 12px; text-align: center; font-size: 13px;">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="oturumGecmisiTabloGovde">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatOturumGecmisiModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bulk Upload Modal -->
     <div id="topluYuklemeModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px;">
@@ -736,6 +778,78 @@
                     <div>
                         <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">6. Çevrimdışı (Offline) Çalışma</h4>
                         <p style="margin-top: 0; margin-bottom: 0;">Arazide internetiniz çekmese dahi uygulama açılır ve çalışır. İnternet yokken eklediğiniz tuzaklar ve sayım verileri telefon hafızasında tutulur; internet bağlantısı kurulduğu an veritabanına otomatik olarak eşitlenir.</p>
+                    </div>
+                </div>
+
+                <!-- Section 7 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/categorize.png" alt="Kayıt Türleri" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">7. Kayıt Türleri ve Tuzak Renk Skalası</h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Sistemde 3 farklı kayıt türü bulunur:</p>
+                        <ul style="margin-top: 0; margin-bottom: 8px; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>🏺 Huni (Funnel) Tuzak:</b> Yuvarlak işaretçi ile gösterilir. Renk skalası: <span style="color:#10b981; font-weight:700;">●Yeşil</span> (0-19), <span style="color:#f59e0b; font-weight:700;">●Sarı</span> (20-49), <span style="color:#ef4444; font-weight:700;">●Kırmızı</span> (50+).</li>
+                            <li style="margin-bottom: 6px;"><b>🟨 Yapışkan Tuzak:</b> Kare işaretçi ile gösterilir. Renk skalası: <span style="color:#fbbf24; font-weight:700;">■Amber</span> (0-19), <span style="color:#ea580c; font-weight:700;">■Turuncu</span> (20-49), <span style="color:#9333ea; font-weight:700;">■Mor</span> (50+).</li>
+                            <li style="margin-bottom: 0;"><b>🔵 Samuray Arısı Salımı:</b> Mavi yuvarlak işaretçi. Bu kayıt türünde böcek sayısı yerine <b>salınan tüp sayısı</b> girilir. Sayım kaydı tutulmaz.</li>
+                        </ul>
+                        <p style="margin-top: 0; margin-bottom: 0; font-size: 13px; color: var(--text-muted);">İşaretçilerin üzerindeki harf (H/Y/A) tuzak tipini, altındaki rakam ise böcek veya tüp sayısını gösterir.</p>
+                    </div>
+                </div>
+
+                <!-- Section 8 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/filter.png" alt="Bölge Filtreleme" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">8. Bölge Filtreleme ve Yol Tarifi</h4>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>Bölge Filtresi (Yönetici):</b> Sol menüdeki <b>Bölge Seçimi</b> bölümünden İl, İlçe ve Köy seçerek haritadaki tuzakları filtreleyebilirsiniz. Saha personeli yalnızca kendi ilçesini görür.</li>
+                            <li style="margin-bottom: 6px;"><b>Köy Sınırları ile Filtreleme:</b> Haritada köy sınırları katmanı açıkken, bir köy sınırına tıklayarak o köyü otomatik filtreleyebilirsiniz.</li>
+                            <li style="margin-bottom: 0;"><b>Yol Tarifi:</b> Herhangi bir tuzağa tıklayıp popup'taki <b>🗺️ Yol Tarifi</b> butonuna basarak Google Haritalar üzerinden o tuzağa yol tarifi alabilirsiniz.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 9 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
+                    <img src="https://img.icons8.com/color/96/000000/upload-2.png" alt="Toplu Yükleme" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">9. Toplu Tuzak Yükleme <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Sol menüdeki <b>Yönetim → Toplu Tuzak Yükleme</b> bölümünden birden fazla tuzağı aynı anda sisteme ekleyebilirsiniz.</p>
+                        <p style="margin-top: 0; margin-bottom: 0;"><b>Veri Formatı:</b> Her satıra virgülle ayrılmış olarak <code style="background:#fef3c7; padding:2px 6px; border-radius:4px; font-size:12px;">SıraNo, KöyAdı, Enlem, Boylam</code> yazılır. Örnek:<br><code style="background:#fef3c7; padding:2px 6px; border-radius:4px; font-size:12px;">1,Adacami Mah.,41.000884,40.597200</code></p>
+                    </div>
+                </div>
+
+                <!-- Section 10 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
+                    <img src="https://img.icons8.com/color/96/000000/conference-call.png" alt="Personel Yönetimi" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">10. Personel Yönetimi <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Sol menüdeki <b>Yönetim → Personel Yönetimi</b> bölümünden sisteme yeni personel ekleyebilir, mevcut personeli düzenleyebilir veya silebilirsiniz.</p>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;">Her personele <b>ad soyad, kullanıcı adı, ünvan, sorumlu ilçe, telefon ve rol</b> tanımlanır.</li>
+                            <li style="margin-bottom: 0;">Kullanıcı adı boş bırakılırsa isimden otomatik üretilir (örn: gokhan.aslan).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 11 -->
+                <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
+                    <img src="https://img.icons8.com/color/96/000000/worldwide-location.png" alt="Lokasyon Yönetimi" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">11. Lokasyon Yönetimi <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
+                        <p style="margin-top: 0; margin-bottom: 0;">Sol menüdeki <b>Yönetim → Lokasyon Yönetimi</b> bölümünden sisteme yeni ilçe veya köy/mahalle ekleyebilir, mevcut olanları silebilirsiniz. Eklenen lokasyonlar tuzak ekleme ve raporlama formlarında anında görünür hale gelir.</p>
+                    </div>
+                </div>
+
+                <!-- Section 12 -->
+                <div style="display: flex; gap: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
+                    <img src="https://img.icons8.com/color/96/000000/activity-history.png" alt="Log Kayıtları" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4 style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">12. Log Kayıtları ve Aktif Kullanıcılar <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>📜 Log Kayıtları:</b> Sistemde yapılan tüm işlemler (tuzak ekleme/silme, personel değişiklikleri, rapor indirme vb.) tarih, kullanıcı ve detay bilgisiyle kayıt altına alınır.</li>
+                            <li style="margin-bottom: 0;"><b>🟢 Sistemdekiler:</b> Sisteme giriş yapmış tüm personelin listesini ve çevrimiçi/çevrimdışı durumlarını gösterir. Son 15 dakika içinde aktif olan personel <b>yeşil</b> nokta ile işaretlenir.</li>
+                        </ul>
                     </div>
                 </div>
                 
@@ -1742,6 +1856,7 @@
         var aktifKullanici = null;
         var tuzakListener = null;
         var aktifFiltreler = { il: "Tümü", ilce: "Tümü", koy: "Tümü" };
+        var aktifOturumId = null;
 
         function isAdmin() {
             return aktifKullanici && (aktifKullanici.rol === "Yönetici" || aktifKullanici.rol === "Süper Admin");
@@ -1764,12 +1879,23 @@
 
         function kullaniciAktifliginiGuncelle() {
             if (!aktifKullanici) return;
-            db.collection("personeller").doc(aktifKullanici.telefon).update({
+            var docId = aktifKullanici.kullaniciAdi || aktifKullanici.telefon;
+            db.collection("personeller").doc(docId).update({
                 sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
                 sonAktiflikStr: new Date().toLocaleString('tr-TR')
             }).catch(function(err) {
                 console.error("Aktiflik güncellenemedi:", err);
             });
+
+            // Aktif oturumu güncelle
+            if (aktifOturumId) {
+                db.collection("oturumlar").doc(aktifOturumId).update({
+                    sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
+                    sonAktiflikStr: new Date().toLocaleString('tr-TR')
+                }).catch(function(err) {
+                    console.error("Oturum aktiflik güncellenemedi:", err);
+                });
+            }
         }
         setInterval(kullaniciAktifliginiGuncelle, 300000); // Heartbeat every 5 minutes
 
@@ -3448,12 +3574,45 @@
             if (isAdmin()) {
                 personelListesiniDinle();
             }
+
+            // Oturum kaydı oluştur
+            db.collection("oturumlar").add({
+                kullanici: user.adSoyad,
+                kullaniciAdi: user.kullaniciAdi || '',
+                ilce: user.ilce || '',
+                rol: user.rol || 'Saha Personeli',
+                girisZamani: firebase.firestore.FieldValue.serverTimestamp(),
+                girisZamaniStr: new Date().toLocaleString('tr-TR'),
+                sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
+                sonAktiflikStr: new Date().toLocaleString('tr-TR'),
+                cikisZamani: null,
+                aktif: true
+            }).then(function(docRef) {
+                aktifOturumId = docRef.id;
+                localStorage.setItem("aktifOturumId", aktifOturumId);
+            }).catch(function(err) {
+                console.error("Oturum kaydı oluşturulamadı:", err);
+            });
             
             alert("Giriş başarılı! Hoş geldiniz, " + aktifKullanici.adSoyad);
         }
 
         function oturumKapat() {
             if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
+                // Oturum kaydını kapat
+                var kapatilacakId = aktifOturumId || localStorage.getItem("aktifOturumId");
+                if (kapatilacakId) {
+                    db.collection("oturumlar").doc(kapatilacakId).update({
+                        cikisZamani: firebase.firestore.FieldValue.serverTimestamp(),
+                        cikisZamaniStr: new Date().toLocaleString('tr-TR'),
+                        aktif: false
+                    }).catch(function(err) {
+                        console.error("Oturum kapatma hatası:", err);
+                    });
+                }
+                aktifOturumId = null;
+                localStorage.removeItem("aktifOturumId");
+
                 localStorage.removeItem("aktifPersonel");
                 aktifKullanici = null;
                 
@@ -3602,6 +3761,9 @@
                     }));
                     adminGrubu.appendChild(menuOgesi('📊', 'Tarih Bazlı Excel İndir', '#0369a1', function() {
                         toggleMenu(); tarihBazliExcelIndir();
+                    }));
+                    adminGrubu.appendChild(menuOgesi('🕐', 'Oturum Geçmişi', '#7c3aed', function() {
+                        acOturumGecmisiModal();
                     }));
                 }
 
@@ -4001,6 +4163,135 @@
               });
         }
 
+        // OTURUM GEÇMİŞİ MODAL İŞLEMLERİ (Süper Admin)
+        function acOturumGecmisiModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
+                alert("Bu modüle erişim yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            guncelleOturumGecmisiTablosu();
+            document.getElementById("oturumGecmisiModal").classList.add("active");
+        }
+
+        function kapatOturumGecmisiModal() {
+            document.getElementById("oturumGecmisiModal").classList.remove("active");
+        }
+
+        function guncelleOturumGecmisiTablosu() {
+            var tbody = document.getElementById("oturumGecmisiTabloGovde");
+            var toplamTxt = document.getElementById("oturumToplamTxt");
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
+
+            var filtreGun = parseInt(document.getElementById("oturumFiltreGun").value) || 3;
+            var baslangic = new Date();
+            baslangic.setDate(baslangic.getDate() - filtreGun);
+            baslangic.setHours(0, 0, 0, 0);
+
+            db.collection("oturumlar")
+              .where("girisZamani", ">=", baslangic)
+              .orderBy("girisZamani", "desc")
+              .limit(100)
+              .get()
+              .then(function(querySnapshot) {
+                  tbody.innerHTML = "";
+
+                  if (querySnapshot.empty) {
+                      tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--text-muted);'>Bu tarih aralığında oturum kaydı bulunamadı.</td></tr>";
+                      if (toplamTxt) toplamTxt.innerText = "0 oturum";
+                      return;
+                  }
+
+                  var oturumSayisi = 0;
+                  var simdi = new Date();
+
+                  querySnapshot.forEach(function(doc) {
+                      var oturum = doc.data();
+                      oturumSayisi++;
+
+                      // Giriş zamanı
+                      var girisStr = oturum.girisZamaniStr || "-";
+                      if (girisStr === "-" && oturum.girisZamani && typeof oturum.girisZamani.toDate === 'function') {
+                          girisStr = oturum.girisZamani.toDate().toLocaleString('tr-TR');
+                      }
+
+                      // Süre hesapla
+                      var sureStr = "-";
+                      var girisDate = null;
+                      var bitisDate = null;
+
+                      if (oturum.girisZamani && typeof oturum.girisZamani.toDate === 'function') {
+                          girisDate = oturum.girisZamani.toDate();
+                      }
+
+                      if (oturum.aktif) {
+                          // Aktif oturum: sonAktiflik veya şimdiki zaman ile hesapla
+                          if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
+                              bitisDate = oturum.sonAktiflik.toDate();
+                          } else {
+                              bitisDate = simdi;
+                          }
+                      } else {
+                          // Kapatılmış oturum: çıkış zamanı ile hesapla
+                          if (oturum.cikisZamani && typeof oturum.cikisZamani.toDate === 'function') {
+                              bitisDate = oturum.cikisZamani.toDate();
+                          } else if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
+                              bitisDate = oturum.sonAktiflik.toDate();
+                          }
+                      }
+
+                      if (girisDate && bitisDate) {
+                          var farkMs = bitisDate - girisDate;
+                          var farkDakika = Math.floor(farkMs / 60000);
+                          var farkSaat = Math.floor(farkDakika / 60);
+                          var kalanDakika = farkDakika % 60;
+
+                          if (farkSaat > 0) {
+                              sureStr = farkSaat + " saat " + kalanDakika + " dk";
+                          } else if (farkDakika > 0) {
+                              sureStr = farkDakika + " dakika";
+                          } else {
+                              sureStr = "< 1 dk";
+                          }
+                      }
+
+                      // Durum
+                      var durumHtml = "";
+                      if (oturum.aktif) {
+                          durumHtml = '<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;"></span><span style="font-size:11px; color:#10b981; font-weight:700;">Aktif</span></span>';
+                      } else {
+                          durumHtml = '<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span><span style="font-size:11px; color:#64748b;">Çıkış Yaptı</span></span>';
+                      }
+
+                      var tr = document.createElement("tr");
+                      tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
+                      if (oturum.aktif) {
+                          tr.style.background = "rgba(16, 185, 129, 0.05)";
+                      }
+                      tr.innerHTML =
+                          "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + (oturum.kullanici || "Bilinmiyor") + "<br><span style='font-size:10px; color:var(--text-muted); font-weight:400;'>" + (oturum.rol || "") + "</span></td>" +
+                          "<td style='padding: 10px; font-size:12px; color:var(--text-muted);'>" + (oturum.ilce || "-") + "</td>" +
+                          "<td style='padding: 10px; font-size:12px; color:var(--text-dark); white-space:nowrap;'>" + girisStr + "</td>" +
+                          "<td style='padding: 10px; text-align:center; font-size:13px; font-weight:700; color:" + (oturum.aktif ? "var(--primary)" : "var(--text-dark)") + ";'>" + sureStr + "</td>" +
+                          "<td style='padding: 10px; text-align:center;'>" + durumHtml + "</td>";
+                      tbody.appendChild(tr);
+                  });
+
+                  if (toplamTxt) toplamTxt.innerText = oturumSayisi + " oturum kaydı";
+              })
+              .catch(function(err) {
+                  tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
+              });
+        }
+
+        // Sayfa yüklendiğinde localStorage'dan aktif oturum ID'sini yükle
+        (function() {
+            var cachedOturumId = localStorage.getItem("aktifOturumId");
+            if (cachedOturumId) {
+                aktifOturumId = cachedOturumId;
+            }
+        })();
+
         // AKTİF KULLANICILAR (SİSTEMDEKİLER) MODAL İŞLEMLERİ
         function acAktifKullanicilarModal() {
             if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
@@ -4304,6 +4595,7 @@
                 kapatTopluYuklemeModal();
                 kapatLokasyonModal();
                 kapatTuzakKayitlariModal();
+                kapatOturumGecmisiModal();
             }
         });
 
