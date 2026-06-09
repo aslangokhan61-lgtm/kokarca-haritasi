@@ -1,0 +1,137 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /*
+      ==========================================================================
+      YÖNTEM A: MEVCUT YAPILANDIRMA İÇİN GÜVENLİK KURALLARI (Firebase Auth Yoksa)
+      ==========================================================================
+      Uygulamanızda Firebase Auth etkinleştirilmediği için sunucu tarafında kullanıcı 
+      kimliği doğrulanamaz. Bu durumda kurallar, veri yapısının bozulmasını önlemek, 
+      veri şemasını doğrulamak ve logların/oturumların silinmesini engellemek için kullanılır.
+    */
+
+    // Şema Doğrulama: Tuzak kaydının geçerli bir yapıda olduğunu kontrol eder
+    function isValidTrap(data) {
+      return data.il is string
+        && data.ilce is string
+        && data.koy is string
+        && data.tuzakTipi in ['Huni', 'Yapışkan', 'Samuray Arısı Salımı']
+        && (data.bocekSayisi is int || data.bocekSayisi == null)
+        && (data.lat is number)
+        && (data.lng is number);
+    }
+
+    // Şema Doğrulama: Personel kaydının geçerli bir yapıda olduğunu kontrol eder
+    function isValidPersonnel(data) {
+      return data.adSoyad is string
+        && data.kullaniciAdi is string
+        && data.telefon is string
+        && data.ilce is string
+        && data.rol in ['Saha Personeli', 'Yönetici', 'Süper Admin'];
+    }
+
+    match /tuzaklar/{trapId} {
+      allow read: if true;
+      allow create, update: if isValidTrap(request.resource.data);
+      allow delete: if true; 
+    }
+
+    match /personeller/{personelId} {
+      allow read: if true;
+      allow create, update: if isValidPersonnel(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /loglar/{logId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; // Loglar silinemez veya güncellenemez
+    }
+
+    match /oturumlar/{oturumId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false; // Oturum geçmişi silinemez
+    }
+
+    match /ayarlar/{ayarId} {
+      allow read: if true;
+      allow write: if true; // Lokasyon güncellemeleri
+    }
+
+    match /haftalikRaporlar/{raporId} {
+      allow read: if true;
+      allow write: if true; // Haftalık arşiv oluşturma
+    }
+
+    /*
+      ==========================================================================
+      YÖNTEM B: TAM GÜVENLİ YAPILANDIRMA (Firebase Auth Etkinleştirildiğinde)
+      ==========================================================================
+      Eğer gelecekte Firebase Auth (e-posta veya telefon ile giriş) entegrasyonu 
+      yaparsanız, aşağıdaki kuralları etkinleştirerek veritabanınızı tam korumaya 
+      alabilirsiniz.
+      
+      Kullanımı için: Alttaki kuralları etkinleştirip üsttekileri siliniz.
+      
+      --------------------------------------------------------------------------
+      
+      // Kullanıcının giriş yapıp yapmadığını kontrol eder
+      function isAuthenticated() {
+        return request.auth != null;
+      }
+      
+      // Kullanıcının personel bilgilerini çeker (belge ID'si kullanıcının UID'si olmalıdır)
+      function getPersonnel(uid) {
+        return get(/databases/$(database)/documents/personeller/$(uid)).data;
+      }
+      
+      // Giriş yapan kullanıcının Yönetici veya Süper Admin olup olmadığını kontrol eder
+      function isManager() {
+        return isAuthenticated() && 
+          (getPersonnel(request.auth.uid).rol in ['Yönetici', 'Süper Admin']);
+      }
+      
+      // Giriş yapan kullanıcının kendi sorumlu ilçesine ait işlem yapıp yapmadığını kontrol eder
+      function isDistrictStaff(ilce) {
+        return isAuthenticated() && 
+          getPersonnel(request.auth.uid).ilce == ilce;
+      }
+
+      match /tuzaklar/{trapId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isManager() || isDistrictStaff(request.resource.data.ilce);
+        allow delete: if isManager() || isDistrictStaff(resource.data.ilce);
+      }
+
+      match /personeller/{personelId} {
+        allow read: if isAuthenticated();
+        allow write: if isManager(); // Sadece yöneticiler personel ekleyebilir/düzenleyebilir
+      }
+
+      match /loglar/{logId} {
+        allow read: if isManager(); // Sadece yöneticiler logları okuyabilir
+        allow create: if isAuthenticated();
+        allow update, delete: if false; // Log silmek yasaktır
+      }
+
+      match /oturumlar/{oturumId} {
+        allow read: if isManager();
+        allow write: if isAuthenticated();
+      }
+
+      match /ayarlar/{ayarId} {
+        allow read: if isAuthenticated();
+        allow write: if isManager();
+      }
+
+      match /haftalikRaporlar/{raporId} {
+        allow read: if isAuthenticated();
+        allow write: if isManager();
+      }
+      
+      --------------------------------------------------------------------------
+    */
+  }
+}
