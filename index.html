@@ -1608,14 +1608,6 @@
         </div>
     </div>
 
-    <!-- Weather Card (Faz 3) -->
-    <div id="havaDurumuKart" style="position:absolute; bottom:30px; right:20px; z-index:1000; display:flex; align-items:center; gap:10px; background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:10px 16px; box-shadow:var(--shadow); font-size:12px; font-weight:700; color:var(--text-dark); transition: all 0.3s ease;">
-        <span id="havaIcon" style="font-size:22px; line-height: 1;">🌤️</span>
-        <div style="display:flex; flex-direction:column; justify-content:center;">
-            <div id="havaDerece" style="font-size:13px; font-weight:800; line-height: 1.2;">🌤️ Yükleniyor...</div>
-            <div id="havaDetay" style="font-size:9px; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Hava Durumu</div>
-        </div>
-    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1736,20 +1728,6 @@
 
         L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
 
-        // Fetch initial weather for map center
-        setTimeout(function() {
-            var center = map.getCenter();
-            if (typeof havaDurumunuGuncelle === 'function') {
-                havaDurumunuGuncelle(center.lat, center.lng);
-            }
-        }, 1000);
-
-        map.on('moveend', function() {
-            var center = map.getCenter();
-            if (typeof havaDurumunuGuncelle === 'function') {
-                havaDurumunuGuncelle(center.lat, center.lng);
-            }
-        });
 
         // Geolocation Find User
         var userMarker = null;
@@ -5864,46 +5842,6 @@
             });
         }
 
-        // ───── FAZ 3: HAVA DURUMU ENTEGRASYONU ─────
-        function havaDurumunuGuncelle(lat, lng) {
-            var latitude = lat || 41.0201;  // Rize varsayılan
-            var longitude = lng || 40.5222;
-            
-            var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m';
-            
-            fetch(url)
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data && data.current) {
-                        var temp = Math.round(data.current.temperature_2m);
-                        var humidity = data.current.relative_humidity_2m;
-                        var wind = Math.round(data.current.wind_speed_10m);
-                        var code = data.current.weather_code;
-                        
-                        var icon = "🌤️";
-                        var desc = "Açık";
-                        if (code >= 1 && code <= 3) { icon = "⛅"; desc = "Bulutlu"; }
-                        else if (code >= 45 && code <= 48) { icon = "🌫️"; desc = "Sisli"; }
-                        else if (code >= 51 && code <= 67) { icon = "🌧️"; desc = "Yağmurlu"; }
-                        else if (code >= 71 && code <= 77) { icon = "🌨️"; desc = "Karlı"; }
-                        else if (code >= 80 && code <= 82) { icon = "🌦️"; desc = "Sağanak"; }
-                        else if (code >= 95 && code <= 99) { icon = "⛈️"; desc = "Fırtına"; }
-                        
-                        var dereceEl = document.getElementById("havaDerece");
-                        if (dereceEl) dereceEl.innerHTML = icon + " " + temp + "°C";
-                        
-                        var detayEl = document.getElementById("havaDetay");
-                        if (detayEl) detayEl.innerHTML = desc + " | 💧 %" + humidity + " | 💨 " + wind + " km/h";
-                    }
-                })
-                .catch(function(err) {
-                    console.warn("Hava durumu yüklenemedi:", err);
-                    var dereceEl = document.getElementById("havaDerece");
-                    if (dereceEl) dereceEl.innerHTML = "🌤️ Rize";
-                    var detayEl = document.getElementById("havaDetay");
-                    if (detayEl) detayEl.innerHTML = "Çevrimdışı / Hava Bilgisi Yok";
-                });
-        }
 
         // ───── FAZ 3: FOTOĞRAF EKLEME & YÖNETİMİ ─────
         function tuzakFotoYuklendi(e) {
