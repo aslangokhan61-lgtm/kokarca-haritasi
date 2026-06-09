@@ -869,9 +869,14 @@
             <h3 id="modalBaslik">Yeni Kayıt Ekle</h3>
             <input type="hidden" id="duzenlenenDocId" value="">
             
-            <div id="koordinatBilgi" style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 6px; font-size: 13px; color: #495057;">
-                <strong>Ondalık:</strong> <span id="koordDecimal">-</span><br>
-                <strong>DMS:</strong> <span id="koordDMS">-</span>
+            <div id="koordinatBilgi" style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 6px; font-size: 13px; color: #495057; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>Ondalık:</strong> <span id="koordDecimal">-</span><br>
+                    <strong>DMS:</strong> <span id="koordDMS">-</span>
+                </div>
+                <button type="button" class="btn" style="background: var(--primary); color: white; padding: 6px 10px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: none; border-radius: 4px; cursor: pointer;" onclick="mevcutGPSKonumunuAl(event)">
+                    📍 Konumumu Al
+                </button>
             </div>
 
             <div class="form-group">
@@ -3141,6 +3146,36 @@
                     alert("Kayıt güncellenirken hata oluştu: " + e.message);
                 });
             });
+        }
+
+        function mevcutGPSKonumunuAl(e) {
+            if (e) e.preventDefault();
+            if (!navigator.geolocation) {
+                alert("Tarayıcınız GPS desteklemiyor.");
+                return;
+            }
+            var btn = e ? e.target : null;
+            var eskiMetin = btn ? btn.innerHTML : "";
+            if (btn) btn.innerHTML = "⏳ Bekleyin...";
+            
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                secilenKonum = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
+                document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
+                
+                var docId = document.getElementById('duzenlenenDocId').value;
+                if (docId && markerListesi[docId]) {
+                    markerListesi[docId].setLatLng(secilenKonum);
+                }
+                
+                if (btn) {
+                    btn.innerHTML = "✅ Alındı";
+                    setTimeout(function(){ btn.innerHTML = eskiMetin; }, 2000);
+                }
+            }, function(err) {
+                alert("Konum alınamadı. Lütfen cihaz GPS'inin açık olduğundan emin olun.");
+                if (btn) btn.innerHTML = eskiMetin;
+            }, { enableHighAccuracy: true, maximumAge: 0 });
         }
 
         // Save/Update database records
