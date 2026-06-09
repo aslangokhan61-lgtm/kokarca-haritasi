@@ -77,6 +77,24 @@
             50% { transform: translateX(-50%) scale(1.05); }
             100% { transform: translateX(-50%) scale(1); }
         }
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+                transform: scale(1);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+                transform: scale(1.15);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                transform: scale(1);
+            }
+        }
+        .pulse-animation {
+            animation: pulse-red 2s infinite !important;
+            border-radius: 50% !important;
+        }
 
         /* İlçe Sınırları Loading Badge */
         .ilce-loading-badge {
@@ -414,11 +432,206 @@
             .leaflet-top.leaflet-right {
                 margin-top: 72px !important;
             }
+            
+            /* Leaflet popup customization for mobile */
+            .leaflet-popup-content-wrapper {
+                max-width: 280px !important;
+                padding: 10px !important;
+            }
+            .leaflet-popup-content {
+                font-size: 12px !important;
+                margin: 8px 10px !important;
+            }
+            .popup-actions {
+                flex-direction: column !important;
+                gap: 6px !important;
+            }
+            .popup-btn {
+                padding: 10px 12px !important;
+                font-size: 13px !important;
+                flex: 1 1 100% !important;
+                min-height: 40px !important;
+            }
+            
+            /* Bottom-sheet behavior for main modals on mobile */
+            .modal-overlay {
+                align-items: flex-end !important;
+            }
+            .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 24px 24px 0 0 !important;
+                padding: 24px 20px !important;
+                transform: translateY(100%) scale(1) !important;
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            .modal-overlay.active .modal-content {
+                transform: translateY(0) scale(1) !important;
+            }
+            
+            /* Touch-friendly buttons and form inputs */
+            .form-control {
+                padding: 14px 16px !important;
+                font-size: 16px !important;
+                min-height: 48px !important;
+            }
+            .btn {
+                padding: 14px 24px !important;
+                min-height: 48px !important;
+                font-size: 16px !important;
+            }
+            
+            /* Dashboard cards on mobile */
+            #dashboardCards {
+                bottom: 15px !important;
+                width: 95% !important;
+                gap: 6px !important;
+            }
+            #dashboardCards > div {
+                padding: 8px 10px !important;
+                min-width: 75px !important;
+                flex: 1 !important;
+            }
+            
+            /* Weather card on mobile */
+            #havaDurumuKart {
+                top: 72px !important;
+                bottom: auto !important;
+                right: 15px !important;
+                padding: 6px 12px !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+            }
         }
 
         /* Leaflet sağ üst katman kontrolü: Kullanıcı adı kartının altına it */
         .leaflet-top.leaflet-right {
             margin-top: 68px;
+        }
+
+        /* ── KARANLIK MOD ── */
+        body.dark-mode {
+            --primary: #22c55e;
+            --primary-light: #4ade80;
+            --primary-dark: #16a34a;
+            --text-dark: #e2e8f0;
+            --text-muted: #94a3b8;
+            --bg-glass: rgba(30, 41, 59, 0.92);
+            --border-glass: rgba(71, 85, 105, 0.5);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            --danger: #ef4444;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        body.dark-mode .modal-content {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+        body.dark-mode .form-control {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-color: #475569;
+        }
+        body.dark-mode .report-table th { background: #334155; color: #e2e8f0; }
+        body.dark-mode .report-table td { color: #cbd5e1; border-color: #334155; }
+        body.dark-mode .menu-header { background: linear-gradient(135deg, #065f46, #059669); }
+        body.dark-mode .btn-cancel { background: #334155; color: #e2e8f0; }
+        body.dark-mode .kilavuz-body div[style*="background: #f8fafc"],
+        body.dark-mode .kilavuz-body div[style*="background:#f8fafc"] { background: #1e293b !important; border-color: #334155 !important; }
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+            background: #0f172a !important; color: #e2e8f0 !important; border-color: #475569 !important;
+        }
+
+        .dark-toggle {
+            position: absolute; top: 20px; right: 220px; z-index: 1000;
+            background: var(--bg-glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        .dark-toggle:hover { transform: scale(1.1); }
+
+        /* ── ANİMASYONLAR ── */
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.92) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes modalFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn, .popup-btn, .menu-item {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .btn:hover, .popup-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .btn:active, .popup-btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        /* ── TUZAK ARAMA ÇUBUĞU ── */
+        .search-box {
+            position: absolute; top: 72px; left: 20px; z-index: 1000;
+            display: flex; align-items: center; gap: 0;
+            background: var(--bg-glass); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 25px; box-shadow: var(--shadow);
+            overflow: hidden;
+            width: 280px;
+            transition: all 0.3s ease;
+        }
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 142, 67, 0.15), var(--shadow);
+            width: 320px;
+        }
+        .search-box input {
+            border: none; outline: none; background: transparent;
+            padding: 10px 16px; font-size: 13px; font-weight: 500;
+            font-family: var(--font); color: var(--text-dark);
+            width: 100%;
+        }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box .search-icon {
+            padding: 10px 14px 10px 6px; font-size: 16px;
+            color: var(--text-muted); flex-shrink: 0;
+        }
+        .search-results {
+            position: absolute; top: 44px; left: 0; right: 0;
+            background: white; border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            max-height: 250px; overflow-y: auto;
+            display: none; z-index: 1001;
+            border: 1px solid #e2e8f0;
+        }
+        body.dark-mode .search-results { background: #1e293b; border-color: #334155; }
+        .search-result-item {
+            padding: 10px 16px; cursor: pointer;
+            font-size: 13px; font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s;
+        }
+        .search-result-item:hover { background: #f0fdf4; }
+        body.dark-mode .search-result-item:hover { background: #334155; }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item .sr-title { font-weight: 700; color: var(--primary); }
+        .search-result-item .sr-sub { font-size: 11px; color: var(--text-muted); }
+
+        @media (max-width: 768px) {
+            .search-box { width: 200px; top: 72px; left: 10px; }
+            .search-box:focus-within { width: 260px; }
+            .dark-toggle { right: auto; left: calc(100% - 55px); top: 72px; width: 36px; height: 36px; font-size: 16px; }
         }
     </style>
 </head>
@@ -440,6 +653,18 @@
         <span id="userNameTxt" style="font-weight: 700; color: var(--primary);">Gökhan ASLAN</span>
         <span id="userDistrictTxt" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">(Güneysu - Yönetici)</span>
         <button style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);" onclick="oturumKapat()">Çıkış</button>
+    </div>
+
+    <!-- Karanlık Mod Toggle -->
+    <div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="Karanlık/Aydınlık Mod">
+        🌙
+    </div>
+
+    <!-- Tuzak Arama Kutusu -->
+    <div class="search-box" id="searchBox">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="tuzakAramaInput" placeholder="Tuzak, köy veya numara ara..." oninput="tuzakAra(this.value)" autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
     </div>
 
     <!-- Login Modal (Username Only) -->
@@ -607,6 +832,9 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Log Sayfalama Kutusu -->
+            <div id="logSayfalamaKutusu" style="margin-bottom: 15px;"></div>
             
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="kapatLogModal()">Kapat</button>
@@ -840,18 +1068,6 @@
                         <p style="margin-top: 0; margin-bottom: 0;">Sol menüdeki <b>Yönetim → Lokasyon Yönetimi</b> bölümünden sisteme yeni ilçe veya köy/mahalle ekleyebilir, mevcut olanları silebilirsiniz. Eklenen lokasyonlar tuzak ekleme ve raporlama formlarında anında görünür hale gelir.</p>
                     </div>
                 </div>
-
-                <!-- Section 12 -->
-                <div style="display: flex; gap: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
-                    <img src="https://img.icons8.com/color/96/000000/activity-history.png" alt="Log Kayıtları" style="width: 50px; height: 50px; flex-shrink: 0;">
-                    <div>
-                        <h4 style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">12. Log Kayıtları ve Aktif Kullanıcılar <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
-                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
-                            <li style="margin-bottom: 6px;"><b>📜 Log Kayıtları:</b> Sistemde yapılan tüm işlemler (tuzak ekleme/silme, personel değişiklikleri, rapor indirme vb.) tarih, kullanıcı ve detay bilgisiyle kayıt altına alınır.</li>
-                            <li style="margin-bottom: 0;"><b>🟢 Sistemdekiler:</b> Sisteme giriş yapmış tüm personelin listesini ve çevrimiçi/çevrimdışı durumlarını gösterir. Son 15 dakika içinde aktif olan personel <b>yeşil</b> nokta ile işaretlenir.</li>
-                        </ul>
-                    </div>
-                </div>
                 
                 <!-- Signature -->
                 <div style="margin-top: 30px; text-align: right; padding-right: 20px;">
@@ -865,6 +1081,209 @@
             
             <div class="modal-actions" style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
                 <button class="btn btn-cancel" onclick="kapatKilavuzModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Geliştirme Planı Modal -->
+    <div id="gelistirmePlanModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 850px; width: 92%; max-height: 88vh; overflow-y: auto; font-family: var(--font);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 22px; font-weight: 800; color: var(--primary-dark); display: flex; align-items: center; gap: 8px;">🚀 Geliştirme Yol Haritası</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatGelistirmePlanModal()">&times;</span>
+            </div>
+
+            <!-- Özet Kartları -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #7c3aed, #a855f7); border-radius: 12px; padding: 16px; text-align: center; color: white;">
+                    <div style="font-size: 28px; font-weight: 900;">18</div>
+                    <div style="font-size: 11px; font-weight: 600; opacity: 0.9;">Planlanan Özellik</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #10b981, #34d399); border-radius: 12px; padding: 16px; text-align: center; color: white;">
+                    <div style="font-size: 28px; font-weight: 900;">3</div>
+                    <div style="font-size: 11px; font-weight: 600; opacity: 0.9;">Tamamlanan</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); border-radius: 12px; padding: 16px; text-align: center; color: white;">
+                    <div style="font-size: 28px; font-weight: 900;">5</div>
+                    <div style="font-size: 11px; font-weight: 600; opacity: 0.9;">Kategori</div>
+                </div>
+            </div>
+
+            <div style="font-size: 14px; line-height: 1.5; color: var(--text-dark); text-align: left;">
+
+                <!-- Kategori 1 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#ede9fe; font-size:16px;">📊</span>
+                        <h4 style="margin:0; font-size: 15px; font-weight: 800; color: #7c3aed;">Analiz & Görselleştirme</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🌡️</div>
+                            <div style="font-size:13px; font-weight:700;">Isı Haritası (Heatmap)</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Böcek yoğunluğunu renk geçişleriyle harita üzerinde gösterme</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">📈</div>
+                            <div style="font-size:13px; font-weight:700;">Haftalık Trend Grafiği</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Her tuzağın zaman içindeki böcek sayısı değişimi</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">⚖️</div>
+                            <div style="font-size:13px; font-weight:700;">İlçe Karşılaştırma</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Bölgeler arası karşılaştırmalı analiz grafikleri</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🎯</div>
+                            <div style="font-size:13px; font-weight:700;">Dashboard Paneli</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Giriş sonrası özet kartlar ve istatistikler</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategori 2 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#fef3c7; font-size:16px;">📸</span>
+                        <h4 style="margin:0; font-size: 15px; font-weight: 800; color: #d97706;">Saha Geliştirmeleri</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">📷</div>
+                            <div style="font-size:13px; font-weight:700;">Fotoğraf Ekleme</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Tuzak veya böcek fotoğrafını kayda ekleme</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🔍</div>
+                            <div style="font-size:13px; font-weight:700;">Tuzak Arama</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Ad, numara veya köy ile hızlı arama</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🔔</div>
+                            <div style="font-size:13px; font-weight:700;">Bildirim Sistemi</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Eşik değer aşılınca otomatik uyarı</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🌤️</div>
+                            <div style="font-size:13px; font-weight:700;">Hava Durumu Entegrasyonu</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Bölgesel hava durumu ve böcek ilişkisi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategori 3 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#dbeafe; font-size:16px;">📱</span>
+                        <h4 style="margin:0; font-size: 15px; font-weight: 800; color: #2563eb;">Kullanıcı Deneyimi</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🌙</div>
+                            <div style="font-size:13px; font-weight:700;">Karanlık Mod</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Göz yormayan koyu tema</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">📲</div>
+                            <div style="font-size:13px; font-weight:700;">Gelişmiş Mobil Tasarım</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Telefona optimize arayüz</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">✨</div>
+                            <div style="font-size:13px; font-weight:700;">Akıcı Animasyonlar</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Profesyonel geçiş efektleri</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">💾</div>
+                            <div style="font-size:13px; font-weight:700;">Otomatik Yedekleme</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Verilerin JSON olarak indirilmesi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategori 4 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#fce7f3; font-size:16px;">📈</span>
+                        <h4 style="margin:0; font-size: 15px; font-weight: 800; color: #db2777;">Yönetim & Raporlama</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">📅</div>
+                            <div style="font-size:13px; font-weight:700;">Otomatik Haftalık Rapor</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Her Cuma otomatik özet rapor</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">👤</div>
+                            <div style="font-size:13px; font-weight:700;">Personel Performansı</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Kişi bazlı aktivite istatistikleri</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🖨️</div>
+                            <div style="font-size:13px; font-weight:700;">Yazdırılabilir Rapor</div>
+                            <div style="font-size:11px; color:var(--text-muted);">A4 formatlı profesyonel çıktı</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">📆</div>
+                            <div style="font-size:13px; font-weight:700;">Tarih Aralığı Filtresi</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Belirli dönemlere ait veri analizi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategori 5 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#fee2e2; font-size:16px;">🔧</span>
+                        <h4 style="margin:0; font-size: 15px; font-weight: 800; color: #dc2626;">Teknik İyileştirmeler</h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🧩</div>
+                            <div style="font-size:13px; font-weight:700;">Kod Modülerliği</div>
+                            <div style="font-size:11px; color:var(--text-muted);">CSS ve JS dosyalarına ayırma</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px;">
+                            <div style="font-size:18px; margin-bottom:4px;">🔒</div>
+                            <div style="font-size:13px; font-weight:700;">Güvenlik Kuralları</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Sunucu tarafında yetki doğrulama</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tamamlananlar -->
+                <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 14px; padding: 20px; border: 1.5px solid #a7f3d0;">
+                    <h4 style="margin: 0 0 14px 0; font-size: 15px; font-weight: 800; color: #065f46; display:flex; align-items:center; gap:6px;">✅ Tamamlanan Özellikler</h4>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.7); padding:10px 14px; border-radius:10px; border:1px solid rgba(16,185,129,0.15);">
+                            <span style="width:24px; height:24px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">✓</span>
+                            <div style="flex:1;"><strong style="font-size:13px; color:#065f46;">Oturum Geçmişi Modülü</strong><br><span style="font-size:11px; color:#047857;">Kullanıcı giriş takibi ve süre analizi</span></div>
+                            <span style="font-size:10px; color:#6ee7b7; font-weight:600; white-space:nowrap;">Haziran 2026</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.7); padding:10px 14px; border-radius:10px; border:1px solid rgba(16,185,129,0.15);">
+                            <span style="width:24px; height:24px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">✓</span>
+                            <div style="flex:1;"><strong style="font-size:13px; color:#065f46;">Kullanım Kılavuzu Güncellemesi</strong><br><span style="font-size:11px; color:#047857;">11 bölümlük detaylı kılavuz</span></div>
+                            <span style="font-size:10px; color:#6ee7b7; font-weight:600; white-space:nowrap;">Haziran 2026</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.7); padding:10px 14px; border-radius:10px; border:1px solid rgba(16,185,129,0.15);">
+                            <span style="width:24px; height:24px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">✓</span>
+                            <div style="flex:1;"><strong style="font-size:13px; color:#065f46;">Harita Yükleme Hatası Düzeltme</strong><br><span style="font-size:11px; color:#047857;">MarkerCluster maxZoom hatası giderildi</span></div>
+                            <span style="font-size:10px; color:#6ee7b7; font-weight:600; white-space:nowrap;">Haziran 2026</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- İmza -->
+                <div style="margin-top: 24px; text-align: right; padding-right: 10px;">
+                    <div style="display: inline-block; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; font-weight: 800; color: var(--primary-dark); margin-bottom: 2px;">Gökhan ASLAN</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Ziraat Mühendisi — Güneysu İlçe Tarım ve Orman Müdürlüğü</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                <button class="btn btn-cancel" onclick="kapatGelistirmePlanModal()">Kapat</button>
             </div>
         </div>
     </div>
@@ -1038,6 +1457,23 @@
                     <input type="number" id="tupSayisi" class="form-control" placeholder="Örn: 5" min="1">
                 </div>
             </div>
+            <div class="form-group" id="tuzakFotoGrubu">
+                <label style="display: flex; align-items: center; gap: 4px;">📷 Tuzak / Konum Fotoğrafı</label>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="file" id="tuzakFotoInput" accept="image/*" style="display: none;" onchange="tuzakFotoYuklendi(event)">
+                    <button type="button" class="btn" style="background: #e2e8f0; color: #475569; padding: 8px 14px; font-size: 13px; min-height: 40px !important;" onclick="document.getElementById('tuzakFotoInput').click()">
+                        📷 Fotoğraf Seç / Çek
+                    </button>
+                    <span id="tuzakFotoDurum" style="font-size: 12px; color: var(--text-muted);">Fotoğraf eklenmedi</span>
+                </div>
+                <div id="tuzakFotoOnizlemeBox" style="margin-top: 10px; display: none; text-align: center; position: relative;">
+                    <img id="tuzakFotoOnizleme" src="" style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 100%;">
+                    <div style="margin-top: 6px;">
+                        <button type="button" class="popup-btn btn-delete" style="padding: 4px 8px; font-size: 11px; display: inline-block; width: auto; min-height: 28px !important;" onclick="tuzakFotoSilBtn()">Kaldır</button>
+                    </div>
+                </div>
+                <input type="hidden" id="tuzakFotoBase64" value="">
+            </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="kapatModal()">İptal</button>
                 <button class="btn btn-save" onclick="kaydet()">Kaydet</button>
@@ -1115,6 +1551,9 @@
                 </table>
             </div>
 
+            <!-- Rapor Sayfalama Kutusu -->
+            <div id="raporSayfalamaKutusu" style="margin-bottom: 16px;"></div>
+
             <!-- Bar Chart Container -->
             <div id="bocekGrafikKutusu" style="background-color: #f8fafc; border-radius: var(--radius-md); padding: 15px; border: 1.5px solid #f1f5f9;">
                 <div style="position: relative; height: 200px; width: 100%;">
@@ -1137,6 +1576,9 @@
                 <button id="tarihliExcelBtn" class="btn-csv" style="display:none; background: linear-gradient(135deg,#0369a1,#0284c7); color:white; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:700; font-family:var(--font); cursor:pointer; display:none; align-items:center; gap:6px;" onclick="tarihBazliExcelIndir()">
                     📊 Tarihli Excel
                 </button>
+                <button id="raporYazdirBtn" class="btn-csv" style="background: linear-gradient(135deg,#64748b,#475569); color:white; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:700; font-family:var(--font); cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="raporuYazdir()">
+                    🖨️ Yazdır
+                </button>
                 <button class="btn btn-cancel" onclick="kapatRapor()">Kapat</button>
             </div>
         </div>
@@ -1146,9 +1588,39 @@
     <!-- Map container -->
     <div id="harita"></div>
 
+    <!-- Dashboard Floating Cards -->
+    <div id="dashboardCards" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); z-index:1000; display:none; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <div style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
+            <div id="dashTuzakSayi" style="font-size:24px; font-weight:900; color:var(--primary);">0</div>
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Toplam Tuzak</div>
+        </div>
+        <div style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
+            <div id="dashBocekSayi" style="font-size:24px; font-weight:900; color:#ef4444;">0</div>
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Toplam Böcek</div>
+        </div>
+        <div style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
+            <div id="dashEnYogun" style="font-size:14px; font-weight:900; color:#d97706; min-height:29px; display:flex; align-items:center; justify-content:center;">-</div>
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">En Yoğun İlçe</div>
+        </div>
+        <div style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
+            <div id="dashOrt" style="font-size:24px; font-weight:900; color:#7c3aed;">0</div>
+            <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Ort. Böcek/Tuzak</div>
+        </div>
+    </div>
+
+    <!-- Weather Card (Faz 3) -->
+    <div id="havaDurumuKart" style="position:absolute; bottom:30px; right:20px; z-index:1000; display:flex; align-items:center; gap:10px; background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:10px 16px; box-shadow:var(--shadow); font-size:12px; font-weight:700; color:var(--text-dark); transition: all 0.3s ease;">
+        <span id="havaIcon" style="font-size:22px; line-height: 1;">🌤️</span>
+        <div style="display:flex; flex-direction:column; justify-content:center;">
+            <div id="havaDerece" style="font-size:13px; font-weight:800; line-height: 1.2;">🌤️ Yükleniyor...</div>
+            <div id="havaDetay" style="font-size:9px; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">Hava Durumu</div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1263,6 +1735,21 @@
         };
 
         L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
+
+        // Fetch initial weather for map center
+        setTimeout(function() {
+            var center = map.getCenter();
+            if (typeof havaDurumunuGuncelle === 'function') {
+                havaDurumunuGuncelle(center.lat, center.lng);
+            }
+        }, 1000);
+
+        map.on('moveend', function() {
+            var center = map.getCenter();
+            if (typeof havaDurumunuGuncelle === 'function') {
+                havaDurumunuGuncelle(center.lat, center.lng);
+            }
+        });
 
         // Geolocation Find User
         var userMarker = null;
@@ -1858,6 +2345,13 @@
         var aktifFiltreler = { il: "Tümü", ilce: "Tümü", koy: "Tümü" };
         var aktifOturumId = null;
 
+        // Pagination Variables
+        window.raporMevcutSayfa = 1;
+        window.logMevcutSayfa = 1;
+        window.logSayfaLimit = 20;
+        window.logCursors = [null];
+        window.logSonrakiVar = false;
+
         function isAdmin() {
             return aktifKullanici && (aktifKullanici.rol === "Yönetici" || aktifKullanici.rol === "Süper Admin");
         }
@@ -2088,8 +2582,10 @@
             var iAnchor = [16, 16];
             if (isYapiskan) { iSize = [30, 30]; iAnchor = [15, 15]; }
 
+            var pulseClass = (bocekCount >= 50 && !isArı) ? " pulse-animation" : "";
+
             return L.divIcon({
-                className: 'custom-marker ' + shapeClass + ' ' + colorClass,
+                className: 'custom-marker ' + shapeClass + ' ' + colorClass + pulseClass,
                 html: '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">' + iconHtml + '</div>',
                 iconSize: iSize,
                 iconAnchor: iAnchor,
@@ -2140,6 +2636,9 @@
                         if (data.tuzakTipi !== "Samuray Arısı Salımı") {
                             if (data.tuzakNo) popupIcerik += "<b>Tuzak No:</b> " + data.tuzakNo + "<br>";
                             if (data.bocekSayisi !== undefined) popupIcerik += "<b>Yakalanan Böcek:</b> " + data.bocekSayisi + " adet<br>";
+                            if (data.bocekSayisi >= 50) {
+                                popupIcerik += "<div style='background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:6px; margin:6px 0; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;'>⚠️ YÜKSEK YOĞUNLUK ALARMI (50+)</div>";
+                            }
                         } else {
                             if (data.tupSayisi !== undefined) popupIcerik += "<b>Salınan Tüp:</b> " + data.tupSayisi + " adet<br>";
                         }
@@ -2179,6 +2678,10 @@
                             if (data.sonGuncellemeTarihi) popupIcerik += "<b>Güncelleme Tarihi:</b> " + data.sonGuncellemeTarihi + "<br>";
                         }
 
+                        if (data.fotograf) {
+                            popupIcerik += "<div style='margin: 8px 0; text-align: center;'><img src='" + data.fotograf + "' style='max-height: 80px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; max-width: 100%;' onclick='acTamResimModal(\"" + data.fotograf + "\")' title='Görseli büyütmek için tıklayın'></div>";
+                        }
+
                         if (data.lat !== undefined && data.lng !== undefined) {
                             popupIcerik += "<hr style='margin:5px 0;'/>";
                             popupIcerik += "<div style='font-size:11px; color:#555;'><b>Ondalık:</b> " + parseFloat(data.lat).toFixed(6) + ", " + parseFloat(data.lng).toFixed(6) + "<br>";
@@ -2188,6 +2691,7 @@
                         popupIcerik += "<div class='popup-actions'>";
                         if (data.tuzakTipi !== "Samuray Arısı Salımı") {
                             popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + docId + "\")'>📅 Kayıtlar</button>";
+                            popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, #10b981, #059669); color: white;' onclick='tuzakTrendiAc(\"" + docId + "\")'>📈 Trend</button>";
                         }
                         popupIcerik += "<a class='popup-btn' style='background: linear-gradient(135deg, #ea4335, #ff6b6b); color: white; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;' href='https://www.google.com/maps/dir/?api=1&destination=" + data.lat + "," + data.lng + "' target='_blank'>🗺️ Yol Tarifi</a>";
                         popupIcerik += "<button class='popup-btn btn-edit' onclick='tuzakDuzenle(\"" + docId + "\")'>Düzenle</button>";
@@ -2222,6 +2726,8 @@
                         }
                     }
                 });
+                guncelleDashboard();
+                guncelleHeatmap();
             }, function(error) {
                 console.error("Tuzak dinleme hatası: " + error.message);
             });
@@ -2272,7 +2778,10 @@
         }
 
         // Show Reports
-        function raporGoster(skipToggleMenu) {
+        function raporGoster(skipToggleMenu, keepPage) {
+            if (!keepPage) {
+                window.raporMevcutSayfa = 1;
+            }
             if (!skipToggleMenu) toggleMenu();
 
             var isYonetici = isAdmin();
@@ -2399,13 +2908,53 @@
             document.getElementById('toplamTuzakTxt').innerText = toplamTuzak;
             document.getElementById('toplamBocekTxt').innerText = toplamBocek;
 
+            // Client-side report pagination
+            var itemsPerPage = 15;
+            var totalPages = Math.ceil(raporArray.length / itemsPerPage);
+            if (window.raporMevcutSayfa === undefined || window.raporMevcutSayfa < 1) {
+                window.raporMevcutSayfa = 1;
+            }
+            if (window.raporMevcutSayfa > totalPages) {
+                window.raporMevcutSayfa = Math.max(1, totalPages);
+            }
+
+            var startIdx = (window.raporMevcutSayfa - 1) * itemsPerPage;
+            var endIdx = startIdx + itemsPerPage;
+            var paginatedArray = raporArray.slice(startIdx, endIdx);
+
             var tbody = document.getElementById('raporTabloGovde');
             tbody.innerHTML = "";
-            raporArray.forEach(function(item) {
-                var tr = document.createElement('tr');
-                tr.innerHTML = "<td>" + item.ad + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
-                tbody.appendChild(tr);
-            });
+            
+            if (paginatedArray.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:15px; color:var(--text-muted);'>Gösterilecek kayıt bulunamadı.</td></tr>";
+            } else {
+                paginatedArray.forEach(function(item) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = "<td>" + item.ad + "</td><td style='text-align:center;'>" + item.tuzak + "</td><td style='text-align:center; font-weight:bold; color:#ef4444;'>" + item.bocek + "</td>";
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Render pagination controls
+            var pagDiv = document.getElementById("raporSayfalamaKutusu");
+            if (pagDiv) {
+                if (totalPages > 1) {
+                    pagDiv.innerHTML = `
+                        <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:8px; margin-bottom:8px; font-family:var(--font);">
+                            <button class="btn" style="padding:6px 12px; font-size:12px; min-height:32px; background:${window.raporMevcutSayfa > 1 ? 'var(--primary)' : '#cbd5e1'}; color:white; border:none; border-radius:6px; cursor:${window.raporMevcutSayfa > 1 ? 'pointer' : 'not-allowed'};" ${window.raporMevcutSayfa > 1 ? '' : 'disabled'} onclick="window.raporSayfaGit(${window.raporMevcutSayfa - 1})">◀ Önceki</button>
+                            <span style="font-size:13px; font-weight:700; color:var(--text-dark);">Sayfa ${window.raporMevcutSayfa} / ${totalPages}</span>
+                            <button class="btn" style="padding:6px 12px; font-size:12px; min-height:32px; background:${window.raporMevcutSayfa < totalPages ? 'var(--primary)' : '#cbd5e1'}; color:white; border:none; border-radius:6px; cursor:${window.raporMevcutSayfa < totalPages ? 'pointer' : 'not-allowed'};" ${window.raporMevcutSayfa < totalPages ? '' : 'disabled'} onclick="window.raporSayfaGit(${window.raporMevcutSayfa + 1})">Sonraki ▶</button>
+                        </div>
+                    `;
+                } else {
+                    pagDiv.innerHTML = "";
+                }
+            }
+
+            window.raporSayfaGit = function(p) {
+                window.raporMevcutSayfa = p;
+                raporGoster(true, true);
+            };
 
             var tfoot = document.getElementById('raporTabloAyak');
             tfoot.innerHTML = "<tr style='font-weight:bold; background-color:#f1f5f9; border-top: 2px solid #e2e8f0;'>" +
@@ -2802,6 +3351,19 @@
                     var tSayisiElem = document.getElementById('tupSayisi');
                     if(tSayisiElem) tSayisiElem.value = data.tupSayisi !== undefined ? data.tupSayisi : "";
 
+                    // Load photo if exists
+                    if (data.fotograf) {
+                        document.getElementById('tuzakFotoBase64').value = data.fotograf;
+                        document.getElementById('tuzakFotoOnizleme').src = data.fotograf;
+                        document.getElementById('tuzakFotoOnizlemeBox').style.display = 'block';
+                        document.getElementById('tuzakFotoDurum').innerText = "Kayıtlı fotoğraf yüklendi";
+                    } else {
+                        document.getElementById('tuzakFotoBase64').value = '';
+                        document.getElementById('tuzakFotoOnizleme').src = '';
+                        document.getElementById('tuzakFotoOnizlemeBox').style.display = 'none';
+                        document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklenmedi";
+                    }
+
                     secilenKonum = marker.getLatLng();
                     
                     document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
@@ -2827,6 +3389,14 @@
             
             document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
             document.getElementById('duzenlenenDocId').value = "";
+            
+            // Clear photo inputs
+            document.getElementById('tuzakFotoInput').value = '';
+            document.getElementById('tuzakFotoBase64').value = '';
+            document.getElementById('tuzakFotoOnizleme').src = '';
+            document.getElementById('tuzakFotoOnizlemeBox').style.display = 'none';
+            document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklenmedi";
+
             secilenKonum = e.latlng;
             
             document.getElementById('koordDecimal').innerText = parseFloat(e.latlng.lat).toFixed(6) + ", " + parseFloat(e.latlng.lng).toFixed(6);
@@ -2966,6 +3536,14 @@
             document.getElementById('bocekSayisi').value = "";
             document.getElementById('tuzakTipi').value = "Huni";
             document.getElementById('duzenlenenDocId').value = "";
+            
+            // Clear photo inputs
+            document.getElementById('tuzakFotoInput').value = '';
+            document.getElementById('tuzakFotoBase64').value = '';
+            document.getElementById('tuzakFotoOnizleme').src = '';
+            document.getElementById('tuzakFotoOnizlemeBox').style.display = 'none';
+            document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklenmedi";
+
             secilenKonum = null;
         }
 
@@ -3332,6 +3910,7 @@
             }
 
             if (secilenKonum) {
+                var fotoBase64 = document.getElementById('tuzakFotoBase64').value;
                 var saveData = {
                     il: il,
                     ilce: ilce,
@@ -3340,6 +3919,7 @@
                     tuzakTipi: tuzakTipi,
                     lat: secilenKonum.lat,
                     lng: secilenKonum.lng,
+                    fotograf: fotoBase64 || "",
                     sonGuncelleyen: aktifKullanici.adSoyad,
                     sonGuncelleyenTel: aktifKullanici.telefon,
                     sonGuncelleyenUnvan: aktifKullanici.unvan,
@@ -3735,6 +4315,12 @@
                 raporGrubu.appendChild(menuOgesi('📈', 'Genel Raporlar', null, function() {
                     acBolgeRaporu('Tümü', 'Tümü', null);
                 }));
+                raporGrubu.appendChild(menuOgesi('🌡️', 'Isı Haritası', '#f43f5e', function() {
+                    toggleMenu(); toggleHeatmap();
+                }));
+                raporGrubu.appendChild(menuOgesi('📅', 'Haftalık Rapor Arşivi', '#10b981', function() {
+                    acHaftalikRaporlarModal();
+                }));
 
                 // ── 3. YÖNETİM grubu (kapalı başlar) ──
                 var yonetimGrubu = menuGrubuOlustur('Yönetim', '⚙️', '#d97706', false);
@@ -3765,6 +4351,15 @@
                     adminGrubu.appendChild(menuOgesi('🕐', 'Oturum Geçmişi', '#7c3aed', function() {
                         acOturumGecmisiModal();
                     }));
+                    adminGrubu.appendChild(menuOgesi('💾', 'Veritabanı Yedeği', '#059669', function() {
+                        toggleMenu(); veritabaniYedekIndir();
+                    }));
+                    adminGrubu.appendChild(menuOgesi('👤', 'Personel Performansı', '#3b82f6', function() {
+                        acPersonelPerformansModal();
+                    }));
+                    adminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function() {
+                        toggleMenu(); fotograflariEpostalaVeTemizle();
+                    }));
                 }
 
                 setTimeout(initMenuFilters, 50);
@@ -3775,6 +4370,20 @@
                 item1.onclick = function() { setRaporFiltre('Yapışkan'); };
                 item1.innerHTML = '<span>📊</span> Bölge Raporları';
                 sideMenu.appendChild(item1);
+
+                var itemHeat = document.createElement("div");
+                itemHeat.className = "menu-item";
+                itemHeat.style.borderLeft = "3px solid #f43f5e";
+                itemHeat.onclick = function() { toggleMenu(); toggleHeatmap(); };
+                itemHeat.innerHTML = '<span>🌡️</span> Isı Haritası Aç/Kapat';
+                sideMenu.appendChild(itemHeat);
+
+                var itemWeek = document.createElement("div");
+                itemWeek.className = "menu-item";
+                itemWeek.style.borderLeft = "3px solid #10b981";
+                itemWeek.onclick = function() { acHaftalikRaporlarModal(); };
+                itemWeek.innerHTML = '<span>📅</span> Haftalık Raporlar';
+                sideMenu.appendChild(itemWeek);
             }
 
             // Ortak Kullanım Kılavuzu Menüsü (Tüm Roller İçin)
@@ -3787,6 +4396,17 @@
                 acKilavuzModal();
             };
             sideMenu.appendChild(kilavuzMenu);
+
+            // Geliştirme Planı Menüsü (Tüm Roller İçin)
+            var planMenu = document.createElement("div");
+            planMenu.className = "menu-item";
+            planMenu.style.borderLeft = "3px solid #a855f7";
+            planMenu.innerHTML = '<span>🚀</span> Geliştirme Planı';
+            planMenu.onclick = function() {
+                toggleMenu();
+                acGelistirmePlanModal();
+            };
+            sideMenu.appendChild(planMenu);
         }
 
         function initMenuFilters() {
@@ -3925,6 +4545,14 @@
 
         function kapatKilavuzModal() {
             document.getElementById("kilavuzModal").classList.remove("active");
+        }
+
+        function acGelistirmePlanModal() {
+            document.getElementById("gelistirmePlanModal").classList.add("active");
+        }
+
+        function kapatGelistirmePlanModal() {
+            document.getElementById("gelistirmePlanModal").classList.remove("active");
         }
 
         function kapatRapor() {
@@ -4107,60 +4735,83 @@
             }
         }
 
-        var logListener = null;
-
         function acLogModal() {
             if (!aktifKullanici || aktifKullanici.rol !== "Süper Admin") {
                 alert("Bu modüle erişim yetkiniz yoktur!");
                 return;
             }
             toggleMenu();
-            guncelleLogTablosu();
+            window.logCursors = [null];
+            logYukle(1);
             document.getElementById("logModal").classList.add("active");
         }
 
         function kapatLogModal() {
             document.getElementById("logModal").classList.remove("active");
-            if (logListener) {
-                logListener();
-                logListener = null;
-            }
         }
 
-        function guncelleLogTablosu() {
+        function logYukle(p) {
             var tbody = document.getElementById("logTabloGovde");
             tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
-            
-            if (logListener) {
-                logListener();
-            }
 
-            logListener = db.collection("loglar")
-              .orderBy("tarih", "desc")
-              .limit(100)
-              .onSnapshot(function(querySnapshot) {
-                  tbody.innerHTML = "";
-                  if (querySnapshot.empty) {
-                      tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Kayıtlı log bulunamadı.</td></tr>";
-                      return;
-                  }
-                  querySnapshot.forEach(function(doc) {
-                      var log = doc.data();
-                      var tarihStr = log.tarihStr || "-";
-                      if (tarihStr === "-" && log.tarih && typeof log.tarih.toDate === 'function') {
-                          tarihStr = log.tarih.toDate().toLocaleString('tr-TR');
-                      }
-                      var tr = document.createElement("tr");
-                      tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
-                      tr.innerHTML = "<td style='padding: 10px; font-size:12px; color: var(--text-muted); white-space:nowrap;'>" + tarihStr + "</td>" +
-                                     "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + (log.kullanici || "Bilinmiyor") + " (" + (log.rol || "-") + ")</td>" +
-                                     "<td style='padding: 10px; font-size:13px; color: var(--primary); font-weight:700;'>" + (log.islem || "-") + "</td>" +
-                                     "<td style='padding: 10px; font-size:12px; color: var(--text-dark);'>" + (log.detay || "-") + "</td>";
-                      tbody.appendChild(tr);
-                  });
-              }, function(err) {
-                  tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
-              });
+            if (p < 1) p = 1;
+            window.logMevcutSayfa = p;
+
+            var query = db.collection("loglar").orderBy("tarih", "desc");
+            if (p > 1 && window.logCursors[p - 1]) {
+                query = query.startAfter(window.logCursors[p - 1]);
+            }
+            query = query.limit(window.logSayfaLimit);
+
+            query.get().then(function(querySnapshot) {
+                tbody.innerHTML = "";
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--text-muted);'>Kayıtlı log bulunamadı.</td></tr>";
+                    window.logSonrakiVar = false;
+                    guncelleLogPaginationArayuzu();
+                    return;
+                }
+
+                // Save cursor for page p
+                window.logCursors[p] = querySnapshot.docs[querySnapshot.docs.length - 1];
+                window.logSonrakiVar = querySnapshot.docs.length === window.logSayfaLimit;
+
+                querySnapshot.forEach(function(doc) {
+                    var log = doc.data();
+                    var tarihStr = log.tarihStr || "-";
+                    if (tarihStr === "-" && log.tarih && typeof log.tarih.toDate === 'function') {
+                        tarihStr = log.tarih.toDate().toLocaleString('tr-TR');
+                    }
+                    var tr = document.createElement("tr");
+                    tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
+                    tr.innerHTML = "<td style='padding: 10px; font-size:12px; color: var(--text-muted); white-space:nowrap;'>" + tarihStr + "</td>" +
+                                   "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + (log.kullanici || "Bilinmiyor") + " (" + (log.rol || "-") + ")</td>" +
+                                   "<td style='padding: 10px; font-size:13px; color: var(--primary); font-weight:700;'>" + (log.islem || "-") + "</td>" +
+                                   "<td style='padding: 10px; font-size:12px; color: var(--text-dark);'>" + (log.detay || "-") + "</td>";
+                    tbody.appendChild(tr);
+                });
+
+                guncelleLogPaginationArayuzu();
+            }).catch(function(err) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
+            });
+        }
+
+        function guncelleLogPaginationArayuzu() {
+            var pagDiv = document.getElementById("logSayfalamaKutusu");
+            if (!pagDiv) return;
+
+            pagDiv.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:16px; font-family:var(--font);">
+                    <button class="btn" style="padding:6px 12px; font-size:12px; min-height:32px; background:${window.logMevcutSayfa > 1 ? 'var(--primary)' : '#cbd5e1'}; color:white; border:none; border-radius:6px; cursor:${window.logMevcutSayfa > 1 ? 'pointer' : 'not-allowed'};" ${window.logMevcutSayfa > 1 ? '' : 'disabled'} onclick="logSayfaGit(${window.logMevcutSayfa - 1})">◀ Önceki</button>
+                    <span style="font-size:13px; font-weight:700; color:var(--text-dark);">Sayfa ${window.logMevcutSayfa}</span>
+                    <button class="btn" style="padding:6px 12px; font-size:12px; min-height:32px; background:${window.logSonrakiVar ? 'var(--primary)' : '#cbd5e1'}; color:white; border:none; border-radius:6px; cursor:${window.logSonrakiVar ? 'pointer' : 'not-allowed'};" ${window.logSonrakiVar ? '' : 'disabled'} onclick="logSayfaGit(${window.logMevcutSayfa + 1})">Sonraki ▶</button>
+                </div>
+            `;
+        }
+
+        function logSayfaGit(p) {
+            logYukle(p);
         }
 
         // OTURUM GEÇMİŞİ MODAL İŞLEMLERİ (Süper Admin)
@@ -4584,6 +5235,825 @@
             }
         }
 
+        // ───── FAZ 1: TUZAK ARAMA ÇUBUĞU ─────
+        function tuzakAra(sorgu) {
+            var results = document.getElementById('searchResults');
+            if (!sorgu || sorgu.length < 2) {
+                results.style.display = 'none';
+                return;
+            }
+            sorgu = sorgu.toLowerCase();
+            var eslesen = [];
+            for (var id in tuzakVerileri) {
+                var t = tuzakVerileri[id];
+                var aranan = (t.tuzakNo || '').toString().toLowerCase() + ' ' +
+                             (t.koy || '').toLowerCase() + ' ' +
+                             (t.ilce || '').toLowerCase() + ' ' +
+                             (t.tuzakTipi || '').toLowerCase();
+                if (aranan.indexOf(sorgu) !== -1) {
+                    eslesen.push({ id: id, data: t });
+                }
+                if (eslesen.length >= 8) break;
+            }
+
+            if (eslesen.length === 0) {
+                results.innerHTML = '<div class="search-result-item"><span style="color:var(--text-muted);">Sonuç bulunamadı</span></div>';
+                results.style.display = 'block';
+                return;
+            }
+
+            results.innerHTML = '';
+            eslesen.forEach(function(item) {
+                var div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = '<div class="sr-title">' + (item.data.tuzakTipi || 'Tuzak') + ' #' + (item.data.tuzakNo || '?') + '</div>' +
+                                '<div class="sr-sub">' + (item.data.koy || '') + ' • ' + (item.data.ilce || '') + ' • Böcek: ' + (item.data.bocekSayisi || 0) + '</div>';
+                div.onclick = function() {
+                    results.style.display = 'none';
+                    document.getElementById('tuzakAramaInput').value = '';
+                    if (markerListesi[item.id]) {
+                        map.setView([item.data.lat, item.data.lng], 17);
+                        setTimeout(function() {
+                            markerListesi[item.id].openPopup();
+                        }, 300);
+                    } else if (item.data.lat && item.data.lng) {
+                        map.setView([item.data.lat, item.data.lng], 17);
+                    }
+                };
+                results.appendChild(div);
+            });
+            results.style.display = 'block';
+        }
+
+        // Arama dışına tıklayınca kapat
+        document.addEventListener('click', function(e) {
+            var sb = document.getElementById('searchBox');
+            if (sb && !sb.contains(e.target)) {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        });
+
+        // ───── FAZ 1: KARANLIK MOD ─────
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            var isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('darkToggle').innerHTML = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+
+            // Harita tile'ları için filtre
+            var tiles = document.querySelectorAll('.leaflet-tile-pane');
+            tiles.forEach(function(pane) {
+                pane.style.filter = isDark ? 'brightness(0.7) contrast(1.1)' : 'none';
+            });
+        }
+
+        // Sayfa yüklenince karanlık mod tercihini kontrol et
+        (function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                var toggle = document.getElementById('darkToggle');
+                if (toggle) toggle.innerHTML = '☀️';
+                setTimeout(function() {
+                    var tiles = document.querySelectorAll('.leaflet-tile-pane');
+                    tiles.forEach(function(pane) {
+                        pane.style.filter = 'brightness(0.7) contrast(1.1)';
+                    });
+                }, 1000);
+            }
+        })();
+
+        // ───── FAZ 1: OTOMATĬK YEDEKLEME ─────
+        function veritabaniYedekIndir() {
+            if (!aktifKullanici || aktifKullanici.rol !== 'Süper Admin') {
+                alert('Bu işlem için yetkiniz yoktur!');
+                return;
+            }
+
+            alert('Veritabanı yedeği hazırlanıyor... Lütfen bekleyin.');
+
+            var yedekVeri = {
+                tarih: new Date().toLocaleString('tr-TR'),
+                uygulama: 'Kokarca Haritası',
+                versiyon: '1.0',
+                tuzaklar: [],
+                personeller: [],
+                lokasyonlar: null
+            };
+
+            // Tüm tuzakları al
+            db.collection('tuzaklar').get().then(function(snap) {
+                snap.forEach(function(doc) {
+                    var d = doc.data();
+                    d._id = doc.id;
+                    yedekVeri.tuzaklar.push(d);
+                });
+
+                // Tüm personelleri al
+                return db.collection('personeller').get();
+            }).then(function(snap) {
+                snap.forEach(function(doc) {
+                    var d = doc.data();
+                    d._id = doc.id;
+                    yedekVeri.personeller.push(d);
+                });
+
+                // Lokasyonları al
+                return db.collection('lokasyonlar').get();
+            }).then(function(snap) {
+                if (!snap.empty) {
+                    snap.forEach(function(doc) {
+                        yedekVeri.lokasyonlar = doc.data();
+                    });
+                }
+
+                // JSON dosyası oluştur ve indir
+                var json = JSON.stringify(yedekVeri, null, 2);
+                var blob = new Blob([json], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                var tarihStr = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = 'kokarca_yedek_' + tarihStr + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                logEkle('Veritabanı Yedeği', 'Tüm veriler JSON olarak indirildi. Tuzak: ' + yedekVeri.tuzaklar.length + ', Personel: ' + yedekVeri.personeller.length);
+                alert('Yedek başarıyla indirildi!\nTuzak: ' + yedekVeri.tuzaklar.length + '\nPersonel: ' + yedekVeri.personeller.length);
+            }).catch(function(err) {
+                alert('Yedekleme hatası: ' + err.message);
+            });
+        }
+
+        // ───── FAZ 2: DASHBOARD PANELİ ─────
+        var heatLayer = null;
+
+        function guncelleDashboard() {
+            var toplamTuzak = 0;
+            var toplamBocek = 0;
+            var ilceBocek = {};
+
+            for (var id in tuzakVerileri) {
+                var t = tuzakVerileri[id];
+                toplamTuzak++;
+                var bocek = parseInt(t.bocekSayisi) || 0;
+                toplamBocek += bocek;
+
+                var ilce = t.ilce || 'Bilinmiyor';
+                if (!ilceBocek[ilce]) ilceBocek[ilce] = 0;
+                ilceBocek[ilce] += bocek;
+            }
+
+            var enYogunIlce = '-';
+            var maxBocek = 0;
+            for (var i in ilceBocek) {
+                if (ilceBocek[i] > maxBocek) {
+                    maxBocek = ilceBocek[i];
+                    enYogunIlce = i;
+                }
+            }
+
+            var ort = toplamTuzak > 0 ? (toplamBocek / toplamTuzak).toFixed(1) : '0';
+
+            var el = document.getElementById('dashTuzakSayi');
+            if (el) el.innerText = toplamTuzak;
+            el = document.getElementById('dashBocekSayi');
+            if (el) el.innerText = toplamBocek;
+            el = document.getElementById('dashEnYogun');
+            if (el) el.innerText = enYogunIlce;
+            el = document.getElementById('dashOrt');
+            if (el) el.innerText = ort;
+
+            var dash = document.getElementById('dashboardCards');
+            if (dash && toplamTuzak > 0) dash.style.display = 'flex';
+
+            if (!window.otomatikRaporKontrolEdildi && toplamTuzak > 0) {
+                window.otomatikRaporKontrolEdildi = true;
+                setTimeout(otomatikHaftalikRaporKontrol, 2000);
+            }
+        }
+
+        // ───── FAZ 2: ISI HARİTASI (HEATMAP) ─────
+        function toggleHeatmap() {
+            if (!heatLayer) {
+                var heatData = [];
+                for (var id in tuzakVerileri) {
+                    var t = tuzakVerileri[id];
+                    if (t.lat && t.lng) {
+                        var intensity = Math.min((parseInt(t.bocekSayisi) || 0) / 50, 1);
+                        heatData.push([t.lat, t.lng, Math.max(intensity, 0.1)]);
+                    }
+                }
+                if (heatData.length > 0) {
+                    heatLayer = L.heatLayer(heatData, {
+                        radius: 30,
+                        blur: 20,
+                        maxZoom: 15,
+                        max: 1.0,
+                        gradient: { 0.2: '#22c55e', 0.5: '#facc15', 0.8: '#f97316', 1: '#ef4444' }
+                    }).addTo(map);
+                }
+            } else {
+                map.removeLayer(heatLayer);
+                heatLayer = null;
+            }
+        }
+
+        // Isı haritası güncelle (veriler değişince)
+        function guncelleHeatmap() {
+            if (!heatLayer) return;
+            map.removeLayer(heatLayer);
+            heatLayer = null;
+            toggleHeatmap();
+        }
+
+        // ───── FAZ 2: PERSONEL PERFORMANSI ─────
+        function acPersonelPerformansModal() {
+            if (!aktifKullanici || aktifKullanici.rol !== 'Süper Admin') {
+                alert('Bu modüle erişim yetkiniz yoktur!');
+                return;
+            }
+            toggleMenu();
+
+            var personelStats = {};
+            for (var id in tuzakVerileri) {
+                var t = tuzakVerileri[id];
+                var kisi = t.ekleyenKisi || t.ekleyen || 'Bilinmiyor';
+                if (!personelStats[kisi]) {
+                    personelStats[kisi] = { tuzak: 0, toplam: 0, kayit: 0 };
+                }
+                personelStats[kisi].tuzak++;
+                personelStats[kisi].toplam += parseInt(t.bocekSayisi) || 0;
+
+                if (t.kayitlar && Array.isArray(t.kayitlar)) {
+                    personelStats[kisi].kayit += t.kayitlar.length;
+                }
+            }
+
+            var sortedKeys = Object.keys(personelStats).sort(function(a, b) {
+                return personelStats[b].tuzak - personelStats[a].tuzak;
+            });
+
+            var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">' +
+                '<h3 style="margin:0;font-size:20px;font-weight:800;">👤 Personel Performansı</h3>' +
+                '<span class="close-btn" style="color:#64748b;cursor:pointer;" onclick="this.closest(\'.modal-overlay\').classList.remove(\'active\')">&times;</span></div>' +
+                '<div style="max-height:400px;overflow-y:auto;border-radius:8px;border:1px solid rgba(0,0,0,0.08);">' +
+                '<table class="report-table" style="width:100%;border-collapse:collapse;">' +
+                '<thead><tr style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;">' +
+                '<th style="padding:12px;text-align:left;font-size:13px;">#</th>' +
+                '<th style="padding:12px;text-align:left;font-size:13px;">Personel</th>' +
+                '<th style="padding:12px;text-align:center;font-size:13px;">Tuzak</th>' +
+                '<th style="padding:12px;text-align:center;font-size:13px;">Kayıt</th>' +
+                '<th style="padding:12px;text-align:center;font-size:13px;">Top. Böcek</th>' +
+                '</tr></thead><tbody>';
+
+            sortedKeys.forEach(function(kisi, idx) {
+                var s = personelStats[kisi];
+                html += '<tr style="border-bottom:1px solid rgba(0,0,0,0.05);">' +
+                    '<td style="padding:10px;font-size:13px;font-weight:700;color:var(--primary);">' + (idx + 1) + '</td>' +
+                    '<td style="padding:10px;font-size:13px;font-weight:600;">' + kisi + '</td>' +
+                    '<td style="padding:10px;text-align:center;font-size:14px;font-weight:800;color:var(--primary);">' + s.tuzak + '</td>' +
+                    '<td style="padding:10px;text-align:center;font-size:14px;font-weight:700;color:#0ea5e9;">' + s.kayit + '</td>' +
+                    '<td style="padding:10px;text-align:center;font-size:14px;font-weight:700;color:#ef4444;">' + s.toplam + '</td></tr>';
+            });
+
+            html += '</tbody></table></div>' +
+                '<div class="modal-actions" style="margin-top:16px;"><button class="btn btn-cancel" onclick="this.closest(\'.modal-overlay\').classList.remove(\'active\')">Kapat</button></div>';
+
+            // Reuse a generic modal
+            var modal = document.getElementById('personelPerfModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'personelPerfModal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = '<div class="modal-content" style="max-width:700px;width:92%;"></div>';
+                document.body.appendChild(modal);
+            }
+            modal.querySelector('.modal-content').innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        // ───── FAZ 2: YAZDIRILAB İLİR RAPOR ─────
+        function raporuYazdir() {
+            var raporIcerik = document.getElementById('raporModal');
+            if (!raporIcerik) return;
+
+            var printCSS = '<style>@media print{body *{visibility:hidden}#raporModal,.modal-content,#raporModal *{visibility:visible}#raporModal{position:fixed;top:0;left:0;width:100%;height:auto;z-index:999999;background:white!important}.modal-overlay{display:block!important;position:static!important;background:white!important}.modal-content{box-shadow:none!important;border:none!important;max-height:none!important;overflow:visible!important;max-width:100%!important}.modal-actions,.close-btn,.report-tabs,.tab-btn,.btn{display:none!important}.report-table{font-size:11px}canvas{max-width:100%;height:300px!important}}</style>';
+
+            var printDiv = document.createElement('div');
+            printDiv.id = 'printArea';
+            printDiv.innerHTML = printCSS;
+            document.body.appendChild(printDiv);
+
+            window.print();
+
+            setTimeout(function() {
+                document.body.removeChild(printDiv);
+            }, 1000);
+        }
+
+        // ───── FAZ 2: HAFTALIK TREND GRAFİĞİ (TUZAK) ─────
+        function tuzakTrendiAc(docId) {
+            db.collection("tuzaklar").doc(docId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var data = doc.data();
+                var kayitlar = data.kayitlar || [];
+                
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0
+                    }];
+                }
+
+                var sirali = [...kayitlar].sort(function(a, b) {
+                    var da = parseTurkishDate(a.tarih), db_ = parseTurkishDate(b.tarih);
+                    return (da && db_) ? da - db_ : 0;
+                });
+
+                if (sirali.length > 8) {
+                    sirali = sirali.slice(-8);
+                }
+
+                var labels = sirali.map(function(k) { return k.tarih; });
+                var counts = sirali.map(function(k) { return k.bocekSayisi; });
+
+                var koyStr = data.koy || data.ad || "-";
+                var tuzakNoStr = data.tuzakNo ? " No: " + data.tuzakNo : "";
+
+                var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">' +
+                    '<h3 style="margin:0;font-size:18px;font-weight:800;">📈 Haftalık Böcek Sayım Trendi</h3>' +
+                    '<span class="close-btn" style="color:#64748b;cursor:pointer;font-size:24px;" onclick="document.getElementById(\'tuzakTrendModal\').classList.remove(\'active\')">&times;</span></div>' +
+                    '<div style="margin-bottom:12px;font-size:14px;color:var(--text-muted);"><b>Tuzak:</b> ' + data.il + ' / ' + data.ilce + ' / ' + koyStr + tuzakNoStr + ' (' + data.tuzakTipi + ')</div>' +
+                    '<div style="position:relative;height:300px;width:100%;"><canvas id="tuzakTrendCanvas"></canvas></div>' +
+                    '<div class="modal-actions" style="margin-top:16px;"><button class="btn btn-cancel" onclick="document.getElementById(\'tuzakTrendModal\').classList.remove(\'active\')">Kapat</button></div>';
+
+                var modal = document.getElementById('tuzakTrendModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'tuzakTrendModal';
+                    modal.className = 'modal-overlay';
+                    modal.innerHTML = '<div class="modal-content" style="max-width:600px;width:92%;"></div>';
+                    document.body.appendChild(modal);
+                }
+                modal.querySelector('.modal-content').innerHTML = html;
+                modal.classList.add('active');
+
+                var ctx = document.getElementById('tuzakTrendCanvas').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Yakalanan Böcek Sayısı',
+                            data: counts,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ef4444',
+                            pointRadius: 5,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 5 }
+                            }
+                        }
+                    }
+                });
+            }).catch(function(err) {
+                alert("Trend yüklenirken hata oluştu: " + err.message);
+            });
+        }
+
+        // ───── FAZ 2: HAFTALIK RAPORLAR ─────
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return d.getUTCFullYear() + "-W" + String(weekNo).padStart(2, '0');
+        }
+
+        function acHaftalikRaporlarModal() {
+            toggleMenu();
+            
+            var modal = document.getElementById('haftalikRaporlarModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'haftalikRaporlarModal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = '<div class="modal-content" style="max-width:800px;width:92%;"></div>';
+                document.body.appendChild(modal);
+            }
+            
+            var isSuperAdmin = aktifKullanici && aktifKullanici.rol === 'Süper Admin';
+            var olusturBtnHtml = isSuperAdmin ? '<button class="btn" style="background:linear-gradient(135deg,#059669,#10b981);color:white;font-weight:700;" onclick="haftalikRaporOlustur()">➕ Yeni Rapor Oluştur</button>' : '';
+            
+            var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">' +
+                '<h3 style="margin:0;font-size:20px;font-weight:800;">📅 Haftalık Rapor Arşivi</h3>' +
+                '<span class="close-btn" style="color:#64748b;cursor:pointer;font-size:24px;" onclick="document.getElementById(\'haftalikRaporlarModal\').classList.remove(\'active\')">&times;</span></div>' +
+                '<div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
+                '<div style="font-size:13px;color:var(--text-muted);">Sistemde kayıtlı haftalık özet raporlar listelenmektedir.</div>' +
+                olusturBtnHtml +
+                '</div>' +
+                '<div id="haftalikRaporlarListesi" style="max-height:400px;overflow-y:auto;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:#f8fafc;padding:10px;">' +
+                '<div style="text-align:center;padding:20px;color:var(--text-muted);">Yükleniyor...</div>' +
+                '</div>' +
+                '<div class="modal-actions" style="margin-top:16px;"><button class="btn btn-cancel" onclick="document.getElementById(\'haftalikRaporlarModal\').classList.remove(\'active\')">Kapat</button></div>';
+                
+            modal.querySelector('.modal-content').innerHTML = html;
+            modal.classList.add('active');
+            
+            guncelleHaftalikRaporlarListesi();
+        }
+
+        function guncelleHaftalikRaporlarListesi() {
+            var container = document.getElementById('haftalikRaporlarListesi');
+            if (!container) return;
+            
+            db.collection("haftalikRaporlar").orderBy("tarihRaw", "desc").get().then(function(snap) {
+                if (snap.empty) {
+                    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:600;">Kayıtlı haftalık rapor bulunamadı.</div>';
+                    return;
+                }
+                
+                var html = '';
+                snap.forEach(function(doc) {
+                    var r = doc.data();
+                    var id = doc.id;
+                    
+                    var ilceDetayHtml = '';
+                    if (r.ilceDagilim) {
+                        ilceDetayHtml = '<div style="margin-top:10px;padding:8px;background:white;border-radius:6px;font-size:12px;border:1px solid rgba(0,0,0,0.04);">';
+                        ilceDetayHtml += '<div style="font-weight:700;margin-bottom:4px;color:var(--primary);">İlçe Dağılımı:</div>';
+                        for (var ilce in r.ilceDagilim) {
+                            var stat = r.ilceDagilim[ilce];
+                            ilceDetayHtml += `<div>📍 <b>${ilce}:</b> ${stat.tuzak} Tuzak, ${stat.bocek} Böcek (Ort: ${(stat.bocek / Math.max(stat.tuzak, 1)).toFixed(1)})</div>`;
+                        }
+                        ilceDetayHtml += '</div>';
+                    }
+                    
+                    var silmeHtml = (aktifKullanici && aktifKullanici.rol === 'Süper Admin') ? 
+                        `<button class="popup-btn btn-delete" style="padding:4px 8px;font-size:11px;" onclick="haftalikRaporSil('${id}')">Sil</button>` : '';
+
+                    html += `
+                        <div class="card" style="margin-bottom:12px;padding:14px;background:white;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.05);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,0,0,0.05);padding-bottom:8px;margin-bottom:8px;">
+                                <span style="font-weight:800;color:var(--text-main);font-size:15px;">📅 Hafta: ${r.haftaNumarasi}</span>
+                                <span style="font-size:11px;color:var(--text-muted);">${r.tarih}</span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:10px;font-size:13px;">
+                                <div>🏺 <b>Huni:</b> ${r.tuzakHuni || 0} Tuzak / ${r.bocekHuni || 0} Böcek</div>
+                                <div>🟨 <b>Yapışkan:</b> ${r.tuzakYapiskan || 0} Tuzak / ${r.bocekYapiskan || 0} Böcek</div>
+                                <div style="font-weight:700;color:var(--primary);">📊 <b>Toplam:</b> ${r.toplamTuzak || 0} Tuzak / ${r.toplamBocek || 0} Böcek</div>
+                            </div>
+                            ${ilceDetayHtml}
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--text-muted);">
+                                <span>Oluşturan: ${r.olusturan || 'Sistem'}</span>
+                                ${silmeHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }).catch(function(err) {
+                container.innerHTML = '<div style="color:var(--danger);padding:10px;">Raporlar yüklenirken hata oluştu: ' + err.message + '</div>';
+            });
+        }
+
+        function haftalikRaporOlustur() {
+            if (!confirm("Şu anki tuzak ve böcek sayımı verileriyle haftalık özet rapor oluşturulsun mu?")) return;
+            
+            var toplamTuzak = 0;
+            var toplamBocek = 0;
+            var tuzakHuni = 0;
+            var bocekHuni = 0;
+            var tuzakYapiskan = 0;
+            var bocekYapiskan = 0;
+            var ilceDagilim = {};
+            
+            for (var id in tuzakVerileri) {
+                var t = tuzakVerileri[id];
+                var bocek = parseInt(t.bocekSayisi) || 0;
+                var tip = t.tuzakTipi || 'Huni';
+                var ilce = t.ilce || 'Bilinmiyor';
+                
+                toplamTuzak++;
+                toplamBocek += bocek;
+                
+                if (tip === 'Yapışkan') {
+                    tuzakYapiskan++;
+                    bocekYapiskan += bocek;
+                } else if (tip === 'Huni') {
+                    tuzakHuni++;
+                    bocekHuni += bocek;
+                }
+                
+                if (!ilceDagilim[ilce]) ilceDagilim[ilce] = { tuzak: 0, bocek: 0 };
+                ilceDagilim[ilce].tuzak++;
+                ilceDagilim[ilce].bocek += bocek;
+            }
+            
+            var bugun = new Date();
+            var haftaNo = getWeekNumber(bugun);
+            
+            var yeniRapor = {
+                tarih: bugun.toLocaleString('tr-TR'),
+                tarihRaw: firebase.firestore.FieldValue.serverTimestamp(),
+                haftaNumarasi: haftaNo,
+                toplamTuzak: toplamTuzak,
+                toplamBocek: toplamBocek,
+                tuzakHuni: tuzakHuni,
+                bocekHuni: bocekHuni,
+                tuzakYapiskan: tuzakYapiskan,
+                bocekYapiskan: bocekYapiskan,
+                ilceDagilim: ilceDagilim,
+                olusturan: aktifKullanici ? aktifKullanici.adSoyad : 'Sistem'
+            };
+            
+            db.collection("haftalikRaporlar").add(yeniRapor).then(function() {
+                alert("Haftalık rapor başarıyla oluşturuldu.");
+                logEkle("Haftalık Rapor Oluşturuldu", "Hafta: " + haftaNo + ", Toplam Böcek: " + toplamBocek);
+                guncelleHaftalikRaporlarListesi();
+            }).catch(function(err) {
+                alert("Rapor oluşturma hatası: " + err.message);
+            });
+        }
+        
+        function haftalikRaporSil(id) {
+            if (!confirm("Bu haftalık raporu silmek istediğinize emin misiniz?")) return;
+            db.collection("haftalikRaporlar").doc(id).delete().then(function() {
+                alert("Rapor silindi.");
+                guncelleHaftalikRaporlarListesi();
+            }).catch(function(err) {
+                alert("Silme hatası: " + err.message);
+            });
+        }
+
+        function otomatikHaftalikRaporKontrol() {
+            var bugun = new Date();
+            if (bugun.getDay() !== 5) return;
+            
+            var haftaNo = getWeekNumber(bugun);
+            db.collection("haftalikRaporlar").where("haftaNumarasi", "==", haftaNo).get().then(function(qs) {
+                if (qs.empty) {
+                    console.log("Cuma günü için otomatik haftalık rapor oluşturuluyor...");
+                    
+                    var toplamTuzak = 0;
+                    var toplamBocek = 0;
+                    var tuzakHuni = 0;
+                    var bocekHuni = 0;
+                    var tuzakYapiskan = 0;
+                    var bocekYapiskan = 0;
+                    var ilceDagilim = {};
+                    
+                    for (var id in tuzakVerileri) {
+                        var t = tuzakVerileri[id];
+                        var bocek = parseInt(t.bocekSayisi) || 0;
+                        var tip = t.tuzakTipi || 'Huni';
+                        var ilce = t.ilce || 'Bilinmiyor';
+                        
+                        toplamTuzak++;
+                        toplamBocek += bocek;
+                        
+                        if (tip === 'Yapışkan') {
+                            tuzakYapiskan++;
+                            bocekYapiskan += bocek;
+                        } else if (tip === 'Huni') {
+                            tuzakHuni++;
+                            bocekHuni += bocek;
+                        }
+                        
+                        if (!ilceDagilim[ilce]) ilceDagilim[ilce] = { tuzak: 0, bocek: 0 };
+                        ilceDagilim[ilce].tuzak++;
+                        ilceDagilim[ilce].bocek += bocek;
+                    }
+                    
+                    var yeniRapor = {
+                        tarih: bugun.toLocaleString('tr-TR') + " (Otomatik)",
+                        tarihRaw: firebase.firestore.FieldValue.serverTimestamp(),
+                        haftaNumarasi: haftaNo,
+                        toplamTuzak: toplamTuzak,
+                        toplamBocek: toplamBocek,
+                        tuzakHuni: tuzakHuni,
+                        bocekHuni: bocekHuni,
+                        tuzakYapiskan: tuzakYapiskan,
+                        bocekYapiskan: bocekYapiskan,
+                        ilceDagilim: ilceDagilim,
+                        olusturan: 'Sistem (Otomatik)'
+                    };
+                    
+                    db.collection("haftalikRaporlar").add(yeniRapor).then(function() {
+                        console.log("Otomatik haftalık rapor oluşturuldu: " + haftaNo);
+                        logEkle("Otomatik Haftalık Rapor Oluşturuldu", "Hafta: " + haftaNo);
+                    }).catch(function(err) {
+                        console.warn("Otomatik rapor oluşturulamadı:", err);
+                    });
+                }
+            });
+        }
+
+        // ───── FAZ 3: HAVA DURUMU ENTEGRASYONU ─────
+        function havaDurumunuGuncelle(lat, lng) {
+            var latitude = lat || 41.0201;  // Rize varsayılan
+            var longitude = lng || 40.5222;
+            
+            var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m';
+            
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data && data.current) {
+                        var temp = Math.round(data.current.temperature_2m);
+                        var humidity = data.current.relative_humidity_2m;
+                        var wind = Math.round(data.current.wind_speed_10m);
+                        var code = data.current.weather_code;
+                        
+                        var icon = "🌤️";
+                        var desc = "Açık";
+                        if (code >= 1 && code <= 3) { icon = "⛅"; desc = "Bulutlu"; }
+                        else if (code >= 45 && code <= 48) { icon = "🌫️"; desc = "Sisli"; }
+                        else if (code >= 51 && code <= 67) { icon = "🌧️"; desc = "Yağmurlu"; }
+                        else if (code >= 71 && code <= 77) { icon = "🌨️"; desc = "Karlı"; }
+                        else if (code >= 80 && code <= 82) { icon = "🌦️"; desc = "Sağanak"; }
+                        else if (code >= 95 && code <= 99) { icon = "⛈️"; desc = "Fırtına"; }
+                        
+                        var dereceEl = document.getElementById("havaDerece");
+                        if (dereceEl) dereceEl.innerHTML = icon + " " + temp + "°C";
+                        
+                        var detayEl = document.getElementById("havaDetay");
+                        if (detayEl) detayEl.innerHTML = desc + " | 💧 %" + humidity + " | 💨 " + wind + " km/h";
+                    }
+                })
+                .catch(function(err) {
+                    console.warn("Hava durumu yüklenemedi:", err);
+                    var dereceEl = document.getElementById("havaDerece");
+                    if (dereceEl) dereceEl.innerHTML = "🌤️ Rize";
+                    var detayEl = document.getElementById("havaDetay");
+                    if (detayEl) detayEl.innerHTML = "Çevrimdışı / Hava Bilgisi Yok";
+                });
+        }
+
+        // ───── FAZ 3: FOTOĞRAF EKLEME & YÖNETİMİ ─────
+        function tuzakFotoYuklendi(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var img = new Image();
+                img.onload = function() {
+                    var max_width = 800;
+                    var max_height = 800;
+                    var width = img.width;
+                    var height = img.height;
+                    
+                    if (width > height) {
+                        if (width > max_width) {
+                            height *= max_width / width;
+                            width = max_width;
+                        }
+                    } else {
+                        if (height > max_height) {
+                            width *= max_height / height;
+                            height = max_height;
+                        }
+                    }
+                    
+                    var canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    var base64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById('tuzakFotoBase64').value = base64;
+                    document.getElementById('tuzakFotoOnizleme').src = base64;
+                    document.getElementById('tuzakFotoOnizlemeBox').style.display = 'block';
+                    document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklendi (Sıkıştırıldı)";
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function tuzakFotoSilBtn() {
+            document.getElementById('tuzakFotoInput').value = '';
+            document.getElementById('tuzakFotoBase64').value = '';
+            document.getElementById('tuzakFotoOnizleme').src = '';
+            document.getElementById('tuzakFotoOnizlemeBox').style.display = 'none';
+            document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklenmedi";
+        }
+
+        function acTamResimModal(src) {
+            var modal = document.getElementById('tamResimModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'tamResimModal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = '<div class="modal-content" style="max-width:90%;width:600px;text-align:center;padding:16px;">' +
+                    '<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">' +
+                    '<span class="close-btn" style="color:#64748b;cursor:pointer;font-size:24px;" onclick="document.getElementById(\'tamResimModal\').classList.remove(\'active\')">&times;</span></div>' +
+                    '<img id="tamResimGorsel" src="" style="max-width:100%;max-height:70vh;border-radius:8px;box-shadow:var(--shadow);">' +
+                    '</div>';
+                document.body.appendChild(modal);
+            }
+            modal.querySelector('#tamResimGorsel').src = src;
+            modal.classList.add('active');
+        }
+
+        function fotograflariEpostalaVeTemizle() {
+            if (!aktifKullanici || aktifKullanici.rol !== 'Süper Admin') {
+                alert('Bu işlem için yetkiniz yoktur!');
+                return;
+            }
+
+            alert('Fotoğraflı kayıtlar aranıyor... Lütfen bekleyin.');
+
+            db.collection("tuzaklar").get().then(function(snap) {
+                var fotograflıTuzaklar = [];
+                snap.forEach(function(doc) {
+                    var data = doc.data();
+                    if (data.fotograf && data.fotograf.startsWith("data:image/")) {
+                        fotograflıTuzaklar.push({
+                            id: doc.id,
+                            il: data.il || "Rize",
+                            ilce: data.ilce || "-",
+                            koy: data.koy || data.ad || "-",
+                            tuzakNo: data.tuzakNo || "-",
+                            tuzakTipi: data.tuzakTipi || "Huni",
+                            bocekSayisi: data.bocekSayisi !== undefined ? data.bocekSayisi : 0,
+                            ekleyen: data.adSoyad || "-",
+                            sonGuncellemeTarihi: data.sonGuncellemeTarihi || "-",
+                            fotograf: data.fotograf
+                        });
+                    }
+                });
+
+                if (fotograflıTuzaklar.length === 0) {
+                    alert('Sistemde e-postalanacak yeni fotoğraf bulunamadı.');
+                    return;
+                }
+
+                var gasUrl = localStorage.getItem('gas_photo_url');
+                if (!gasUrl) {
+                    gasUrl = prompt('Lütfen Google Apps Script Web App URL\'nizi giriniz (E-posta gönderimi için bir kere tanımlanmalıdır):');
+                    if (!gasUrl) {
+                        alert('E-posta gönderimi iptal edildi. Google Apps Script URL\'si gereklidir.');
+                        return;
+                    }
+                    localStorage.setItem('gas_photo_url', gasUrl.trim());
+                }
+
+                if (!confirm(fotograflıTuzaklar.length + ' adet fotoğraflı kayıt bulundu. Bu fotoğraflar aslangokhan61@gmail.com adresine e-postalanıp veritabanından silinsin mi?')) {
+                    return;
+                }
+
+                // Call GAS POST webhook
+                fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'aslangokhan61@gmail.com',
+                        tarih: new Date().toLocaleString('tr-TR'),
+                        olusturan: aktifKullanici.adSoyad,
+                        tuzaklar: fotograflıTuzaklar
+                    })
+                }).then(function() {
+                    var batch = db.batch();
+                    fotograflıTuzaklar.forEach(function(t) {
+                        var docRef = db.collection("tuzaklar").doc(t.id);
+                        batch.update(docRef, { fotograf: "" });
+                    });
+
+                    batch.commit().then(function() {
+                        alert('Fotoğraflar başarıyla aslangokhan61@gmail.com adresine gönderildi ve veritabanı temizlendi!');
+                        logEkle('Fotoğraflar Gönderildi ve Temizlendi', 'Adet: ' + fotograflıTuzaklar.length);
+                        tuzaklariDinle();
+                    }).catch(function(err) {
+                        alert('E-posta gönderildi fakat veritabanı temizlenirken hata oluştu: ' + err.message);
+                    });
+                }).catch(function(err) {
+                    alert('Fotoğraflar gönderilirken hata oluştu: ' + err.message);
+                });
+            }).catch(function(err) {
+                alert('Veriler çekilirken hata oluştu: ' + err.message);
+            });
+        }
+
         // Global Escape Key listener to close active modals
         window.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
@@ -4596,6 +6066,16 @@
                 kapatLokasyonModal();
                 kapatTuzakKayitlariModal();
                 kapatOturumGecmisiModal();
+                kapatGelistirmePlanModal();
+                
+                var hModal = document.getElementById('haftalikRaporlarModal');
+                if (hModal) hModal.classList.remove('active');
+                var tModal = document.getElementById('tuzakTrendModal');
+                if (tModal) tModal.classList.remove('active');
+                var pModal = document.getElementById('personelPerfModal');
+                if (pModal) pModal.classList.remove('active');
+                var trModal = document.getElementById('tamResimModal');
+                if (trModal) trModal.classList.remove('active');
             }
         });
 
