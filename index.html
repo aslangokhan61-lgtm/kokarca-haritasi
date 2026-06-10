@@ -320,6 +320,7 @@
 
         .menu-group-body.open {
             max-height: 600px;
+            overflow: visible;
         }
 
         .menu-group-body .menu-item {
@@ -3280,6 +3281,7 @@
                 var bounds = L.latLngBounds(visibleLatLngs);
                 map.fitBounds(bounds, { maxZoom: 16, padding: [60, 60] });
             }
+            guncelleDashboard();
         }
 
         // Real-Time Personnel Listener - Robust default personnel checking and seeding
@@ -5310,8 +5312,7 @@
                     dashCards.style.margin = "0 15px 15px 15px";
                     dashCards.style.width = "auto";
                     
-                    var toplamTuzak = 0;
-                    for (var id in tuzakVerileri) toplamTuzak++;
+                    var toplamTuzak = window.filteredTuzakSayisi !== undefined ? window.filteredTuzakSayisi : 0;
                     
                     if (toplamTuzak > 0) {
                         dashCards.style.display = "grid";
@@ -5368,8 +5369,7 @@
                     dashCards.style.margin = "";
                     dashCards.style.width = "";
                     
-                    var toplamTuzak = 0;
-                    for (var id in tuzakVerileri) toplamTuzak++;
+                    var toplamTuzak = window.filteredTuzakSayisi !== undefined ? window.filteredTuzakSayisi : 0;
                     
                     if (toplamTuzak > 0) {
                         dashCards.style.display = "flex";
@@ -6504,20 +6504,40 @@
         }
 
         // ───── FAZ 1: TUZAK ARAMA ÇUBUĞU ─────
+        function searchNormalize(str) {
+            if (!str) return "";
+            return str.toString()
+                .replace(/İ/g, 'i')
+                .replace(/I/g, 'i')
+                .replace(/ı/g, 'i')
+                .replace(/Ğ/g, 'g')
+                .replace(/ğ/g, 'g')
+                .replace(/Ü/g, 'u')
+                .replace(/ü/g, 'u')
+                .replace(/Ş/g, 's')
+                .replace(/ş/g, 's')
+                .replace(/Ö/g, 'o')
+                .replace(/ö/g, 'o')
+                .replace(/Ç/g, 'c')
+                .replace(/ç/g, 'c')
+                .toLowerCase();
+        }
+
+        // ───── FAZ 1: TUZAK ARAMA ÇUBUĞU ─────
         function tuzakAra(sorgu) {
             var results = document.getElementById('searchResults');
             if (!sorgu || sorgu.length < 2) {
                 results.style.display = 'none';
                 return;
             }
-            sorgu = sorgu.toLowerCase();
+            sorgu = searchNormalize(sorgu);
             var eslesen = [];
             for (var id in tuzakVerileri) {
                 var t = tuzakVerileri[id];
-                var aranan = (t.tuzakNo || '').toString().toLowerCase() + ' ' +
-                    (t.koy || '').toLowerCase() + ' ' +
-                    (t.ilce || '').toLowerCase() + ' ' +
-                    (t.tuzakTipi || '').toLowerCase();
+                var aranan = searchNormalize(t.tuzakNo || '') + ' ' +
+                    searchNormalize(t.koy || '') + ' ' +
+                    searchNormalize(t.ilce || '') + ' ' +
+                    searchNormalize(t.tuzakTipi || '');
                 if (aranan.indexOf(sorgu) !== -1) {
                     eslesen.push({ id: id, data: t });
                 }
@@ -6539,6 +6559,34 @@
                 div.onclick = function () {
                     results.style.display = 'none';
                     document.getElementById('tuzakAramaInput').value = '';
+                    
+                    // Menüyü kapat
+                    document.getElementById('sideMenu').classList.remove('open');
+                    
+                    // Orijinal filtreleri güncelle ki tuzak haritada görünür olsun
+                    aktifFiltreler.il = item.data.il || "Rize";
+                    aktifFiltreler.ilce = item.data.ilce || "Tümü";
+                    aktifFiltreler.koy = item.data.koy || "Tümü";
+
+                    // Dropdown seçimlerini güncelle
+                    var menuIl = document.getElementById("menuFiltreIl");
+                    var menuIlce = document.getElementById("menuFiltreIlce");
+                    var menuKoy = document.getElementById("menuFiltreKoy");
+                    if (menuIl) {
+                        menuIl.value = aktifFiltreler.il;
+                        menuFiltreIlSecildi(true);
+                    }
+                    if (menuIlce) {
+                        menuIlce.value = aktifFiltreler.ilce;
+                        menuFiltreIlceSecildi(true);
+                    }
+                    if (menuKoy) {
+                        menuKoy.value = aktifFiltreler.koy;
+                        menuFiltreKoySecildi();
+                    }
+
+                    filtreleriUygula();
+
                     if (markerListesi[item.id]) {
                         map.setView([item.data.lat, item.data.lng], 17);
                         setTimeout(function () {
@@ -6664,14 +6712,23 @@
 
             for (var id in tuzakVerileri) {
                 var t = tuzakVerileri[id];
-                toplamTuzak++;
-                var bocek = parseInt(t.bocekSayisi) || 0;
-                toplamBocek += bocek;
+                
+                var ilUyumlu = (aktifFiltreler.il === "Tümü" || t.il === aktifFiltreler.il);
+                var ilceUyumlu = (aktifFiltreler.ilce === "Tümü" || t.ilce === aktifFiltreler.ilce);
+                var koyUyumlu = (aktifFiltreler.koy === "Tümü" || t.koy === aktifFiltreler.koy);
 
-                var ilce = t.ilce || 'Bilinmiyor';
-                if (!ilceBocek[ilce]) ilceBocek[ilce] = 0;
-                ilceBocek[ilce] += bocek;
+                if (ilUyumlu && ilceUyumlu && koyUyumlu) {
+                    toplamTuzak++;
+                    var bocek = parseInt(t.bocekSayisi) || 0;
+                    toplamBocek += bocek;
+
+                    var ilce = t.ilce || 'Bilinmiyor';
+                    if (!ilceBocek[ilce]) ilceBocek[ilce] = 0;
+                    ilceBocek[ilce] += bocek;
+                }
             }
+
+            window.filteredTuzakSayisi = toplamTuzak;
 
             var enYogunIlce = '-';
             var maxBocek = 0;
@@ -6694,9 +6751,13 @@
             if (el) el.innerText = ort;
 
             var dash = document.getElementById('dashboardCards');
-            if (dash && toplamTuzak > 0) {
-                var isMobile = window.innerWidth <= 768;
-                dash.style.display = isMobile ? 'grid' : 'flex';
+            if (dash) {
+                if (toplamTuzak > 0) {
+                    var isMobile = window.innerWidth <= 768;
+                    dash.style.display = isMobile ? 'grid' : 'flex';
+                } else {
+                    dash.style.display = 'none';
+                }
             }
 
             if (!window.otomatikRaporKontrolEdildi && toplamTuzak > 0) {
