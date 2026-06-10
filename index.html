@@ -1295,6 +1295,7 @@
                             <th>Sorumlu İlçe</th>
                             <th>Telefon</th>
                             <th>Rol</th>
+                            <th>Cihaz Durumu</th>
                             <th style="width: 120px; text-align: center;">İşlemler</th>
                         </tr>
                     </thead>
@@ -3132,22 +3133,70 @@
         function kullaniciAktifliginiGuncelle() {
             if (!aktifKullanici) return;
             var docId = aktifKullanici.kullaniciAdi || aktifKullanici.telefon;
-            db.collection("personeller").doc(docId).update({
-                sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
-                sonAktiflikStr: new Date().toLocaleString('tr-TR')
-            }).catch(function (err) {
-                console.error("Aktiflik güncellenemedi:", err);
-            });
-
-            // Aktif oturumu güncelle
-            if (aktifOturumId) {
-                db.collection("oturumlar").doc(aktifOturumId).update({
+            
+            // Heartbeat sırasında cihaz kilidini de sorgula
+            db.collection("personeller").doc(docId).get().then(function (docSnap) {
+                if (docSnap.exists) {
+                    var serverData = docSnap.data();
+                    var r = (serverData.rol || "").toLowerCase().replace(/\s+/g, '');
+                    var isSuper = (r.indexOf("peradmin") !== -1);
+                    
+                    if (!isSuper) {
+                        var currentDeviceId = getOrCreateDeviceId();
+                        if (serverData.deviceId && serverData.deviceId !== currentDeviceId) {
+                            alert("Oturumunuz başka bir cihazda açıldığı veya sıfırlandığı için sonlandırıldı.");
+                            // Oturumu tamamen kapat
+                            aktifOturumId = null;
+                            localStorage.removeItem("aktifOturumId");
+                            localStorage.removeItem("aktifPersonel");
+                            aktifKullanici = null;
+                            
+                            var profCard = document.getElementById("userProfileCard");
+                            var dashCards = document.getElementById("dashboardCards");
+                            if (profCard) {
+                                profCard.style.display = "none";
+                                document.body.appendChild(profCard);
+                            }
+                            if (dashCards) {
+                                dashCards.style.display = "none";
+                                document.body.appendChild(dashCards);
+                            }
+                            document.getElementById("sideMenu").innerHTML = "";
+                            document.getElementById("girisModal").classList.add("active");
+                            document.getElementById("girisKullanici").value = "";
+                            
+                            if (tuzakListener) {
+                                tuzakListener();
+                                tuzakListener = null;
+                            }
+                            if (personelListener) {
+                                personelListener();
+                                personelListener = null;
+                            }
+                            return;
+                        }
+                    }
+                }
+                
+                // Normal heartbeat güncellemesini yap
+                db.collection("personeller").doc(docId).update({
                     sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
                     sonAktiflikStr: new Date().toLocaleString('tr-TR')
                 }).catch(function (err) {
-                    console.error("Oturum aktiflik güncellenemedi:", err);
+                    console.error("Aktiflik güncellenemedi:", err);
                 });
-            }
+
+                if (aktifOturumId) {
+                    db.collection("oturumlar").doc(aktifOturumId).update({
+                        sonAktiflik: firebase.firestore.FieldValue.serverTimestamp(),
+                        sonAktiflikStr: new Date().toLocaleString('tr-TR')
+                    }).catch(function (err) {
+                        console.error("Oturum aktiflik güncellenemedi:", err);
+                    });
+                }
+            }).catch(function (e) {
+                console.warn("Heartbeat sırasında veritabanına erişilemedi:", e);
+            });
         }
         setInterval(kullaniciAktifliginiGuncelle, 300000); // Heartbeat every 5 minutes
 
@@ -3974,7 +4023,7 @@
 
             var workbook = XLSX.utils.book_new();
 
-            // SAYFA 1: Tuzaklar ve Tarih Sütunları
+            // Tarihleri topla
             var tumTarihlerSet = new Set();
             var tuzakSatirlari = [];
 
@@ -4016,27 +4065,30 @@
                 return a.localeCompare(b, 'tr');
             });
 
-            // Sayfa 1 Veri Hazırlama
+            // SAYFA 1: Tuzak Listesi (Temiz liste, Sıra No ile)
             var s1Data = [];
-            var s1Baslik = ['İl', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Tipi', 'Ondalık Koordinat', 'DMS Koordinat', 'Toplam Böcek'];
-            tumTarihler.forEach(function (t) { s1Baslik.push(t); });
-            s1Data.push(s1Baslik);
-
-            tuzakSatirlari.forEach(function (ts) {
-                var satir = [ts.il, ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.ondalik, ts.dms, ts.toplamBocek];
-                tumTarihler.forEach(function (t) {
-                    satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
-                });
-                s1Data.push(satir);
+            s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat']);
+            
+            tuzakSatirlari.forEach(function (ts, index) {
+                s1Data.push([
+                    index + 1,
+                    ts.ilce,
+                    ts.koy,
+                    ts.tuzakNo,
+                    ts.tuzakTipi,
+                    ts.ondalik,
+                    ts.dms
+                ]);
             });
 
             var ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-            XLSX.utils.book_append_sheet(workbook, ws1, "Tuzak Özetleri");
+            XLSX.utils.book_append_sheet(workbook, ws1, "Tuzak Listesi");
 
             // SAYFA 2: Ziyaret / Sayım Geçmişi (Tüm Kayıtlar Alt Alta)
             var s2Data = [];
-            s2Data.push(['Tarih', 'İlçe', 'Köy', 'Tuzak No', 'Tuzak Tipi', 'Sayılan Böcek', 'Personel']);
+            s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy', 'Tuzak No', 'Tuzak Tipi', 'Sayılan Böcek', 'Personel']);
 
+            var s2Index = 1;
             for (var gKey in tuzakVerileri) {
                 var data = tuzakVerileri[gKey];
 
@@ -4047,6 +4099,7 @@
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
                     s2Data.push([
+                        s2Index++,
                         k.tarih || 'Tarihsiz',
                         data.ilce || '-',
                         data.koy || data.ad || '-',
@@ -4060,6 +4113,23 @@
 
             var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
             XLSX.utils.book_append_sheet(workbook, ws2, "Ziyaret Geçmişi");
+
+            // SAYFA 3: Tarih Bazlı Sayımlar (Pivot görünüm)
+            var s3Data = [];
+            var s3Baslik = ['İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat', 'Toplam Böcek'];
+            tumTarihler.forEach(function (t) { s3Baslik.push(t); });
+            s3Data.push(s3Baslik);
+
+            tuzakSatirlari.forEach(function (ts) {
+                var satir = [ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.ondalik, ts.dms, ts.toplamBocek];
+                tumTarihler.forEach(function (t) {
+                    satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
+                });
+                s3Data.push(satir);
+            });
+
+            var ws3 = XLSX.utils.aoa_to_sheet(s3Data);
+            XLSX.utils.book_append_sheet(workbook, ws3, "Tarih Bazlı Sayımlar");
 
             // İndir
             var filename = "Kokarca_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
@@ -4806,79 +4876,143 @@
             });
         }
 
-        function oturumKontrol() {
-            var cached = localStorage.getItem("aktifPersonel");
-            if (cached) {
-                var cachedUser = JSON.parse(cached);
-                var docId = cachedUser.kullaniciAdi || cachedUser.telefon;
-                db.collection("personeller").doc(docId).get().then(function (doc) {
-                    if (doc.exists) {
-                        var user = doc.data();
-                        aktifKullanici = user;
-                        localStorage.setItem("aktifPersonel", JSON.stringify(user));
-                        document.getElementById("girisModal").classList.remove("active");
-                        guncelleArayuzRolBazli();
-                        tuzaklariDinle();
-                        kullaniciAktifliginiGuncelle();
+        function getOrCreateDeviceId() {
+            var devId = localStorage.getItem("kullaniciCihazId");
+            if (!devId) {
+                devId = "cihaz_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now().toString(36);
+                localStorage.setItem("kullaniciCihazId", devId);
+            }
+            return devId;
+        }
 
-                        if (aktifKullanici && aktifKullanici.ilce) {
-                            arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
-                        }
+        function cihazDogrulaVeOturumAc(user, isOturumKontrol) {
+            var r = (user.rol || "").toLowerCase().replace(/\s+/g, '');
+            var isSuper = (r.indexOf("peradmin") !== -1);
+            
+            // Süper Admin'ler cihaz kilidinden muaftır
+            if (isSuper) {
+                if (isOturumKontrol) {
+                    aktifKullanici = user;
+                    localStorage.setItem("aktifPersonel", JSON.stringify(user));
+                    document.getElementById("girisModal").classList.remove("active");
+                    guncelleArayuzRolBazli();
+                    tuzaklariDinle();
+                    kullaniciAktifliginiGuncelle();
+                    if (aktifKullanici && aktifKullanici.ilce) {
+                        arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
+                    }
+                    if (isAdmin()) {
+                        personelListesiniDinle();
+                    }
+                } else {
+                    oturumAc(user);
+                }
+                return;
+            }
 
-                        if (isAdmin()) {
-                            personelListesiniDinle();
-                        }
-                    } else {
-                        // Try fallback querying all personeller
-                        db.collection("personeller").get().then(function (qs) {
-                            var foundUser = null;
-                            qs.forEach(function (d) {
-                                var p = d.data();
-                                if ((p.kullaniciAdi && p.kullaniciAdi === cachedUser.kullaniciAdi) || (p.telefon && p.telefon === cachedUser.telefon)) {
-                                    foundUser = p;
-                                }
-                            });
-                            if (foundUser) {
-                                aktifKullanici = foundUser;
-                                localStorage.setItem("aktifPersonel", JSON.stringify(foundUser));
+            var currentDeviceId = getOrCreateDeviceId();
+            var docId = user.kullaniciAdi || user.telefon;
+
+            db.collection("personeller").doc(docId).get().then(function (docSnap) {
+                if (docSnap.exists) {
+                    var serverData = docSnap.data();
+                    var savedDeviceId = serverData.deviceId;
+
+                    if (!savedDeviceId) {
+                        // İlk kez giriş yapılıyor veya cihaz sıfırlanmış. Bu cihazı kaydet.
+                        db.collection("personeller").doc(docId).update({
+                            deviceId: currentDeviceId
+                        }).then(function () {
+                            if (isOturumKontrol) {
+                                user.deviceId = currentDeviceId;
+                                aktifKullanici = user;
+                                localStorage.setItem("aktifPersonel", JSON.stringify(user));
                                 document.getElementById("girisModal").classList.remove("active");
                                 guncelleArayuzRolBazli();
                                 tuzaklariDinle();
                                 kullaniciAktifliginiGuncelle();
-
                                 if (aktifKullanici && aktifKullanici.ilce) {
                                     arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
                                 }
-
                                 if (isAdmin()) {
                                     personelListesiniDinle();
                                 }
                             } else {
-                                localStorage.removeItem("aktifPersonel");
-                                aktifKullanici = null;
-                                document.getElementById("girisModal").classList.add("active");
+                                user.deviceId = currentDeviceId;
+                                oturumAc(user);
                             }
-                        }).catch(function () {
-                            // Offline recovery: assume cached is fine
-                            aktifKullanici = cachedUser;
+                        }).catch(function (e) {
+                            alert("Cihaz kaydı yapılamadı: " + e.message);
+                        });
+                    } else if (savedDeviceId === currentDeviceId) {
+                        // Cihaz eşleşti, sorun yok.
+                        if (isOturumKontrol) {
+                            aktifKullanici = user;
+                            localStorage.setItem("aktifPersonel", JSON.stringify(user));
                             document.getElementById("girisModal").classList.remove("active");
                             guncelleArayuzRolBazli();
                             tuzaklariDinle();
+                            kullaniciAktifliginiGuncelle();
                             if (aktifKullanici && aktifKullanici.ilce) {
                                 arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
                             }
-                        });
+                            if (isAdmin()) {
+                                personelListesiniDinle();
+                            }
+                        } else {
+                            oturumAc(user);
+                        }
+                    } else {
+                        // Başka bir cihazdan girilmiş!
+                        alert("Bu hesap başka bir cihaza tanımlanmıştır. Sadece tanımlı cihazdan giriş yapılabilir!");
+                        if (isOturumKontrol) {
+                            // Local'deki oturumu sil ve giriş ekranına dön
+                            localStorage.removeItem("aktifPersonel");
+                            aktifKullanici = null;
+                            
+                            var profCard = document.getElementById("userProfileCard");
+                            var dashCards = document.getElementById("dashboardCards");
+                            if (profCard) {
+                                profCard.style.display = "none";
+                                document.body.appendChild(profCard);
+                            }
+                            if (dashCards) {
+                                dashCards.style.display = "none";
+                                document.body.appendChild(dashCards);
+                            }
+                            document.getElementById("sideMenu").innerHTML = "";
+                            document.getElementById("girisModal").classList.add("active");
+                            document.getElementById("girisKullanici").value = "";
+                        }
                     }
-                }).catch(function (err) {
-                    console.warn("Firestore bağlantı hatası, yerel önbellekten oturum açılıyor:", err);
-                    aktifKullanici = cachedUser;
+                } else {
+                    // Kullanıcı silinmiş veya bulunamadı
+                    localStorage.removeItem("aktifPersonel");
+                    aktifKullanici = null;
+                    document.getElementById("girisModal").classList.add("active");
+                }
+            }).catch(function (err) {
+                // Bağlantı hatası durumunda yerel oturuma izin ver (çevrimdışı modu desteklemek için)
+                console.warn("Cihaz doğrulanamadı (çevrimdışı olabilir), yerel oturuma izin veriliyor:", err);
+                if (isOturumKontrol) {
+                    aktifKullanici = user;
                     document.getElementById("girisModal").classList.remove("active");
                     guncelleArayuzRolBazli();
                     tuzaklariDinle();
                     if (aktifKullanici && aktifKullanici.ilce) {
                         arkaPlandaKoySinirlariniYukle(aktifKullanici.ilce);
                     }
-                });
+                } else {
+                    oturumAc(user);
+                }
+            });
+        }
+
+        function oturumKontrol() {
+            var cached = localStorage.getItem("aktifPersonel");
+            if (cached) {
+                var cachedUser = JSON.parse(cached);
+                cihazDogrulaVeOturumAc(cachedUser, true);
             } else {
                 document.getElementById("girisModal").classList.add("active");
             }
@@ -4895,7 +5029,7 @@
             db.collection("personeller").doc(userInput).get().then(function (doc) {
                 if (doc.exists) {
                     var user = doc.data();
-                    oturumAc(user);
+                    cihazDogrulaVeOturumAc(user, false);
                 } else {
                     // Fallback: search all users for matching username or phone number
                     db.collection("personeller").get().then(function (qs) {
@@ -4910,7 +5044,7 @@
                         });
 
                         if (foundUser) {
-                            oturumAc(foundUser);
+                            cihazDogrulaVeOturumAc(foundUser, false);
                         } else {
                             alert("Kayıtlı personel bulunamadı! Lütfen kullanıcı adınızı doğru yazdığınızdan emin olun.");
                         }
@@ -5333,7 +5467,6 @@
                     }));
                 }
 
-                setTimeout(initMenuFilters, 50);
             } else {
                 // Saha personeli için sadece kendi bölge raporu
                 var item1 = document.createElement("div");
@@ -5356,6 +5489,8 @@
                 itemWeek.innerHTML = '<span>📅</span> Haftalık Raporlar';
                 sideMenu.appendChild(itemWeek);
             }
+
+            setTimeout(initMenuFilters, 50);
 
             // Ortak Kullanım Kılavuzu Menüsü (Tüm Roller İçin)
             var kilavuzMenu = document.createElement("div");
@@ -5558,6 +5693,19 @@
             var sorted = [...personelListesi].sort(function (a, b) { return a.adSoyad.localeCompare(b.adSoyad, 'tr'); });
             sorted.forEach(function (pers) {
                 var kullaniciStr = pers.kullaniciAdi || "-";
+                
+                // Cihaz Kilidi Durumu ve Sıfırlama Düğmesi
+                var cihazDurumHtml = "";
+                var isSuper = ((pers.rol || "").toLowerCase().replace(/\s+/g, '').indexOf("peradmin") !== -1);
+                
+                if (isSuper) {
+                    cihazDurumHtml = "<span style='font-size:11px; color:#10b981; font-weight:700;'>Muaf (S.Admin)</span>";
+                } else if (pers.deviceId) {
+                    cihazDurumHtml = "<button class='popup-btn' style='padding:4px 8px; flex:none; background:#f97316; color:white; border:none; border-radius:6px; font-weight:700; font-size:11px;' onclick='cihazKilidiniSifirla(\"" + (pers.kullaniciAdi || pers.telefon) + "\")'>📱 Kilidi Aç</button>";
+                } else {
+                    cihazDurumHtml = "<span style='font-size:11px; color:#64748b;'>Kilit Yok</span>";
+                }
+
                 var tr = document.createElement("tr");
                 tr.innerHTML = "<td>" + pers.adSoyad + "</td>" +
                     "<td>" + kullaniciStr + "</td>" +
@@ -5565,12 +5713,30 @@
                     "<td>" + pers.ilce + "</td>" +
                     "<td>" + pers.telefon + "</td>" +
                     "<td>" + (pers.rol || "Personel") + "</td>" +
+                    "<td style='text-align:center; vertical-align:middle;'>" + cihazDurumHtml + "</td>" +
                     "<td style='text-align:center; display:flex; gap:5px; justify-content:center;'>" +
                     "<button class='popup-btn btn-edit' style='padding:4px 8px; flex:none;' onclick='personelDuzenle(\"" + (pers.kullaniciAdi || pers.telefon) + "\")'>Düzenle</button>" +
                     "<button class='popup-btn btn-delete' style='padding:4px 8px; flex:none;' onclick='personelSil(\"" + (pers.kullaniciAdi || pers.telefon) + "\")'>Sil</button>" +
                     "</td>";
                 tbody.appendChild(tr);
             });
+        }
+
+        function cihazKilidiniSifirla(usernameOrTel) {
+            if (!isAdmin()) {
+                alert("Bu işlem için yetkiniz yoktur!");
+                return;
+            }
+            if (confirm("Bu personelin cihaz eşleşmesini sıfırlamak istediğinize emin misiniz?\nSıfırlandıktan sonra personel yeni bir cihazdan giriş yapabilecektir.")) {
+                db.collection("personeller").doc(usernameOrTel).update({
+                    deviceId: firebase.firestore.FieldValue.delete()
+                }).then(function () {
+                    alert("Cihaz kilidi başarıyla sıfırlandı.");
+                    logEkle("Cihaz Kilidi Sıfırlandı", "Kullanıcı: " + usernameOrTel);
+                }).catch(function (err) {
+                    alert("Sıfırlama hatası: " + err.message);
+                });
+            }
         }
 
         function yeniPersonelFormuAc() {
