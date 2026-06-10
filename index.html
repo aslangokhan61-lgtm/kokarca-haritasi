@@ -309,14 +309,10 @@
         /* Huni (Funnel) Tuzak -> Circle */
         .marker-huni {
             border-radius: 50%;
-            width: 100% !important;
-            height: 100% !important;
         }
         /* Yapışkan Tuzak -> Önemli (Kare & Parlak Çerçeveli) */
         .marker-yapiskan {
             border-radius: 8px;
-            width: 100% !important;
-            height: 100% !important;
             border: 3px solid #ffeb3b !important;
             box-shadow: 0 0 15px rgba(255, 235, 59, 0.6) !important;
         }
@@ -2553,12 +2549,12 @@
 
             var iconHtml = ''; 
 
-            var iSize = [18, 18]; // Huni (Normal)
-            var iAnchor = [9, 9];
+            var iSize = [20, 20]; // Huni (Normal)
+            var iAnchor = [10, 10];
             if (isYapiskan) { 
-                iSize = [36, 36]; // Yapışkan (Çok Önemli ve Büyük)
-                iAnchor = [18, 18]; 
-                iconHtml = '<span style="font-size:18px;">⭐</span>';
+                iSize = [48, 48]; // Yapışkan (Devasa)
+                iAnchor = [24, 24]; 
+                iconHtml = '<span style="font-size:32px;">⭐</span>';
             }
 
             var pulseClass = (bocekCount >= 50 && !isArı) ? " pulse-animation" : "";
