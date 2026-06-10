@@ -2330,7 +2330,8 @@
         function isAdmin() {
             if (!aktifKullanici) return false;
             var r = (aktifKullanici.rol || "").toLowerCase().replace(/\s+/g, '');
-            return (r === "yönetici" || r === "yonetici" || r === "süperadmin" || r === "superadmin");
+            // Encoding sorunlarını aşmak için sadece ingilizce/ascii karakterleri arıyoruz
+            return (r.indexOf("admin") !== -1 || r.indexOf("netici") !== -1 || r.indexOf("yonetici") !== -1);
         }
 
         function logEkle(islem, detay) {
