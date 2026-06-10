@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kokarca-haritasi-v43';
+const CACHE_NAME = 'kokarca-haritasi-v45';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,10 +6,10 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './lokasyonlar.json',
   './icon.png',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap'
 ];
