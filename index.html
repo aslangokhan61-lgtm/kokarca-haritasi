@@ -321,6 +321,9 @@
         .marker-yellow { background: #f59e0b; color: #ffffff; }
         .marker-red    { background: #ef4444; }
 
+        /* Samuray Arısı -> Mavi */
+        .marker-ari    { background: #3b82f6; border-radius: 50%; color: white; }
+
         /* Yapışkan tuzak renk skalası (amber → turuncu → mor) */
         .marker-yp-az    { background: #fbbf24; color: #78350f; }  /* az böcek → amber */
         .marker-yp-orta  { background: #ea580c; color: #ffffff; }  /* orta    → turuncu */
@@ -2325,7 +2328,9 @@
         window.logSonrakiVar = false;
 
         function isAdmin() {
-            return aktifKullanici && (aktifKullanici.rol === "Yönetici" || aktifKullanici.rol === "Süper Admin");
+            if (!aktifKullanici) return false;
+            var r = (aktifKullanici.rol || "").toLowerCase().replace(/\s+/g, '');
+            return (r === "yönetici" || r === "yonetici" || r === "süperadmin" || r === "superadmin");
         }
 
         function logEkle(islem, detay) {
@@ -2396,7 +2401,7 @@
             var varsayilanlar = [
                 { adSoyad: "Gökhan ASLAN", kullaniciAdi: "gokhan.aslan", unvan: "Yönetici", ilce: "Güneysu", telefon: "+905555555555", rol: "Süper Admin" },
                 { adSoyad: "Dursun Ali AZAKLI", kullaniciAdi: "dursunali.azakli", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905444444444", rol: "Saha Personeli" },
-                { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Saha Personeli", ilce: "Güneysu", telefon: "+905333333333", rol: "Saha Personeli" }
+                { adSoyad: "Beyza FEYİZ", kullaniciAdi: "beyza.feyiz", unvan: "Yönetici", ilce: "Merkez", telefon: "+905333333333", rol: "Yönetici" }
             ];
 
             var checks = varsayilanlar.map(function(p) {
@@ -2547,14 +2552,14 @@
             
             var countVal = isArı ? tupCount : bocekCount;
 
-            var iconHtml = ''; 
+            var iconHtml = '<span style="font-size:14px;">' + countVal + '</span>'; 
 
-            var iSize = [20, 20]; // Huni (Normal)
-            var iAnchor = [10, 10];
+            var iSize = [36, 36]; // Huni (Büyük)
+            var iAnchor = [18, 18];
             if (isYapiskan) { 
                 iSize = [48, 48]; // Yapışkan (Devasa)
                 iAnchor = [24, 24]; 
-                iconHtml = '<span style="font-size:32px;">⭐</span>';
+                iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.2;"><span style="font-size:14px;">⭐</span><span style="font-size:14px;">' + countVal + '</span></div>';
             }
 
             var pulseClass = (bocekCount >= 50 && !isArı) ? " pulse-animation" : "";
