@@ -4981,7 +4981,16 @@
                 localStorage.removeItem("aktifPersonel");
                 aktifKullanici = null;
 
-                document.getElementById("userProfileCard").style.display = "none";
+                var profCard = document.getElementById("userProfileCard");
+                var dashCards = document.getElementById("dashboardCards");
+                if (profCard) {
+                    profCard.style.display = "none";
+                    document.body.appendChild(profCard);
+                }
+                if (dashCards) {
+                    dashCards.style.display = "none";
+                    document.body.appendChild(dashCards);
+                }
                 document.getElementById("sideMenu").innerHTML = "";
                 document.getElementById("girisModal").classList.add("active");
                 document.getElementById("girisKullanici").value = "";
@@ -5006,6 +5015,132 @@
             }
         }
 
+        function yerlestirPanelleri() {
+            if (!aktifKullanici) return;
+            var isMobile = window.innerWidth <= 768;
+            var profCard = document.getElementById("userProfileCard");
+            var dashCards = document.getElementById("dashboardCards");
+            var sideMenu = document.getElementById("sideMenu");
+
+            if (isMobile) {
+                // Mobil Görünüm: Elemanları yan menünün içine taşı ve stilleri ayarla
+                if (profCard) {
+                    if (profCard.parentNode !== sideMenu) {
+                        sideMenu.appendChild(profCard);
+                    }
+                    profCard.style.setProperty("position", "relative", "important");
+                    profCard.style.setProperty("top", "0", "important");
+                    profCard.style.setProperty("right", "auto", "important");
+                    profCard.style.setProperty("left", "0", "important");
+                    profCard.style.margin = "0 15px 15px 15px";
+                    profCard.style.boxShadow = "none";
+                    profCard.style.background = "#f8fafc";
+                    profCard.style.border = "1px solid #e2e8f0";
+                    profCard.style.flexDirection = "column";
+                    profCard.style.alignItems = "flex-start";
+                    profCard.style.gap = "4px";
+                    profCard.style.display = "flex";
+
+                    var logoutBtn = profCard.querySelector("button");
+                    if (logoutBtn) {
+                        logoutBtn.style.marginLeft = "0";
+                        logoutBtn.style.marginTop = "4px";
+                        logoutBtn.style.padding = "6px 12px";
+                        logoutBtn.style.background = "#fee2e2";
+                        logoutBtn.style.borderRadius = "6px";
+                    }
+                }
+                if (dashCards) {
+                    if (dashCards.parentNode !== sideMenu) {
+                        sideMenu.appendChild(dashCards);
+                    }
+                    dashCards.style.setProperty("position", "relative", "important");
+                    dashCards.style.setProperty("bottom", "auto", "important");
+                    dashCards.style.setProperty("top", "0", "important");
+                    dashCards.style.setProperty("left", "auto", "important");
+                    dashCards.style.setProperty("transform", "none", "important");
+                    dashCards.style.margin = "0 15px 15px 15px";
+                    dashCards.style.width = "auto";
+                    
+                    var toplamTuzak = 0;
+                    for (var id in tuzakVerileri) toplamTuzak++;
+                    
+                    if (toplamTuzak > 0) {
+                        dashCards.style.display = "grid";
+                    } else {
+                        dashCards.style.display = "none";
+                    }
+                    dashCards.style.gridTemplateColumns = "1fr 1fr";
+
+                    var children = dashCards.querySelectorAll("div");
+                    children.forEach(function (child) {
+                        if (child.id && child.id.startsWith("dash")) return;
+                        child.style.minWidth = "0";
+                        child.style.padding = "8px";
+                        child.style.borderRadius = "8px";
+                    });
+                }
+            } else {
+                // Masaüstü (PC) Görünüm: Elemanları body'ye taşı (yüzen paneller)
+                if (profCard) {
+                    if (profCard.parentNode !== document.body) {
+                        document.body.appendChild(profCard);
+                    }
+                    profCard.style.removeProperty("position");
+                    profCard.style.removeProperty("top");
+                    profCard.style.removeProperty("right");
+                    profCard.style.removeProperty("left");
+                    profCard.style.margin = "";
+                    profCard.style.boxShadow = "";
+                    profCard.style.background = "";
+                    profCard.style.border = "";
+                    profCard.style.flexDirection = "";
+                    profCard.style.alignItems = "";
+                    profCard.style.gap = "";
+                    profCard.style.display = "flex";
+
+                    var logoutBtn = profCard.querySelector("button");
+                    if (logoutBtn) {
+                        logoutBtn.style.marginLeft = "10px";
+                        logoutBtn.style.marginTop = "0";
+                        logoutBtn.style.padding = "4px";
+                        logoutBtn.style.background = "transparent";
+                        logoutBtn.style.borderRadius = "0";
+                    }
+                }
+                if (dashCards) {
+                    if (dashCards.parentNode !== document.body) {
+                        document.body.appendChild(dashCards);
+                    }
+                    dashCards.style.removeProperty("position");
+                    dashCards.style.removeProperty("bottom");
+                    dashCards.style.removeProperty("top");
+                    dashCards.style.removeProperty("left");
+                    dashCards.style.removeProperty("transform");
+                    dashCards.style.margin = "";
+                    dashCards.style.width = "";
+                    
+                    var toplamTuzak = 0;
+                    for (var id in tuzakVerileri) toplamTuzak++;
+                    
+                    if (toplamTuzak > 0) {
+                        dashCards.style.display = "flex";
+                    } else {
+                        dashCards.style.display = "none";
+                    }
+
+                    var children = dashCards.querySelectorAll("div");
+                    children.forEach(function (child) {
+                        if (child.id && child.id.startsWith("dash")) return;
+                        child.style.minWidth = "110px";
+                        child.style.padding = "12px 18px";
+                        child.style.borderRadius = "14px";
+                    });
+                }
+            }
+        }
+        window.addEventListener('resize', yerlestirPanelleri);
+
         function guncelleArayuzRolBazli() {
             if (!aktifKullanici) return;
 
@@ -5025,64 +5160,10 @@
             header.innerHTML = 'Seçenekler <span class="close-btn" onclick="toggleMenu()">&times;</span>';
             sideMenu.appendChild(header);
 
-            // Update and append Profile Card to menu
+            // Profil kartı detaylarını güncelle (yerleşimi yerlestirPanelleri yapacak)
             if (profCard) {
                 document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
                 document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
-
-                profCard.style.setProperty("position", "relative", "important");
-                profCard.style.setProperty("top", "0", "important");
-                profCard.style.setProperty("right", "auto", "important");
-                profCard.style.setProperty("left", "0", "important");
-                profCard.style.margin = "0 15px 15px 15px";
-                profCard.style.boxShadow = "none";
-                profCard.style.background = "#f8fafc";
-                profCard.style.border = "1px solid #e2e8f0";
-                profCard.style.flexDirection = "column";
-                profCard.style.alignItems = "flex-start";
-                profCard.style.gap = "4px";
-                profCard.style.display = "flex";
-
-                // Fix logout button to look better in vertical layout
-                var logoutBtn = profCard.querySelector("button");
-                if (logoutBtn) {
-                    logoutBtn.style.marginLeft = "0";
-                    logoutBtn.style.marginTop = "4px";
-                    logoutBtn.style.padding = "6px 12px";
-                    logoutBtn.style.background = "#fee2e2";
-                    logoutBtn.style.borderRadius = "6px";
-                }
-
-                sideMenu.appendChild(profCard);
-            }
-
-            // Append Dashboard Cards to menu
-            if (dashCards) {
-                dashCards.style.setProperty("position", "relative", "important");
-                dashCards.style.setProperty("bottom", "auto", "important");
-                dashCards.style.setProperty("top", "0", "important");
-                dashCards.style.setProperty("left", "auto", "important");
-                dashCards.style.setProperty("transform", "none", "important");
-                dashCards.style.margin = "0 15px 15px 15px";
-                dashCards.style.width = "auto";
-                dashCards.style.display = "grid";
-                dashCards.style.gridTemplateColumns = "1fr 1fr";
-
-                // Only show if it has flex (handled by guncelleTopluDurumVeDash usually, but we force grid if visible)
-                if (dashCards.style.display !== "none") {
-                    dashCards.style.display = "grid";
-                }
-
-                // Make child items smaller to fit the menu
-                var children = dashCards.querySelectorAll("div");
-                children.forEach(function (child) {
-                    if (child.id && child.id.startsWith("dash")) return; // skip internal text divs
-                    child.style.minWidth = "0";
-                    child.style.padding = "8px";
-                    child.style.borderRadius = "8px";
-                });
-
-                sideMenu.appendChild(dashCards);
             }
 
             // ── Yardımcı: Accordion Grup Oluşturucu ──
@@ -5299,6 +5380,9 @@
                 };
                 sideMenu.appendChild(planMenu);
             }
+
+            // Yerleşimi ekran genişliğine göre yap (Masaüstü/Mobil)
+            yerlestirPanelleri();
         }
 
         function initMenuFilters() {
@@ -6330,7 +6414,10 @@
             if (el) el.innerText = ort;
 
             var dash = document.getElementById('dashboardCards');
-            if (dash && toplamTuzak > 0) dash.style.display = 'flex';
+            if (dash && toplamTuzak > 0) {
+                var isMobile = window.innerWidth <= 768;
+                dash.style.display = isMobile ? 'grid' : 'flex';
+            }
 
             if (!window.otomatikRaporKontrolEdildi && toplamTuzak > 0) {
                 window.otomatikRaporKontrolEdildi = true;
