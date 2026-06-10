@@ -2552,14 +2552,17 @@
             
             var countVal = isArı ? tupCount : bocekCount;
 
-            var iconHtml = '<span style="font-size:14px;">' + countVal + '</span>'; 
+            var iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;"><span style="font-size:10px; opacity:0.9;">H</span><span style="font-size:14px;">' + countVal + '</span></div>'; 
 
             var iSize = [36, 36]; // Huni (Büyük)
             var iAnchor = [18, 18];
-            if (isYapiskan) { 
+            
+            if (isArı) {
+                iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;"><span style="font-size:10px; opacity:0.9;">A</span><span style="font-size:14px;">' + countVal + '</span></div>';
+            } else if (isYapiskan) { 
                 iSize = [48, 48]; // Yapışkan (Devasa)
                 iAnchor = [24, 24]; 
-                iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.2;"><span style="font-size:14px;">⭐</span><span style="font-size:14px;">' + countVal + '</span></div>';
+                iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;"><span style="font-size:12px;">Y ⭐</span><span style="font-size:15px;">' + countVal + '</span></div>';
             }
 
             var pulseClass = (bocekCount >= 50 && !isArı) ? " pulse-animation" : "";
