@@ -213,13 +213,47 @@
 
         .close-btn {
             cursor: pointer;
-            font-size: 28px;
+            font-size: 24px;
             line-height: 1;
-            transition: transform 0.2s;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            user-select: none;
         }
 
         .close-btn:hover {
-            transform: scale(1.1);
+            background: rgba(0, 0, 0, 0.05);
+            transform: scale(1.05);
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Menu header close button specific styles for contrast */
+        .menu-header .close-btn {
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-header .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .menu-header .close-btn {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.dark-mode .menu-header .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .menu-item {
@@ -761,6 +795,19 @@
 
         /* Responsive adjustments to prevent overlap on mobile */
         @media (max-width: 600px) {
+            .side-menu {
+                width: 280px !important;
+                left: -280px !important;
+            }
+
+            .side-menu.open {
+                left: 0 !important;
+            }
+
+            .menu-header {
+                padding: 18px 20px !important;
+            }
+
             .menu-btn {
                 top: 15px !important;
                 left: 15px !important;
@@ -3221,8 +3268,17 @@
         }
 
         function filtreleriUygula() {
+            var visibleLatLngs = [];
             for (var docId in markerListesi) {
                 markerGosterGizle(docId);
+                var marker = markerListesi[docId];
+                if (marker && markerKatmani.hasLayer(marker)) {
+                    visibleLatLngs.push(marker.getLatLng());
+                }
+            }
+            if (visibleLatLngs.length > 0) {
+                var bounds = L.latLngBounds(visibleLatLngs);
+                map.fitBounds(bounds, { maxZoom: 16, padding: [60, 60] });
             }
         }
 
@@ -3431,23 +3487,41 @@
                     }
                 });
 
-                // Now, group the data
+                // Now, group the data (no grouping anymore, each Firestore document is its own unique trap)
                 tuzakVerileri = {};
                 for (var docId in hamTuzakVerileri) {
                     var data = hamTuzakVerileri[docId];
 
+                    var ilceStr = data.ilce || "";
+                    if (!ilceStr || ilceStr === "-") {
+                        if (lokasyonDB && data.il && lokasyonDB[data.il]) {
+                            var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
+                            for (var ilceName in lokasyonDB[data.il]) {
+                                var koyler = lokasyonDB[data.il][ilceName];
+                                if (Array.isArray(koyler)) {
+                                    var found = koyler.some(function (k) {
+                                        return turkceNormalize(k) === normalizedKoy;
+                                    });
+                                    if (found) {
+                                        ilceStr = ilceName;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!ilceStr) ilceStr = "-";
+
                     // ROLE-BASED DISTRICT ISOLATION
-                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isAdmin() && ilceStr !== aktifKullanici.ilce) {
                         continue;
                     }
 
-                    var ilceStr = data.ilce || "-";
                     var koyStr = data.koy || data.ad || "-";
                     var tuzakNoStr = data.tuzakNo || "Toplu";
                     var tipStr = data.tuzakTipi || "Huni";
 
-                    var groupKey = ilceStr + "_" + koyStr + "_" + tuzakNoStr + "_" + tipStr;
-                    groupKey = groupKey.replace(/\s+/g, "_"); // sanitize key
+                    var groupKey = docId;
 
                     if (!tuzakVerileri[groupKey]) {
                         tuzakVerileri[groupKey] = {
@@ -4141,14 +4215,34 @@
             db.collection("tuzaklar").doc(docId).get().then(function (doc) {
                 if (doc.exists) {
                     var data = doc.data();
-                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    var resolvedIlce = data.ilce || "";
+                    if (!resolvedIlce || resolvedIlce === "-") {
+                        if (lokasyonDB && data.il && lokasyonDB[data.il]) {
+                            var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
+                            for (var ilceName in lokasyonDB[data.il]) {
+                                var koyler = lokasyonDB[data.il][ilceName];
+                                if (Array.isArray(koyler)) {
+                                    var found = koyler.some(function (k) {
+                                        return turkceNormalize(k) === normalizedKoy;
+                                    });
+                                    if (found) {
+                                        resolvedIlce = ilceName;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!resolvedIlce) resolvedIlce = "-";
+
+                    if (aktifKullanici && !isAdmin() && resolvedIlce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı silme yetkiniz yok!");
                         return;
                     }
                     if (confirm("Bu kaydı haritadan silmek istediğinize emin misiniz?")) {
                         db.collection("tuzaklar").doc(docId).delete().then(function () {
                             console.log("Kayıt silindi.");
-                            logEkle("Tuzak Silindi", "İlçe: " + (data.ilce || "-") + ", Köy: " + (data.koy || "-") + ", Tip: " + (data.tuzakTipi || "-") + ", No: " + (data.tuzakNo || "-"));
+                            logEkle("Tuzak Silindi", "İlçe: " + resolvedIlce + ", Köy: " + (data.koy || "-") + ", Tip: " + (data.tuzakTipi || "-") + ", No: " + (data.tuzakNo || "-"));
                         }).catch(function (error) {
                             alert("Silme hatası: " + error.message);
                         });
@@ -4166,7 +4260,27 @@
                 if (doc.exists) {
                     var data = doc.data();
 
-                    if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                    var resolvedIlce = data.ilce || "";
+                    if (!resolvedIlce || resolvedIlce === "-") {
+                        if (lokasyonDB && data.il && lokasyonDB[data.il]) {
+                            var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
+                            for (var ilceName in lokasyonDB[data.il]) {
+                                var koyler = lokasyonDB[data.il][ilceName];
+                                if (Array.isArray(koyler)) {
+                                    var found = koyler.some(function (k) {
+                                        return turkceNormalize(k) === normalizedKoy;
+                                    });
+                                    if (found) {
+                                        resolvedIlce = ilceName;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!resolvedIlce) resolvedIlce = "-";
+
+                    if (aktifKullanici && !isAdmin() && resolvedIlce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı düzenleme yetkiniz yok!");
                         return;
                     }
@@ -4181,7 +4295,7 @@
                     ilSelect.value = data.il || "Rize";
                     ilSecildi();
 
-                    ilceSelect.value = data.ilce || "";
+                    ilceSelect.value = resolvedIlce;
                     ilceSecildi();
 
                     // Lock District select for standard personnel
