@@ -404,9 +404,10 @@
             #userProfileCard {
                 top: 15px !important;
                 right: 15px !important;
-                height: 44px !important;
-                padding: 0 12px !important;
-                border-radius: 22px !important;
+                height: auto !important;
+                min-height: 44px !important;
+                padding: 10px 12px !important;
+                border-radius: 12px !important;
                 font-size: 11px !important;
                 gap: 6px !important;
                 max-width: calc(100% - 90px) !important;
@@ -4234,9 +4235,10 @@
                 document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
                 document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
                 
-                profCard.style.position = "relative";
-                profCard.style.top = "0";
-                profCard.style.right = "0";
+                profCard.style.setProperty("position", "relative", "important");
+                profCard.style.setProperty("top", "0", "important");
+                profCard.style.setProperty("right", "auto", "important");
+                profCard.style.setProperty("left", "0", "important");
                 profCard.style.margin = "0 15px 15px 15px";
                 profCard.style.boxShadow = "none";
                 profCard.style.background = "#f8fafc";
@@ -4261,10 +4263,11 @@
 
             // Append Dashboard Cards to menu
             if (dashCards) {
-                dashCards.style.position = "relative";
-                dashCards.style.bottom = "auto";
-                dashCards.style.left = "auto";
-                dashCards.style.transform = "none";
+                dashCards.style.setProperty("position", "relative", "important");
+                dashCards.style.setProperty("bottom", "auto", "important");
+                dashCards.style.setProperty("top", "0", "important");
+                dashCards.style.setProperty("left", "auto", "important");
+                dashCards.style.setProperty("transform", "none", "important");
                 dashCards.style.margin = "0 15px 15px 15px";
                 dashCards.style.width = "auto";
                 dashCards.style.display = "grid";
