@@ -3396,12 +3396,14 @@
                                             ilce: resolvedIlce,
                                             koy: rawData.koy || rawData.ad || "Bilinmiyor",
                                             tuzakTipi: rawData.tuzakTipi || "Huni",
-                                            bocekSayisi: parseInt(rawData.bocekSayisi) || 0
+                                            bocekSayisi: parseInt(rawData.bocekSayisi) || 0,
+                                            lat: parseFloat(rawData.lat),
+                                            lng: parseFloat(rawData.lng)
                                         };
                                         db.collection("tuzaklar").doc(dId).update(updateObj).then(function() {
-                                            console.log("Otomatik Düzeltildi (Gecikmeli): Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
+                                            alert("Otomatik Düzeltildi (Gecikmeli): Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
                                         }).catch(function(err) {
-                                            console.warn("Gecikmeli otomatik ilçe düzeltme hatası (" + dId + "):", err);
+                                            alert("Gecikmeli otomatik ilçe düzeltme hatası (" + dId + "): " + err.message);
                                         });
                                     })(docId, ilceName, data, province);
                                     break;
@@ -3577,12 +3579,14 @@
                                 ilce: resolvedIlce,
                                 koy: rawData.koy || rawData.ad || "Bilinmiyor",
                                 tuzakTipi: rawData.tuzakTipi || "Huni",
-                                bocekSayisi: parseInt(rawData.bocekSayisi) || 0
+                                bocekSayisi: parseInt(rawData.bocekSayisi) || 0,
+                                lat: parseFloat(rawData.lat),
+                                lng: parseFloat(rawData.lng)
                             };
                             db.collection("tuzaklar").doc(dId).update(updateObj).then(function() {
-                                console.log("Otomatik Düzeltildi: Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
+                                alert("Otomatik Düzeltildi: Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
                             }).catch(function(err) {
-                                console.warn("Otomatik ilçe düzeltme hatası (" + dId + "):", err);
+                                alert("Otomatik ilçe düzeltme hatası (" + dId + "): " + err.message);
                             });
                         })(docId, ilceStr, data, province);
                     }
