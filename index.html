@@ -2063,6 +2063,16 @@
                 <span class="close-btn" style="color: #64748b;" onclick="kapatLokasyonModal()">&times;</span>
             </div>
 
+            <!-- Toplu JSON Yükleme -->
+            <div style="background: #eff6ff; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; border: 1.5px solid #bfdbfe; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 12px; font-weight: 800; color: #1e3a8a;">📥 Toplu Ekle (Excel/JSON)</span>
+                    <span style="font-size: 11px; color: #1e40af;">lokasyonlar.json dosyasını yükleyin</span>
+                </div>
+                <input type="file" id="lokasyonJsonInput" accept=".json" style="display: none;" onchange="topluLokasyonJsonYukle(event)" />
+                <button class="btn" style="background: #3b82f6; color: white; padding: 6px 12px; font-size: 12px; min-height: auto !important; width: auto;" onclick="document.getElementById('lokasyonJsonInput').click()">Dosya Seç</button>
+            </div>
+
             <!-- İl / İlçe seç -->
             <div style="display: flex; gap: 12px; margin-bottom: 16px;">
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
@@ -2286,6 +2296,24 @@
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="kapatModal()">İptal</button>
                 <button class="btn btn-save" onclick="kaydet()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Scope Selection Modal -->
+    <div id="excelKapsamModal" class="modal-overlay" style="z-index: 100005;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark);">📊 Excel İndirme Kapsamı</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatExcelKapsamModal()">&times;</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: left;">Lütfen indirmek istediğiniz Excel raporunun kapsamını seçin:</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn" style="background: linear-gradient(135deg, var(--primary), #059669); color: white; padding: 12px; font-size: 14px;" onclick="excelIndirKapsamSecildi('kendi')">📍 Sadece Kendi İlçem (Görev Yerim)</button>
+                <button class="btn" style="background: linear-gradient(135deg, #0369a1, #0284c7); color: white; padding: 12px; font-size: 14px;" onclick="excelIndirKapsamSecildi('tumu')">🌍 Tüm İl ve İlçeler</button>
+            </div>
+            <div style="margin-top: 16px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                <button class="btn btn-cancel" style="width: 100%; min-height: 40px !important;" onclick="kapatExcelKapsamModal()">İptal</button>
             </div>
         </div>
     </div>
@@ -3802,7 +3830,7 @@
             if (tarihBox) tarihBox.style.display = isYonetici ? 'block' : 'none';
             if (trendTab) trendTab.style.display = isYonetici ? '' : 'none';
             if (csvBtn) csvBtn.style.display = isYonetici ? 'flex' : 'none';
-            if (excelBtn) excelBtn.style.display = isSuperAdmin ? 'flex' : 'none';
+            if (excelBtn) excelBtn.style.display = aktifKullanici ? 'flex' : 'none';
 
             // Trend sekme aktifse burada dur
             if (seciliRaporFiltre === "Trend") {
@@ -4167,11 +4195,47 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-        // 🟢 Tarih Bazlı Detaylı Excel İndir (Süper Admin) 🟢
-        function tarihBazliExcelIndir() {
+        function kapatExcelKapsamModal() {
+            document.getElementById('excelKapsamModal').classList.remove('active');
+        }
+
+        function excelIndirKapsamSecildi(kapsam) {
+            kapatExcelKapsamModal();
+            tarihBazliExcelIndir(kapsam);
+        }
+
+        function normalizeDateStr(dateStr) {
+            if (!dateStr) return 'Tarihsiz';
+            var parts = dateStr.split('.');
+            if (parts.length < 3) return dateStr;
+            var d = parts[0].trim();
+            var m = parts[1].trim();
+            var y = parts[2].trim();
+            if (d.length === 1) d = '0' + d;
+            if (m.length === 1) m = '0' + m;
+            return d + '.' + m + '.' + y;
+        }
+
+        // 🟢 Tarih Bazlı Detaylı Excel İndir (Süper Admin / Seçenekli) 🟢
+        function tarihBazliExcelIndir(kapsam) {
             if (typeof XLSX === 'undefined') {
                 alert("Excel modülü yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.");
                 return;
+            }
+
+            var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            var isSpecialUser = (userName === 'gokhan.aslan' || userName === 'beyza.feyiz');
+
+            // Gökhan ve Beyza için kapsam seçilmemişse modalı aç
+            if (isSpecialUser && !kapsam) {
+                document.getElementById('excelKapsamModal').classList.add('active');
+                return;
+            }
+
+            // Seçilen kapsamı belirle: Özel kullanıcılar seçebilir, diğerleri sadece kendi ilçesini indirebilir
+            var finalKapsam = kapsam || 'kendi';
+            if (!isSpecialUser) {
+                finalKapsam = 'kendi';
             }
 
             var workbook = XLSX.utils.book_new();
@@ -4183,6 +4247,12 @@
             for (var gKey in tuzakVerileri) {
                 var data = tuzakVerileri[gKey];
 
+                // İlçe bazlı kısıtlama
+                if (finalKapsam === 'kendi' && aktifKullanici && data.ilce !== aktifKullanici.ilce) continue;
+
+                // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
+                if (seciliRaporFiltre !== 'Tümü' && seciliRaporFiltre !== 'Trend' && data.tuzakTipi !== seciliRaporFiltre) continue;
+
                 if (aktifFiltreler.il !== 'Tümü' && data.il !== aktifFiltreler.il) continue;
                 if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
                 if (aktifFiltreler.koy !== 'Tümü' && data.koy !== aktifFiltreler.koy && data.ad !== aktifFiltreler.koy) continue;
@@ -4191,7 +4261,7 @@
                 var tarihBazliSayim = {};
 
                 kayitlar.forEach(function (k) {
-                    var t = k.tarih || 'Tarihsiz';
+                    var t = normalizeDateStr(k.tarih);
                     tumTarihlerSet.add(t);
                     tarihBazliSayim[t] = (tarihBazliSayim[t] || 0) + (parseInt(k.bocekSayisi) || 0);
                 });
@@ -4211,6 +4281,16 @@
                     tarihSayimlari: tarihBazliSayim
                 });
             }
+
+            // Sayfa 1 için tuzakSatirlari'nı sırala (Köy adına göre ve ardından Tuzak No'suna göre alfabetik/sayısal)
+            tuzakSatirlari.sort(function (a, b) {
+                var c1 = a.koy.localeCompare(b.koy, 'tr');
+                if (c1 !== 0) return c1;
+                var n1 = parseInt(a.tuzakNo) || 0;
+                var n2 = parseInt(b.tuzakNo) || 0;
+                if (n1 !== 0 && n2 !== 0) return n1 - n2;
+                return String(a.tuzakNo).localeCompare(String(b.tuzakNo), 'tr');
+            });
 
             var tumTarihler = Array.from(tumTarihlerSet).sort(function (a, b) {
                 var da = parseTurkishDate(a), db_ = parseTurkishDate(b);
@@ -4241,9 +4321,15 @@
             var s2Data = [];
             s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy', 'Tuzak No', 'Tuzak Tipi', 'Sayılan Böcek', 'Personel']);
 
-            var s2Index = 1;
+            var ziyaretKayitlari = [];
             for (var gKey in tuzakVerileri) {
                 var data = tuzakVerileri[gKey];
+
+                // İlçe bazlı kısıtlama
+                if (finalKapsam === 'kendi' && aktifKullanici && data.ilce !== aktifKullanici.ilce) continue;
+
+                // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
+                if (seciliRaporFiltre !== 'Tümü' && seciliRaporFiltre !== 'Trend' && data.tuzakTipi !== seciliRaporFiltre) continue;
 
                 if (aktifFiltreler.il !== 'Tümü' && data.il !== aktifFiltreler.il) continue;
                 if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
@@ -4251,18 +4337,42 @@
 
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
-                    s2Data.push([
-                        s2Index++,
-                        k.tarih || 'Tarihsiz',
-                        data.ilce || '-',
-                        data.koy || data.ad || '-',
-                        data.tuzakNo || '-',
-                        data.tuzakTipi || 'Huni',
-                        parseInt(k.bocekSayisi) || 0,
-                        k.personel || 'Saha Personeli'
-                    ]);
+                    ziyaretKayitlari.push({
+                        tarihStr: normalizeDateStr(k.tarih),
+                        ilce: data.ilce || '-',
+                        koy: data.koy || data.ad || '-',
+                        tuzakNo: data.tuzakNo || '-',
+                        tuzakTipi: data.tuzakTipi || 'Huni',
+                        bocekSayisi: parseInt(k.bocekSayisi) || 0,
+                        personel: k.personel || 'Saha Personeli'
+                    });
                 });
             }
+
+            // Sayfa 2 Ziyaret geçmişini sırala: Tarih -> Köy -> Tuzak Adı
+            ziyaretKayitlari.sort(function (a, b) {
+                var da = parseTurkishDate(a.tarihStr), db_ = parseTurkishDate(b.tarihStr);
+                if (da && db_ && (da - db_ !== 0)) return da - db_;
+                var c1 = a.koy.localeCompare(b.koy, 'tr');
+                if (c1 !== 0) return c1;
+                var n1 = parseInt(a.tuzakNo) || 0;
+                var n2 = parseInt(b.tuzakNo) || 0;
+                if (n1 !== 0 && n2 !== 0) return n1 - n2;
+                return String(a.tuzakNo).localeCompare(String(b.tuzakNo), 'tr');
+            });
+
+            ziyaretKayitlari.forEach(function (z, index) {
+                s2Data.push([
+                    index + 1,
+                    z.tarihStr,
+                    z.ilce,
+                    z.koy,
+                    z.tuzakNo,
+                    z.tuzakTipi,
+                    z.bocekSayisi,
+                    z.personel
+                ]);
+            });
 
             var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
             XLSX.utils.book_append_sheet(workbook, ws2, "Ziyaret Geçmişi");
@@ -6525,6 +6635,33 @@
             }).catch(function (err) {
                 document.getElementById("lokasyonDurumTxt").innerText = "❌ Hata: " + err.message;
             });
+        }
+
+        function topluLokasyonJsonYukle(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var parsed = JSON.parse(e.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                        var keys = Object.keys(parsed);
+                        if (keys.length > 0 && typeof parsed[keys[0]] === 'object') {
+                            lokasyonDB = parsed;
+                            lokasyonFirestoreGuncelle(function() {
+                                alert("Yeni lokasyon listesi başarıyla veritabanına kaydedildi! Sayfa yenilenerek filtreler güncellenecektir.");
+                                window.location.reload();
+                            });
+                            return;
+                        }
+                    }
+                    alert("Geçersiz dosya yapısı. Lütfen dönüştürücüden indirdiğiniz lokasyonlar.json dosyasını seçin.");
+                } catch(err) {
+                    alert("Dosya okuma hatası: " + err.message);
+                }
+            };
+            reader.readAsText(file);
         }
 
         function ilceEkle() {
