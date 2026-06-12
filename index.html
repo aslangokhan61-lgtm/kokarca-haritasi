@@ -3378,26 +3378,32 @@
             if (!lokasyonDB || !hamTuzakVerileri) return;
             for (var docId in hamTuzakVerileri) {
                 var data = hamTuzakVerileri[docId];
+                var province = data.il || "Rize";
                 var ilceStr = data.ilce || "";
                 if (!ilceStr || ilceStr === "-") {
-                    if (data.il && lokasyonDB[data.il]) {
+                    if (lokasyonDB[province]) {
                         var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
-                        for (var ilceName in lokasyonDB[data.il]) {
-                            var koyler = lokasyonDB[data.il][ilceName];
+                        for (var ilceName in lokasyonDB[province]) {
+                            var koyler = lokasyonDB[province][ilceName];
                             if (Array.isArray(koyler)) {
                                 var found = koyler.some(function (k) {
                                     return turkceNormalize(k) === normalizedKoy;
                                 });
                                 if (found) {
-                                    (function(dId, resolvedIlce) {
-                                        db.collection("tuzaklar").doc(dId).update({
-                                            ilce: resolvedIlce
-                                        }).then(function() {
+                                    (function(dId, resolvedIlce, rawData, prov) {
+                                        var updateObj = {
+                                            il: prov,
+                                            ilce: resolvedIlce,
+                                            koy: rawData.koy || rawData.ad || "Bilinmiyor",
+                                            tuzakTipi: rawData.tuzakTipi || "Huni",
+                                            bocekSayisi: parseInt(rawData.bocekSayisi) || 0
+                                        };
+                                        db.collection("tuzaklar").doc(dId).update(updateObj).then(function() {
                                             console.log("Otomatik Düzeltildi (Gecikmeli): Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
                                         }).catch(function(err) {
                                             console.warn("Gecikmeli otomatik ilçe düzeltme hatası (" + dId + "):", err);
                                         });
-                                    })(docId, ilceName);
+                                    })(docId, ilceName, data, province);
                                     break;
                                 }
                             }
@@ -3540,13 +3546,14 @@
                 for (var docId in hamTuzakVerileri) {
                     var data = hamTuzakVerileri[docId];
 
+                    var province = data.il || "Rize";
                     var ilceStr = data.ilce || "";
                     var needsUpdate = false;
                     if (!ilceStr || ilceStr === "-") {
-                        if (lokasyonDB && data.il && lokasyonDB[data.il]) {
+                        if (lokasyonDB && lokasyonDB[province]) {
                             var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
-                            for (var ilceName in lokasyonDB[data.il]) {
-                                var koyler = lokasyonDB[data.il][ilceName];
+                            for (var ilceName in lokasyonDB[province]) {
+                                var koyler = lokasyonDB[province][ilceName];
                                 if (Array.isArray(koyler)) {
                                     var found = koyler.some(function (k) {
                                         return turkceNormalize(k) === normalizedKoy;
@@ -3564,15 +3571,20 @@
 
                     // Auto-heal database record if missing/hyphen but resolved successfully
                     if (needsUpdate && ilceStr !== "-") {
-                        (function(dId, resolvedIlce) {
-                            db.collection("tuzaklar").doc(dId).update({
-                                ilce: resolvedIlce
-                            }).then(function() {
+                        (function(dId, resolvedIlce, rawData, prov) {
+                            var updateObj = {
+                                il: prov,
+                                ilce: resolvedIlce,
+                                koy: rawData.koy || rawData.ad || "Bilinmiyor",
+                                tuzakTipi: rawData.tuzakTipi || "Huni",
+                                bocekSayisi: parseInt(rawData.bocekSayisi) || 0
+                            };
+                            db.collection("tuzaklar").doc(dId).update(updateObj).then(function() {
                                 console.log("Otomatik Düzeltildi: Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
                             }).catch(function(err) {
                                 console.warn("Otomatik ilçe düzeltme hatası (" + dId + "):", err);
                             });
-                        })(docId, ilceStr);
+                        })(docId, ilceStr, data, province);
                     }
 
                     // ROLE-BASED DISTRICT ISOLATION
