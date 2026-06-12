@@ -3327,6 +3327,7 @@
                 try {
                     lokasyonDB = JSON.parse(cached);
                     ilListesiniDoldur();
+                    recheckMissingDistricts();
                 } catch (e) {
                     console.error("Önbellekten lokasyon okuma hatası:", e);
                 }
@@ -3339,6 +3340,7 @@
                     lokasyonDB = doc.data();
                     localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
                     ilListesiniDoldur();
+                    recheckMissingDistricts();
                 } else {
                     // 3. Firestore empty: seed from lokasyonlar.json
                     fetch('./lokasyonlar.json')
@@ -3348,6 +3350,7 @@
                                 lokasyonDB = jsonData;
                                 localStorage.setItem("lokasyonDB", JSON.stringify(lokasyonDB));
                                 ilListesiniDoldur();
+                                recheckMissingDistricts();
                                 console.log("Lokasyonlar JSON'dan Firestore'a tohumlandı.");
                             });
                         })
@@ -3364,10 +3367,44 @@
                         .then(function (jsonData) {
                             lokasyonDB = jsonData;
                             ilListesiniDoldur();
+                            recheckMissingDistricts();
                         })
                         .catch(function () { console.error("Lokasyon verisi hiç yüklenemedi."); });
                 }
             });
+        }
+
+        function recheckMissingDistricts() {
+            if (!lokasyonDB || !hamTuzakVerileri) return;
+            for (var docId in hamTuzakVerileri) {
+                var data = hamTuzakVerileri[docId];
+                var ilceStr = data.ilce || "";
+                if (!ilceStr || ilceStr === "-") {
+                    if (data.il && lokasyonDB[data.il]) {
+                        var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
+                        for (var ilceName in lokasyonDB[data.il]) {
+                            var koyler = lokasyonDB[data.il][ilceName];
+                            if (Array.isArray(koyler)) {
+                                var found = koyler.some(function (k) {
+                                    return turkceNormalize(k) === normalizedKoy;
+                                });
+                                if (found) {
+                                    (function(dId, resolvedIlce) {
+                                        db.collection("tuzaklar").doc(dId).update({
+                                            ilce: resolvedIlce
+                                        }).then(function() {
+                                            console.log("Otomatik Düzeltildi (Gecikmeli): Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
+                                        }).catch(function(err) {
+                                            console.warn("Gecikmeli otomatik ilçe düzeltme hatası (" + dId + "):", err);
+                                        });
+                                    })(docId, ilceName);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         function ilListesiniDoldur() {
@@ -3504,6 +3541,7 @@
                     var data = hamTuzakVerileri[docId];
 
                     var ilceStr = data.ilce || "";
+                    var needsUpdate = false;
                     if (!ilceStr || ilceStr === "-") {
                         if (lokasyonDB && data.il && lokasyonDB[data.il]) {
                             var normalizedKoy = turkceNormalize(data.koy || data.ad || "");
@@ -3515,6 +3553,7 @@
                                     });
                                     if (found) {
                                         ilceStr = ilceName;
+                                        needsUpdate = true;
                                         break;
                                     }
                                 }
@@ -3522,6 +3561,19 @@
                         }
                     }
                     if (!ilceStr) ilceStr = "-";
+
+                    // Auto-heal database record if missing/hyphen but resolved successfully
+                    if (needsUpdate && ilceStr !== "-") {
+                        (function(dId, resolvedIlce) {
+                            db.collection("tuzaklar").doc(dId).update({
+                                ilce: resolvedIlce
+                            }).then(function() {
+                                console.log("Otomatik Düzeltildi: Tuzak " + dId + " ilçesi " + resolvedIlce + " olarak güncellendi.");
+                            }).catch(function(err) {
+                                console.warn("Otomatik ilçe düzeltme hatası (" + dId + "):", err);
+                            });
+                        })(docId, ilceStr);
+                    }
 
                     // ROLE-BASED DISTRICT ISOLATION
                     if (aktifKullanici && !isAdmin() && ilceStr !== aktifKullanici.ilce) {
