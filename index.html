@@ -689,6 +689,20 @@
 
         /* çok     → mor     */
 
+        .marker-bahce {
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e6fffa, #319795) !important;
+            color: #004d40 !important;
+            border: 2.5px solid #004d40 !important;
+        }
+
+        .marker-sera {
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0f2fe, #0284c7) !important;
+            color: #0f172a !important;
+            border: 2.5px solid #0369a1 !important;
+        }
+
         /* Tarih Filtresi */
         .tarih-filtre-box {
             background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
@@ -1184,9 +1198,16 @@
         }
 
         @media (max-width: 768px) {
+            #aktifModulBanner {
+                left: 15px !important;
+                top: 72px !important;
+                font-size: 12px !important;
+                padding: 8px 14px !important;
+            }
+
             .search-box {
                 width: 200px;
-                top: 72px;
+                top: 120px !important;
                 left: 10px;
             }
 
@@ -1218,6 +1239,12 @@
     <!-- İlçe Sınırları Yükleme Badge -->
     <div id="ilceLoadingBadge" class="ilce-loading-badge">
         🗺️ İlçe sınırları yükleniyor...
+    </div>
+
+    <!-- Active Module Banner -->
+    <div id="aktifModulBanner"
+        style="position: absolute; top: 20px; left: 150px; z-index: 1000; display: none; background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border-glass); padding: 10px 20px; border-radius: 30px; box-shadow: var(--shadow); align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--primary-dark);">
+        <span id="aktifModulIcon">🦠</span> <span id="aktifModulAdiTxt">Kahverengi Kokarca (Halyomorpha halys.)</span>
     </div>
 
     <!-- Floating Active User Profile Card -->
@@ -1328,6 +1355,36 @@
     <!-- Side Menu -->
     <div id="sideMenu" class="side-menu">
         <!-- Filled Dynamically depending on role -->
+    </div>
+
+    <!-- New Module Modal -->
+    <div id="yeniModulModal" class="modal-overlay" style="z-index: 100006;">
+        <div class="modal-content" style="max-width: 400px; text-align: left; border-top: 5px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark);">➕ Yeni Modül Ekle</h3>
+                <span class="close-btn" style="color: #64748b;" onclick="kapatYeniModulModal()">&times;</span>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Modül Kategori</label>
+                <select id="yeniModulKategori" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px;">
+                    <option value="Tarımsal Hastalık ve Zararlılar">Tarımsal Hastalık ve Zararlılar</option>
+                    <option value="Meyve ve Sebze Bahçeleri">Meyve ve Sebze Bahçeleri</option>
+                    <option value="Örtüaltı Yetiştiriciliği">Örtüaltı Yetiştiriciliği</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Modül Adı (Örn: Armut Bahçeleri)</label>
+                <input type="text" id="yeniModulAdi" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px;" placeholder="Örn: Armut Bahçeleri">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Emoji / İkon</label>
+                <input type="text" id="yeniModulEmoji" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px; text-align: center;" placeholder="Örn: 🍐" value="🌳">
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-cancel" onclick="kapatYeniModulModal()">İptal</button>
+                <button class="btn btn-save" style="background: var(--primary); color: white;" onclick="yeniModulKaydet()">Kaydet</button>
+            </div>
+        </div>
     </div>
 
     <!-- Personnel Management Modal -->
@@ -2137,11 +2194,11 @@
     <!-- Tuzak Kayıtları Modal -->
     <div id="tuzakKayitlariModal" class="modal-overlay">
         <div class="modal-content"
-            style="max-width: 550px; max-height: 85vh; overflow-y: auto; border-top: 5px solid var(--primary);">
+            style="max-width: 650px; max-height: 85vh; overflow-y: auto; border-top: 5px solid var(--primary);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3
+                <h3 id="tuzakKayitlariModalBaslik"
                     style="margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);">
-                    📅 Tuzak Sayım Kayıtları</h3>
+                    📅 Ziyaret ve Gözlem Kayıtları</h3>
                 <span class="close-btn" style="color: #64748b;" onclick="kapatTuzakKayitlariModal()">&times;</span>
             </div>
 
@@ -2152,24 +2209,28 @@
 
             <h4
                 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
-                ➕ Yeni Sayım Ekle</h4>
+                ➕ Yeni Ziyaret Kaydı Ekle</h4>
             <div
                 style="background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1.5px solid #e2e8f0; margin-bottom: 20px;">
                 <input type="hidden" id="kayitDetayDocId" value="">
                 <input type="hidden" id="duzenlenenKayitTarih" value="">
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
-                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Sayım Tarihi</label>
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Ziyaret Tarihi</label>
                         <input type="date" id="yeniKayitTarihi" class="form-control" style="padding: 8px 12px;"
                             onchange="yeniKayitTarihiDegisti()">
                         <span id="yeniKayitTarihiGunu"
                             style="font-size: 11px; font-weight: 700; margin-top: 2px; min-height: 16px;"></span>
                     </div>
-                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 4px;">
-                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Yakalanan Böcek
-                            Sayısı</label>
+                    <div id="yeniKayitBocekKutusu" style="flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 4px;">
+                        <label id="lblZiyaretSayisal" style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Böcek / Sayı</label>
                         <input type="number" id="yeniKayitBocek" class="form-control" style="padding: 8px 12px;"
                             placeholder="Örn: 5" min="0">
+                    </div>
+                    <div style="flex: 2; min-width: 220px; display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Durum / Gözlem Notu</label>
+                        <input type="text" id="yeniKayitGozlem" class="form-control" style="padding: 8px 12px;"
+                            placeholder="Örn: İlaçlama yapıldı, mildiyö başlangıcı vb.">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: flex-end; margin-top: 12px; gap: 8px;">
@@ -2188,10 +2249,11 @@
                 <table class="report-table" style="margin-top: 0;">
                     <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
                         <tr>
-                            <th>Tarih</th>
-                            <th style="text-align: center; width: 80px;">Böcek</th>
+                            <th style="width: 100px;">Tarih</th>
+                            <th id="tblZiyaretSayisalBaslik" style="text-align: center; width: 85px;">Sayı</th>
+                            <th>Durum / Gözlem Notu</th>
                             <th>Kaydeden</th>
-                            <th style="width: 120px; text-align: center;">İşlem</th>
+                            <th style="width: 90px; text-align: center;">İşlem</th>
                         </tr>
                     </thead>
                     <tbody id="tuzakKayitlariTabloGovde">
@@ -2225,7 +2287,7 @@
                 </button>
             </div>
 
-            <div class="form-group">
+            <div id="tuzakTipiGrup" class="form-group">
                 <label>Kayıt Türü (Tuzak Tipi)</label>
                 <select id="tuzakTipi" class="form-control" onchange="kayitTuruDegisti()">
                     <option value="Huni" selected>Huni (Funnel) Tuzak</option>
@@ -2252,6 +2314,8 @@
                     <option value="" disabled selected>Önce İlçe Seçiniz</option>
                 </select>
             </div>
+
+            <!-- Category 1: Tarımsal Hastalık ve Zararlılar -->
             <div id="tuzakAlanlari">
                 <div class="form-group">
                     <label>Tuzak No</label>
@@ -2268,8 +2332,64 @@
                     <input type="number" id="tupSayisi" class="form-control" placeholder="Örn: 5" min="1">
                 </div>
             </div>
+
+            <!-- Category 2: Meyve ve Sebze Bahçeleri -->
+            <div id="bahceAlanlari" style="display: none;">
+                <div class="form-group">
+                    <label>Bahçe Sahibi / Adı</label>
+                    <input type="text" id="bahceAdi" class="form-control" placeholder="Örn: Ahmet Bey'in Kivi Bahçesi">
+                </div>
+                <div class="form-group">
+                    <label>Bahçe Türü (Ürün)</label>
+                    <select id="bahceUrunTuru" class="form-control">
+                        <option value="Elma">🍎 Elma Bahçesi</option>
+                        <option value="Kivi" selected>🥝 Kivi Bahçesi</option>
+                        <option value="Maviyemiş">🫐 Maviyemiş Bahçesi</option>
+                        <option value="Mısır">🌽 Mısır Tarlası</option>
+                        <option value="Karalahana">🥬 Karalahana Bahçesi</option>
+                        <option value="Mandarin">🍊 Mandarin Bahçesi</option>
+                        <option value="Üzüm">🍇 Üzüm Bağı</option>
+                        <option value="Trabzon Hurması">🍊 Trabzon Hurması Bahçesi</option>
+                        <option value="Diğer">🌳 Diğer Bahçe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bahçe Alanı (m²)</label>
+                    <input type="number" id="bahceAlani" class="form-control" placeholder="Örn: 500" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Ağaç / Bitki Sayısı</label>
+                    <input type="number" id="bahceAgacSayisi" class="form-control" placeholder="Örn: 120" min="0">
+                </div>
+            </div>
+
+            <!-- Category 3: Örtüaltı Yetiştiriciliği -->
+            <div id="seraAlanlari" style="display: none;">
+                <div class="form-group">
+                    <label>Sera Adı / Sahibi</label>
+                    <input type="text" id="seraAdi" class="form-control" placeholder="Örn: Güneysu Sera-A">
+                </div>
+                <div class="form-group">
+                    <label>Sera Tipi</label>
+                    <select id="seraTipi" class="form-control">
+                        <option value="Plastik Sera" selected>Plastik Sera</option>
+                        <option value="Cam Sera">Cam Sera</option>
+                        <option value="Yüksek Tünel">Yüksek Tünel</option>
+                        <option value="Topraksız Tarım Serası">Topraksız Tarım Serası</option>
+                        <option value="Diğer">Diğer Sera</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sera Alanı (m²)</label>
+                    <input type="number" id="seraAlani" class="form-control" placeholder="Örn: 250" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Yetiştirilen Ürün</label>
+                    <input type="text" id="seraUrun" class="form-control" placeholder="Örn: Domates, Çilek">
+                </div>
+            </div>
             <div class="form-group" id="tuzakFotoGrubu">
-                <label style="display: flex; align-items: center; gap: 4px;">📷 Tuzak / Konum Fotoğrafı</label>
+                <label id="lblTuzakFoto" style="display: flex; align-items: center; gap: 4px;">📷 Tuzak / Konum Fotoğrafı</label>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <input type="file" id="tuzakFotoInput" accept="image/*" style="display: none;"
                         onchange="tuzakFotoYuklendi(event)">
@@ -2365,16 +2485,18 @@
                 <button id="tabTumu" class="tab-btn" onclick="setRaporFiltre('Tümü')">📊 Tümü</button>
                 <button id="tabTrend" class="tab-btn admin-only" style="display:none;"
                     onclick="setRaporFiltre('Trend')">📈 Trend</button>
+                <button id="tabIlceKarsilastirma" class="tab-btn admin-only" style="display:none;"
+                    onclick="setRaporFiltre('IlceKarsilastirma')">⚖️ İlçe Karşılaştırma</button>
             </div>
 
             <!-- Dashboard Cards -->
             <div class="stats-grid" id="raporStatGrid">
                 <div class="stat-card">
-                    <span class="stat-label">Toplam Tuzak</span>
+                    <span id="lblRaporToplamTuzak" class="stat-label">Toplam Tuzak</span>
                     <span id="toplamTuzakTxt" class="stat-value">0</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Toplam Böcek</span>
+                    <span id="lblRaporToplamBocek" class="stat-label">Toplam Böcek</span>
                     <span id="toplamBocekTxt" class="stat-value text-danger">0</span>
                 </div>
             </div>
@@ -2386,8 +2508,8 @@
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
                             <th id="raporTabloIlkSutun">Köy / Mahalle</th>
-                            <th style="text-align: center; width: 90px;">Tuzak</th>
-                            <th style="text-align: center; width: 90px;">Böcek</th>
+                            <th id="raporTabloIkinciSutun" style="text-align: center; width: 90px;">Tuzak</th>
+                            <th id="raporTabloUcuncuSutun" style="text-align: center; width: 90px;">Böcek</th>
                         </tr>
                     </thead>
                     <tbody id="raporTabloGovde"></tbody>
@@ -2410,6 +2532,13 @@
             <div id="trendGrafikKutusu" class="trend-grafik-box">
                 <div style="position: relative; height: 220px; width: 100%;">
                     <canvas id="trendGrafik"></canvas>
+                </div>
+            </div>
+
+            <!-- İlçe Karşılaştırma Chart Container (Managers only) -->
+            <div id="ilceKarsilastirmaGrafikKutusu" class="trend-grafik-box">
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="ilceKarsilastirmaGrafik"></canvas>
                 </div>
             </div>
 
@@ -2444,14 +2573,14 @@
         <div
             style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
             <div id="dashTuzakSayi" style="font-size:24px; font-weight:900; color:var(--primary);">0</div>
-            <div
+            <div id="lblDashTuzakSayi"
                 style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
                 Toplam Tuzak</div>
         </div>
         <div
             style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
             <div id="dashBocekSayi" style="font-size:24px; font-weight:900; color:#ef4444;">0</div>
-            <div
+            <div id="lblDashBocekSayi"
                 style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
                 Toplam Böcek</div>
         </div>
@@ -2467,7 +2596,7 @@
         <div
             style="background:var(--bg-glass); backdrop-filter:blur(12px); border:1px solid var(--border-glass); border-radius:14px; padding:12px 18px; box-shadow:var(--shadow); text-align:center; min-width:110px;">
             <div id="dashOrt" style="font-size:24px; font-weight:900; color:#7c3aed;">0</div>
-            <div
+            <div id="lblDashOrt"
                 style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
                 Ort. Böcek/Tuzak</div>
         </div>
@@ -2501,6 +2630,19 @@
         // Initialize Firebase Firestore and Offline Persistence
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
+        // Dynamic Collection Routing Override
+        const originalCollection = db.collection;
+        db.rawCollection = originalCollection.bind(db);
+        db.collection = function (name) {
+            var finalName = name;
+            if (name === "tuzaklar") {
+                finalName = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.koleksiyon) ? aktifModul.koleksiyon : "tuzaklar";
+            } else if (name === "haftalikRaporlar") {
+                finalName = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.id !== "kahverengi_kokarca") ? "haftalikRaporlar_" + aktifModul.id : "haftalikRaporlar";
+            }
+            return originalCollection.call(db, finalName);
+        };
 
         db.enablePersistence()
             .then(function () {
@@ -3184,6 +3326,30 @@
         var aktifFiltreler = { il: "Tümü", ilce: "Tümü", koy: "Tümü" };
         var aktifOturumId = null;
 
+        // Modules and Categories Global Variables
+        var varsayilanKategoriler = [
+            "Tarımsal Hastalık ve Zararlılar",
+            "Meyve ve Sebze Bahçeleri",
+            "Örtüaltı Yetiştiriciliği"
+        ];
+        var varsayilanModuller = [
+            { id: "kahverengi_kokarca", ad: "Kahverengi Kokarca (Halyomorpha halys.)", kategori: "Tarımsal Hastalık ve Zararlılar", koleksiyon: "tuzaklar", icon: "🦠" },
+            { id: "turuncgil_uzun_antenli_bocegi", ad: "Turunçgil Uzun Antenli Böceği", kategori: "Tarımsal Hastalık ve Zararlılar", koleksiyon: "tuzaklar_turuncgil_antenli", icon: "🐞" },
+            { id: "findik_kurdu", ad: "Fındık Kurdu", kategori: "Tarımsal Hastalık ve Zararlılar", koleksiyon: "tuzaklar_findik_kurdu", icon: "🌰" },
+            { id: "mildiyo", ad: "Mildiyö Hastalığı", kategori: "Tarımsal Hastalık ve Zararlılar", koleksiyon: "tuzaklar_mildiyo", icon: "🍄" },
+            { id: "elma_bahceleri", ad: "Elma Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_elma_bahceleri", icon: "🍎" },
+            { id: "kivi_bahceleri", ad: "Kivi Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_kivi_bahceleri", icon: "🥝" },
+            { id: "maviyemis_bahceleri", ad: "Maviyemiş Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_maviyemis_bahceleri", icon: "🫐" },
+            { id: "misir_tarlalari", ad: "Mısır Tarlaları", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_misir", icon: "🌽" },
+            { id: "karalahana_bahceleri", ad: "Karalahana Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_karalahana", icon: "🥬" },
+            { id: "mandarin_bahceleri", ad: "Mandarin Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_mandarin", icon: "🍊" },
+            { id: "uzum_baglari", ad: "Üzüm Bağları", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_uzum", icon: "🍇" },
+            { id: "trabzon_hurmasi_bahceleri", ad: "Trabzon Hurması Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_trabzon_hurmasi", icon: "🍊" }
+        ];
+        var tumModuller = [];
+        var aktifModul = null;
+        var currentCompChart = null;
+
         // Pagination Variables
         window.raporMevcutSayfa = 1;
         window.logMevcutSayfa = 1;
@@ -3198,6 +3364,154 @@
             var r = (aktifKullanici.rol || "").toLowerCase().replace(/\s+/g, '');
             // Encoding sorunlarını aşmak için sadece ingilizce/ascii karakterleri arıyoruz
             return (r.indexOf("admin") !== -1 || r.indexOf("netici") !== -1 || r.indexOf("yonetici") !== -1);
+        }
+
+        function slugify(text) {
+            var trMap = {
+                'ç': 'c', 'Ç': 'c',
+                'ğ': 'g', 'Ğ': 'g',
+                'ı': 'i', 'I': 'i', 'İ': 'i',
+                'ö': 'o', 'Ö': 'o',
+                'ş': 's', 'Ş': 's',
+                'ü': 'u', 'Ü': 'u'
+            };
+            for (var key in trMap) {
+                text = text.replace(new RegExp(key, 'g'), trMap[key]);
+            }
+            return text.toLowerCase()
+                .replace(/[^a-z0-9_ ]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_')
+                .trim();
+        }
+
+        function modulleriYukle(callback) {
+            tumModuller = [...varsayilanModuller];
+            db.collection("ayarlar").doc("meyve_modulleri").get().then(function (doc) {
+                if (doc.exists) {
+                    var data = doc.data();
+                    if (data && Array.isArray(data.liste)) {
+                        data.liste.forEach(function (m) {
+                            if (!tumModuller.some(x => x.id === m.id)) {
+                                tumModuller.push(m);
+                            }
+                        });
+                    }
+                }
+                var savedId = localStorage.getItem("aktifModulId") || "kahverengi_kokarca";
+                aktifModuluAyarla(savedId);
+                if (callback) callback();
+            }).catch(function (err) {
+                console.error("Modüller yüklenirken hata oluştu (çevrimdışı olabilir):", err);
+                var savedId = localStorage.getItem("aktifModulId") || "kahverengi_kokarca";
+                aktifModuluAyarla(savedId);
+                if (callback) callback();
+            });
+        }
+
+        function aktifModuluAyarla(modulId) {
+            var m = tumModuller.find(x => x.id === modulId);
+            if (!m) {
+                m = tumModuller[0] || varsayilanModuller[0];
+            }
+            aktifModul = m;
+            localStorage.setItem("aktifModulId", m.id);
+
+            var labelEl = document.getElementById("aktifModulAdiTxt");
+            if (labelEl) {
+                labelEl.innerText = m.ad;
+            }
+            var iconEl = document.getElementById("aktifModulIcon");
+            if (iconEl) {
+                iconEl.innerText = m.icon || "🦠";
+            }
+            document.title = "Rize " + m.ad + " Haritası";
+        }
+
+        function resetRegionFilters() {
+            aktifFiltreler = {
+                il: "Tümü",
+                ilce: (!isAdmin() && aktifKullanici) ? aktifKullanici.ilce : "Tümü",
+                koy: "Tümü"
+            };
+            var ilSelect = document.getElementById("menuFiltreIl");
+            if (ilSelect) {
+                ilSelect.value = "Tümü";
+                menuFiltreIlSecildi(false);
+            }
+        }
+
+        function modulDegistir(modulId) {
+            var menuOpen = document.getElementById('sideMenu').classList.contains('open');
+            if (menuOpen) toggleMenu();
+
+            aktifModuluAyarla(modulId);
+            guncelleArayuzRolBazli();
+            tuzaklariDinle();
+            kapatModal();
+            resetRegionFilters();
+        }
+
+        function acYeniModulModal() {
+            var modal = document.getElementById("yeniModulModal");
+            if (modal) {
+                document.getElementById("yeniModulAdi").value = "";
+                document.getElementById("yeniModulEmoji").value = "🌳";
+                modal.classList.add("active");
+            }
+        }
+
+        function kapatYeniModulModal() {
+            var modal = document.getElementById("yeniModulModal");
+            if (modal) modal.classList.remove("active");
+        }
+
+        function yeniModulKaydet() {
+            var kategori = document.getElementById("yeniModulKategori").value.trim();
+            var ad = document.getElementById("yeniModulAdi").value.trim();
+            var emoji = document.getElementById("yeniModulEmoji").value.trim() || "🌳";
+
+            if (!ad) {
+                alert("Lütfen modül adını giriniz.");
+                return;
+            }
+
+            var id = slugify(ad);
+            if (!id.endsWith("_bahceleri") && kategori === "Meyve ve Sebze Bahçeleri") {
+                id += "_bahceleri";
+            } else if (!id.endsWith("_seralari") && kategori === "Örtüaltı Yetiştiriciliği") {
+                id += "_seralari";
+            }
+            var koleksiyon = "tuzaklar_" + id;
+
+            if (tumModuller.some(x => x.id === id)) {
+                alert("Bu modül zaten mevcut!");
+                return;
+            }
+
+            var yeniModul = {
+                id: id,
+                ad: ad,
+                kategori: kategori,
+                koleksiyon: koleksiyon,
+                icon: emoji
+            };
+
+            var customModules = tumModuller.filter(x => !varsayilanModuller.some(v => v.id === x.id));
+            customModules.push(yeniModul);
+
+            db.collection("ayarlar").doc("meyve_modulleri").set({
+                liste: customModules
+            }).then(function () {
+                alert("Yeni modül başarıyla eklendi.");
+                kapatYeniModulModal();
+                logEkle("Yeni Modül Eklendi", "Ad: " + ad + ", Kategori: " + kategori);
+                modulleriYukle(function() {
+                    modulDegistir(id);
+                });
+            }).catch(function (error) {
+                alert("Modül kaydedilemedi: " + error.message);
+            });
         }
 
         function logEkle(islem, detay) {
@@ -3340,10 +3654,14 @@
 
             Promise.all(checks).then(function () {
                 console.log("Personel kontrol ve tohumlama tamamlandı.");
-                oturumKontrol();
+                modulleriYukle(function() {
+                    oturumKontrol();
+                });
             }).catch(function (err) {
                 console.warn("Personel kontrol/tohumlama hatası:", err);
-                oturumKontrol();
+                modulleriYukle(function() {
+                    oturumKontrol();
+                });
             });
         }
 
@@ -3495,6 +3813,39 @@
             var bocekCount = parseInt(bocekSayisi) || 0;
             var tupCount = parseInt(tupSayisi) || 0;
             var typeVal = tuzakTipi || "Huni";
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+
+            if (kat === "Meyve ve Sebze Bahçeleri") {
+                var cropEmojis = {
+                    "Elma": "🍎",
+                    "Kivi": "🥝",
+                    "Maviyemiş": "🫐",
+                    "Mısır": "🌽",
+                    "Karalahana": "🥬",
+                    "Mandarin": "🍊",
+                    "Üzüm": "🍇",
+                    "Trabzon Hurması": "🍊",
+                    "Diğer": "🌳"
+                };
+                var emoji = cropEmojis[typeVal] || "🌳";
+                var iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;"><span style="font-size:16px;">' + emoji + '</span><span style="font-size:11px; font-weight:bold;">' + bocekCount + '</span></div>';
+                return L.divIcon({
+                    className: 'custom-marker marker-bahce',
+                    html: '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">' + iconHtml + '</div>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -18]
+                });
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                var iconHtml = '<div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;"><span style="font-size:16px;">🏠</span><span style="font-size:11px; font-weight:bold;">' + bocekCount + '</span></div>';
+                return L.divIcon({
+                    className: 'custom-marker marker-sera',
+                    html: '<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">' + iconHtml + '</div>',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -18]
+                });
+            }
 
             var isArı = (typeVal === "Samuray Arısı Salımı");
             var isYapiskan = (typeVal === "Yapışkan");
@@ -3647,7 +3998,13 @@
                             sonGuncelleyen: data.sonGuncelleyen || data.adSoyad,
                             sonGuncelleyenUnvan: data.sonGuncelleyenUnvan || data.unvan,
                             sonGuncelleyenTel: data.sonGuncelleyenTel || data.telefon,
-                            sonGuncellemeTarihi: data.sonGuncellemeTarihi || "1970-01-01"
+                            sonGuncellemeTarihi: data.sonGuncellemeTarihi || "1970-01-01",
+                            tupSayisi: data.tupSayisi || 0,
+                            bahceAlani: data.bahceAlani || 0,
+                            agacSayisi: data.agacSayisi || 0,
+                            seraAlani: data.seraAlani || 0,
+                            yetiştirilenUrun: data.yetiştirilenUrun || data.yetiştirilenÜrün || "",
+                            sonGozlemNotu: data.sonGozlemNotu || ""
                         };
                     }
 
@@ -3664,7 +4021,10 @@
                                 docId: docId,
                                 tarih: k.tarih || tarih,
                                 bocekSayisi: parseInt(k.bocekSayisi) || 0,
-                                personel: k.personel || data.sonGuncelleyen || data.adSoyad || 'Saha Personeli'
+                                gozlemNotu: k.gozlemNotu || "",
+                                kaydeden: k.kaydeden || data.sonGuncelleyen || data.adSoyad || 'Saha Personeli',
+                                kaydedenTel: k.kaydedenTel || data.sonGuncelleyenTel || '',
+                                kaydedenUnvan: k.kaydedenUnvan || data.sonGuncelleyenUnvan || ''
                             });
                         });
                     } else {
@@ -3672,7 +4032,10 @@
                             docId: docId,
                             tarih: tarih,
                             bocekSayisi: bs,
-                            personel: data.sonGuncelleyen || data.adSoyad || 'Saha Personeli'
+                            gozlemNotu: data.sonGozlemNotu || "",
+                            kaydeden: data.sonGuncelleyen || data.adSoyad || 'Saha Personeli',
+                            kaydedenTel: data.sonGuncelleyenTel || '',
+                            kaydedenUnvan: data.sonGuncelleyenUnvan || ''
                         });
                     }
                 }
@@ -3693,19 +4056,42 @@
                     var gData = tuzakVerileri[gKey];
                     if (gData.lat === undefined || gData.lng === undefined) continue;
 
+                    var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
                     var popupIcerik = "";
-                    var tipIkonStr = "🟢 Huni (Funnel) Tuzak";
-                    if (gData.tuzakTipi === "Yapışkan") tipIkonStr = "🟨 Yapışkan Tuzak";
-                    else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔵 Samuray Arısı Salımı";
 
                     popupIcerik += "<b>Köy:</b> " + gData.koy + "<br>";
-                    popupIcerik += "<b>Kayıt Türü:</b> " + tipIkonStr + "<br>";
 
-                    if (gData.tuzakTipi !== "Samuray Arısı Salımı") {
-                        if (gData.tuzakNo && gData.tuzakNo !== "Toplu") popupIcerik += "<b>Tuzak No:</b> " + gData.tuzakNo + "<br>";
-                        popupIcerik += "<b>Toplam Yakalanan Böcek:</b> " + gData.bocekSayisi + " adet<br>";
-                        if (gData.bocekSayisi >= 50) {
-                            popupIcerik += "<div style='background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:6px; margin:6px 0; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;'>⚠️ YÜKSEK YOĞUNLUK ALARMI (50+)</div>";
+                    if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                        var tipIkonStr = "🟢 Huni (Funnel) Tuzak";
+                        if (gData.tuzakTipi === "Yapışkan") tipIkonStr = "🟨 Yapışkan Tuzak";
+                        else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔵 Samuray Arısı Salımı";
+
+                        popupIcerik += "<b>Kayıt Türü:</b> " + tipIkonStr + "<br>";
+
+                        if (gData.tuzakTipi === "Samuray Arısı Salımı") {
+                            popupIcerik += "<b>Salınan Tüp Sayısı:</b> " + (gData.tupSayisi || 0) + " tüp<br>";
+                        } else {
+                            if (gData.tuzakNo && gData.tuzakNo !== "Toplu") popupIcerik += "<b>Tuzak No:</b> " + gData.tuzakNo + "<br>";
+                            popupIcerik += "<b>Toplam Yakalanan Böcek:</b> " + gData.bocekSayisi + " adet<br>";
+                            if (gData.bocekSayisi >= 50) {
+                                popupIcerik += "<div style='background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:6px; margin:6px 0; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;'>⚠️ YÜKSEK YOĞUNLUK ALARMI (50+)</div>";
+                            }
+                        }
+                    } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                        popupIcerik += "<b>Bahçe Sahibi/Adı:</b> " + (gData.tuzakNo || "-") + "<br>";
+                        popupIcerik += "<b>Ürün/Bahçe Türü:</b> " + (gData.tuzakTipi || "-") + "<br>";
+                        popupIcerik += "<b>Bahçe Alanı:</b> " + (gData.bahceAlani || 0) + " m²<br>";
+                        popupIcerik += "<b>Ağaç / Bitki Sayısı:</b> " + (gData.agacSayisi || 0) + " adet<br>";
+                        if (gData.sonGozlemNotu) {
+                            popupIcerik += "<b>Son Gözlem:</b> <span style='color:var(--primary); font-weight:bold;'>" + gData.sonGozlemNotu + "</span><br>";
+                        }
+                    } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                        popupIcerik += "<b>Sera Sahibi/Adı:</b> " + (gData.tuzakNo || "-") + "<br>";
+                        popupIcerik += "<b>Sera Tipi:</b> " + (gData.tuzakTipi || "-") + "<br>";
+                        popupIcerik += "<b>Sera Alanı:</b> " + (gData.seraAlani || 0) + " m²<br>";
+                        popupIcerik += "<b>Yetiştirilen Ürün:</b> " + (gData.yetiştirilenUrun || "-") + "<br>";
+                        if (gData.sonGozlemNotu) {
+                            popupIcerik += "<b>Son Gözlem:</b> <span style='color:var(--primary); font-weight:bold;'>" + gData.sonGozlemNotu + "</span><br>";
                         }
                     }
 
@@ -3734,8 +4120,8 @@
                     popupIcerik += "<b>DMS:</b> " + toDMS(gData.lat, gData.lng) + "</div>";
 
                     popupIcerik += "<div class='popup-actions'>";
-                    if (gData.tuzakTipi !== "Samuray Arısı Salımı") {
-                        popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + gKey + "\")'>📅 Ziyaretler</button>";
+                    popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, var(--secondary-blue), #0284c7); color: white;' onclick='tuzakKayitlariAc(\"" + gKey + "\")'>📅 Ziyaretler</button>";
+                    if (kat === "Tarımsal Hastalık ve Zararlılar" && gData.tuzakTipi !== "Samuray Arısı Salımı") {
                         popupIcerik += "<button class='popup-btn' style='background: linear-gradient(135deg, #10b981, #059669); color: white;' onclick='tuzakTrendiAc(\"" + gKey + "\")'>📈 Trend</button>";
                     }
                     popupIcerik += "<a class='popup-btn' style='background: linear-gradient(135deg, #ea4335, #ff6b6b); color: white; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;' href='https://www.google.com/maps/dir/?api=1&destination=" + gData.lat + "," + gData.lng + "' target='_blank'>🗺️ Yol Tarifi</a>";
@@ -3763,30 +4149,38 @@
             document.getElementById('sideMenu').classList.toggle('open');
         }
 
-        // Report Filter (Yapışkan, Huni, Tümü, Trend)
+        // Report Filter (Yapışkan, Huni, Tümü, Trend, İlçe Karşılaştırma)
         function setRaporFiltre(filtre) {
             seciliRaporFiltre = filtre;
-            var tabs = ["Yapışkan", "Huni", "Tümü", "Trend"];
-            var elIds = ["tabYapiskan", "tabHuni", "tabTumu", "tabTrend"];
+            var tabs = ["Yapışkan", "Huni", "Tümü", "Trend", "IlceKarsilastirma"];
+            var elIds = ["tabYapiskan", "tabHuni", "tabTumu", "tabTrend", "tabIlceKarsilastirma"];
             for (var i = 0; i < tabs.length; i++) {
                 var el = document.getElementById(elIds[i]);
                 if (!el) continue;
                 el.classList.toggle("active", tabs[i] === filtre);
             }
 
-            // Trend sekmesinde tablo ve bar grafik gizle, trend grafik göster
+            // Trend ve Karşılaştırma sekmelerinde tablo ve bar grafik gizle
             var isTrend = (filtre === "Trend");
+            var isKarsilastirma = (filtre === "IlceKarsilastirma");
+
             var tabloEl = document.getElementById("raporTabloKapsayici");
             var statEl = document.getElementById("raporStatGrid");
             var barEl = document.getElementById("bocekGrafikKutusu");
             var trendEl = document.getElementById("trendGrafikKutusu");
-            if (tabloEl) tabloEl.style.display = isTrend ? "none" : "";
-            if (statEl) statEl.style.display = isTrend ? "none" : "";
-            if (barEl) barEl.style.display = isTrend ? "none" : "";
+            var karsilastirmaEl = document.getElementById("ilceKarsilastirmaGrafikKutusu");
+
+            if (tabloEl) tabloEl.style.display = (isTrend || isKarsilastirma) ? "none" : "";
+            if (statEl) statEl.style.display = (isTrend || isKarsilastirma) ? "none" : "";
+            if (barEl) barEl.style.display = (isTrend || isKarsilastirma) ? "none" : "";
             if (trendEl) trendEl.style.display = isTrend ? "block" : "none";
+            if (karsilastirmaEl) karsilastirmaEl.style.display = isKarsilastirma ? "block" : "none";
 
             if (isTrend) {
                 cizTrendGrafik();
+                document.getElementById('raporModal').classList.add('active');
+            } else if (isKarsilastirma) {
+                cizIlceKarsilastirmaGrafik();
                 document.getElementById('raporModal').classList.add('active');
             } else {
                 raporGoster(true);
@@ -3824,16 +4218,22 @@
             // Admin-only UI göster
             var tarihBox = document.getElementById('tarihFiltreKutusu');
             var trendTab = document.getElementById('tabTrend');
+            var karsilastirmaTab = document.getElementById('tabIlceKarsilastirma');
             var csvBtn = document.getElementById('csvIndirBtn');
             var excelBtn = document.getElementById('tarihliExcelBtn');
             var isSuperAdmin = aktifKullanici && isSuperAdminUser();
             if (tarihBox) tarihBox.style.display = isYonetici ? 'block' : 'none';
             if (trendTab) trendTab.style.display = isYonetici ? '' : 'none';
+            if (karsilastirmaTab) karsilastirmaTab.style.display = isYonetici ? '' : 'none';
             if (csvBtn) csvBtn.style.display = isYonetici ? 'flex' : 'none';
             if (excelBtn) excelBtn.style.display = aktifKullanici ? 'flex' : 'none';
 
-            // Trend sekme aktifse burada dur
+            // Trend veya Karşılaştırma sekmesi aktifse burada dur
             if (seciliRaporFiltre === "Trend") {
+                document.getElementById('raporModal').classList.add('active');
+                return;
+            }
+            if (seciliRaporFiltre === "IlceKarsilastirma") {
                 document.getElementById('raporModal').classList.add('active');
                 return;
             }
@@ -3843,10 +4243,60 @@
             var statEl = document.getElementById("raporStatGrid");
             var barEl = document.getElementById("bocekGrafikKutusu");
             var trendEl = document.getElementById("trendGrafikKutusu");
+            var karsilastirmaEl = document.getElementById("ilceKarsilastirmaGrafikKutusu");
             if (tabloEl) tabloEl.style.display = "";
             if (statEl) statEl.style.display = "";
             if (barEl) barEl.style.display = "";
             if (trendEl) trendEl.style.display = "none";
+            if (karsilastirmaEl) karsilastirmaEl.style.display = "none";
+
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var label1 = "Toplam Tuzak";
+            var label2 = "Toplam Böcek";
+            var col2 = "Tuzak";
+            var col3 = "Böcek";
+
+            if (kat === "Meyve ve Sebze Bahçeleri") {
+                label1 = "Toplam Bahçe";
+                label2 = "Toplam Ağaç/Bitki";
+                col2 = "Bahçe";
+                col3 = "Ağaç/Bitki";
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                label1 = "Toplam Sera";
+                label2 = "Toplam Alan (m²)";
+                col2 = "Sera";
+                col3 = "Alan (m²)";
+            }
+
+            var lblTuzak = document.getElementById("lblRaporToplamTuzak");
+            var lblBocek = document.getElementById("lblRaporToplamBocek");
+            var th2 = document.getElementById("raporTabloIkinciSutun");
+            var th3 = document.getElementById("raporTabloUcuncuSutun");
+
+            if (lblTuzak) lblTuzak.innerText = label1;
+            if (lblBocek) lblBocek.innerText = label2;
+            if (th2) th2.innerText = col2;
+            if (th3) th3.innerText = col3;
+
+            // Handle Tab visibility based on category
+            var tabYapiskan = document.getElementById("tabYapiskan");
+            var tabHuni = document.getElementById("tabHuni");
+            var tabTumu = document.getElementById("tabTumu");
+
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                if (tabYapiskan) tabYapiskan.style.display = "";
+                if (tabHuni) tabHuni.style.display = "";
+            } else {
+                if (tabYapiskan) tabYapiskan.style.display = "none";
+                if (tabHuni) tabHuni.style.display = "none";
+                if (seciliRaporFiltre === "Yapışkan" || seciliRaporFiltre === "Huni") {
+                    seciliRaporFiltre = "Tümü";
+                    // Reset active classes on tabs
+                    if (tabYapiskan) tabYapiskan.classList.remove("active");
+                    if (tabHuni) tabHuni.classList.remove("active");
+                    if (tabTumu) tabTumu.classList.add("active");
+                }
+            }
 
             // Update Table Header and Modal Title
             var baslikTxt = "📊 Mahalle / Köy Analizi";
@@ -3998,14 +4448,33 @@
             var grafikData = [...raporArray].sort(function (a, b) { return b.bocek - a.bocek; }).slice(0, 10);
             var labels = grafikData.map(function (item) { return item.ad; });
             var values = grafikData.map(function (item) { return item.bocek; });
-            var grafikBaslik = 'En Çok Kokarca Görülen Mahalleler (İlk 10)';
-            if (analizSeviyesi === "İlçe") grafikBaslik = 'En Çok Kokarca Görülen İlçeler';
-            if (analizSeviyesi === "İl") grafikBaslik = 'En Çok Kokarca Görülen İller';
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var modulAdi = (aktifModul && aktifModul.ad) ? aktifModul.ad : "Böcek";
+            var grafikBaslik = "";
+            var datasetLabel = "";
+
+            if (kat === "Meyve ve Sebze Bahçeleri") {
+                datasetLabel = 'Ağaç/Bitki Sayısı';
+                grafikBaslik = 'En Çok Ağaç/Bitki Bulunan Mahalleler (İlk 10)';
+                if (analizSeviyesi === "İlçe") grafikBaslik = 'En Çok Ağaç/Bitki Bulunan İlçeler';
+                if (analizSeviyesi === "İl") grafikBaslik = 'En Çok Ağaç/Bitki Bulunan İller';
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                datasetLabel = 'Sera Alanı (m²)';
+                grafikBaslik = 'En Büyük Sera Alanı Olan Mahalleler (İlk 10)';
+                if (analizSeviyesi === "İlçe") grafikBaslik = 'En Büyük Sera Alanı Olan İlçeler';
+                if (analizSeviyesi === "İl") grafikBaslik = 'En Büyük Sera Alanı Olan İller';
+            } else {
+                datasetLabel = 'Yakalanan Böcek Sayısı';
+                grafikBaslik = 'En Çok ' + modulAdi + ' Görülen Mahalleler (İlk 10)';
+                if (analizSeviyesi === "İlçe") grafikBaslik = 'En Çok ' + modulAdi + ' Görülen İlçeler';
+                if (analizSeviyesi === "İl") grafikBaslik = 'En Çok ' + modulAdi + ' Görülen İller';
+            }
+
             currentChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels, datasets: [{
-                        label: 'Yakalanan Kokarca Sayısı', data: values,
+                        label: datasetLabel, data: values,
                         backgroundColor: 'rgba(46, 125, 50, 0.85)', borderColor: '#1b5e20',
                         borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6
                     }]
@@ -4027,6 +4496,193 @@
                         y: {
                             grid: { display: false },
                             ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: '#1e293b' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Draw District Comparison Chart (İlçe Karşılaştırma)
+        var currentIlceKarsilastirmaChart = null;
+        function cizIlceKarsilastirmaGrafik() {
+            var canvas = document.getElementById('ilceKarsilastirmaGrafik');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            if (currentIlceKarsilastirmaChart) {
+                currentIlceKarsilastirmaChart.destroy();
+            }
+
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+
+            // Apply date filters
+            var baslangic = null, bitis = null;
+            var baslangicEl = document.getElementById('baslangicTarihi');
+            var bitisEl = document.getElementById('bitisTarihi');
+            if (baslangicEl && baslangicEl.value) baslangic = new Date(baslangicEl.value);
+            if (bitisEl && bitisEl.value) bitis = new Date(bitisEl.value);
+            if (bitis) bitis.setHours(23, 59, 59, 999);
+
+            var ilceIstatistikleri = {};
+
+            for (var id in tuzakVerileri) {
+                var data = tuzakVerileri[id];
+
+                // Region filters
+                if (aktifFiltreler.il !== "Tümü" && data.il !== aktifFiltreler.il) continue;
+                if (aktifFiltreler.ilce !== "Tümü" && data.ilce !== aktifFiltreler.ilce) continue;
+                if (aktifFiltreler.koy !== "Tümü" && data.koy !== aktifFiltreler.koy) continue;
+
+                // Date filter
+                var kayitlar = data.kayitlar || [];
+                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                    kayitlar = [{
+                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                        bocekSayisi: parseInt(data.bocekSayisi) || 0
+                    }];
+                }
+
+                var filtreliKayitlar = kayitlar.filter(function (k) {
+                    if (baslangic || bitis) {
+                        var kayitTarih = parseTurkishDate(k.tarih);
+                        if (!kayitTarih) return false;
+                        if (baslangic && kayitTarih < baslangic) return false;
+                        if (bitis && kayitTarih > bitis) return false;
+                    }
+                    return true;
+                });
+
+                if (filtreliKayitlar.length === 0 && (baslangic || bitis)) {
+                    continue;
+                }
+
+                var countVal = filtreliKayitlar.reduce(function (sum, k) { return sum + (parseInt(k.bocekSayisi) || 0); }, 0);
+                if (!baslangic && !bitis && filtreliKayitlar.length === 0) {
+                    countVal = parseInt(data.bocekSayisi) || 0;
+                }
+
+                var tipVal = data.tuzakTipi || "Huni";
+                if (seciliRaporFiltre !== "Tümü" && seciliRaporFiltre !== "Trend" && seciliRaporFiltre !== "IlceKarsilastirma" && tipVal !== seciliRaporFiltre) continue;
+
+                var ilce = data.ilce || "Bilinmiyor";
+                if (ilce === "-") continue;
+
+                if (!ilceIstatistikleri[ilce]) {
+                    ilceIstatistikleri[ilce] = {
+                        toplamMiktar: 0, // Toplam Böcek, Toplam Ağaç veya Toplam Alan
+                        tuzakAdeti: 0     // Toplam Tuzak, Toplam Bahçe veya Toplam Sera
+                    };
+                }
+                ilceIstatistikleri[ilce].toplamMiktar += countVal;
+                ilceIstatistikleri[ilce].tuzakAdeti++;
+            }
+
+            var ilceler = Object.keys(ilceIstatistikleri).sort(function (a, b) { return a.localeCompare(b, 'tr'); });
+            var toplamlar = [];
+            var ortalamalar = [];
+
+            ilceler.forEach(function (ilce) {
+                var stats = ilceIstatistikleri[ilce];
+                toplamlar.push(stats.toplamMiktar);
+                var avg = stats.tuzakAdeti > 0 ? parseFloat((stats.toplamMiktar / stats.tuzakAdeti).toFixed(1)) : 0;
+                ortalamalar.push(avg);
+            });
+
+            // Set titles based on category
+            var axisLeftLabel = "Toplam Yakalanan Böcek (Adet)";
+            var axisRightLabel = "Ortalama Böcek (Tuzak Başına)";
+            var titleText = "İlçelere Göre Toplam ve Ortalama Böcek Karşılaştırması";
+            var labelLeftDataset = "Toplam Böcek";
+            var labelRightDataset = "Ortalama Böcek";
+
+            if (kat === "Meyve ve Sebze Bahçeleri") {
+                axisLeftLabel = "Toplam Ağaç/Bitki Sayısı (Adet)";
+                axisRightLabel = "Ortalama Ağaç/Bitki (Bahçe Başına)";
+                titleText = "İlçelere Göre Toplam ve Ortalama Ağaç/Bitki Sayısı";
+                labelLeftDataset = "Toplam Ağaç/Bitki";
+                labelRightDataset = "Ortalama Ağaç/Bitki";
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                axisLeftLabel = "Toplam Sera Alanı (m²)";
+                axisRightLabel = "Ortalama Alan (Sera Başına m²)";
+                titleText = "İlçelere Göre Toplam ve Ortalama Sera Alanı";
+                labelLeftDataset = "Toplam Alan (m²)";
+                labelRightDataset = "Ortalama Alan (m²)";
+            }
+
+            currentIlceKarsilastirmaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ilceler,
+                    datasets: [
+                        {
+                            label: labelLeftDataset,
+                            data: toplamlar,
+                            backgroundColor: 'rgba(59, 130, 246, 0.75)', // blue
+                            borderColor: '#2563eb',
+                            borderWidth: 1.5,
+                            borderRadius: 4,
+                            yAxisID: 'yLeft',
+                            order: 2
+                        },
+                        {
+                            label: labelRightDataset,
+                            data: ortalamalar,
+                            backgroundColor: 'rgba(239, 68, 68, 0.85)', // red line
+                            borderColor: '#ef4444',
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ef4444',
+                            yAxisID: 'yRight',
+                            type: 'line',
+                            fill: false,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { family: 'Plus Jakarta Sans', size: 11 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: titleText,
+                            font: { family: 'Plus Jakarta Sans', size: 13, weight: '800' },
+                            color: '#1e293b'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }, color: '#1e293b' }
+                        },
+                        yLeft: {
+                            type: 'linear',
+                            position: 'left',
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            title: {
+                                display: true,
+                                text: axisLeftLabel,
+                                font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }
+                            },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 9 } }
+                        },
+                        yRight: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: { display: false },
+                            title: {
+                                display: true,
+                                text: axisRightLabel,
+                                font: { family: 'Plus Jakarta Sans', size: 10, weight: '700' }
+                            },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 9 } }
                         }
                     }
                 }
@@ -4253,10 +4909,6 @@
                 // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
                 if (seciliRaporFiltre !== 'Tümü' && seciliRaporFiltre !== 'Trend' && data.tuzakTipi !== seciliRaporFiltre) continue;
 
-                if (aktifFiltreler.il !== 'Tümü' && data.il !== aktifFiltreler.il) continue;
-                if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
-                if (aktifFiltreler.koy !== 'Tümü' && data.koy !== aktifFiltreler.koy && data.ad !== aktifFiltreler.koy) continue;
-
                 var kayitlar = data.kayitlar || [];
                 var tarihBazliSayim = {};
 
@@ -4278,7 +4930,11 @@
                     ondalik: ondalikStr,
                     dms: dmsStr,
                     toplamBocek: data.bocekSayisi,
-                    tarihSayimlari: tarihBazliSayim
+                    tarihSayimlari: tarihBazliSayim,
+                    bahceAlani: data.bahceAlani || 0,
+                    agacSayisi: data.agacSayisi || 0,
+                    seraAlani: data.seraAlani || 0,
+                    yetiştirilenUrun: data.yetiştirilenUrun || '-'
                 });
             }
 
@@ -4298,29 +4954,63 @@
                 return a.localeCompare(b, 'tr');
             });
 
-            // SAYFA 1: Tuzak Listesi (Temiz liste, Sıra No ile)
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+
+            // SAYFA 1: Tuzak / Bahçe / Sera Listesi (Temiz liste, Sıra No ile)
             var s1Data = [];
-            s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat']);
-            
-            tuzakSatirlari.forEach(function (ts, index) {
-                s1Data.push([
-                    index + 1,
-                    ts.ilce,
-                    ts.koy,
-                    ts.tuzakNo,
-                    ts.tuzakTipi,
-                    ts.ondalik,
-                    ts.dms
-                ]);
-            });
+            var sheet1Name = "Tuzak Listesi";
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat']);
+                tuzakSatirlari.forEach(function (ts, index) {
+                    s1Data.push([
+                        index + 1,
+                        ts.ilce,
+                        ts.koy,
+                        ts.tuzakNo,
+                        ts.tuzakTipi,
+                        ts.ondalik,
+                        ts.dms
+                    ]);
+                });
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                sheet1Name = "Bahçe Listesi";
+                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Bahçe Alanı (m²)', 'Ağaç/Bitki Sayısı', 'Ondalık Koordinat', 'DMS Koordinat']);
+                tuzakSatirlari.forEach(function (ts, index) {
+                    s1Data.push([
+                        index + 1,
+                        ts.ilce,
+                        ts.koy,
+                        ts.tuzakNo,
+                        ts.tuzakTipi,
+                        ts.bahceAlani,
+                        ts.agacSayisi,
+                        ts.ondalik,
+                        ts.dms
+                    ]);
+                });
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                sheet1Name = "Sera Listesi";
+                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Sera Alanı (m²)', 'Yetiştirilen Ürün', 'Ondalık Koordinat', 'DMS Koordinat']);
+                tuzakSatirlari.forEach(function (ts, index) {
+                    s1Data.push([
+                        index + 1,
+                        ts.ilce,
+                        ts.koy,
+                        ts.tuzakNo,
+                        ts.tuzakTipi,
+                        ts.seraAlani,
+                        ts.yetiştirilenUrun,
+                        ts.ondalik,
+                        ts.dms
+                    ]);
+                });
+            }
 
             var ws1 = XLSX.utils.aoa_to_sheet(s1Data);
-            XLSX.utils.book_append_sheet(workbook, ws1, "Tuzak Listesi");
+            XLSX.utils.book_append_sheet(workbook, ws1, sheet1Name);
 
             // SAYFA 2: Ziyaret / Sayım Geçmişi (Tüm Kayıtlar Alt Alta)
             var s2Data = [];
-            s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy', 'Tuzak No', 'Tuzak Tipi', 'Sayılan Böcek', 'Personel']);
-
             var ziyaretKayitlari = [];
             for (var gKey in tuzakVerileri) {
                 var data = tuzakVerileri[gKey];
@@ -4331,10 +5021,6 @@
                 // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
                 if (seciliRaporFiltre !== 'Tümü' && seciliRaporFiltre !== 'Trend' && data.tuzakTipi !== seciliRaporFiltre) continue;
 
-                if (aktifFiltreler.il !== 'Tümü' && data.il !== aktifFiltreler.il) continue;
-                if (aktifFiltreler.ilce !== 'Tümü' && data.ilce !== aktifFiltreler.ilce) continue;
-                if (aktifFiltreler.koy !== 'Tümü' && data.koy !== aktifFiltreler.koy && data.ad !== aktifFiltreler.koy) continue;
-
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
                     ziyaretKayitlari.push({
@@ -4344,7 +5030,8 @@
                         tuzakNo: data.tuzakNo || '-',
                         tuzakTipi: data.tuzakTipi || 'Huni',
                         bocekSayisi: parseInt(k.bocekSayisi) || 0,
-                        personel: k.personel || 'Saha Personeli'
+                        gozlemNotu: k.gozlemNotu || '-',
+                        personel: k.kaydeden || 'Saha Personeli'
                     });
                 });
             }
@@ -4361,41 +5048,107 @@
                 return String(a.tuzakNo).localeCompare(String(b.tuzakNo), 'tr');
             });
 
-            ziyaretKayitlari.forEach(function (z, index) {
-                s2Data.push([
-                    index + 1,
-                    z.tarihStr,
-                    z.ilce,
-                    z.koy,
-                    z.tuzakNo,
-                    z.tuzakTipi,
-                    z.bocekSayisi,
-                    z.personel
-                ]);
-            });
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Tipi', 'Sayılan Böcek', 'Personel', 'Gözlem Notu']);
+                ziyaretKayitlari.forEach(function (z, index) {
+                    s2Data.push([
+                        index + 1,
+                        z.tarihStr,
+                        z.ilce,
+                        z.koy,
+                        z.tuzakNo,
+                        z.tuzakTipi,
+                        z.bocekSayisi,
+                        z.personel,
+                        z.gozlemNotu
+                    ]);
+                });
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Ağaç/Bitki Sayısı', 'Personel', 'Gözlem Notu']);
+                ziyaretKayitlari.forEach(function (z, index) {
+                    s2Data.push([
+                        index + 1,
+                        z.tarihStr,
+                        z.ilce,
+                        z.koy,
+                        z.tuzakNo,
+                        z.tuzakTipi,
+                        z.bocekSayisi,
+                        z.personel,
+                        z.gozlemNotu
+                    ]);
+                });
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                s2Data.push(['Sıra No', 'Tarih', 'İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Sera Alanı (m²)', 'Personel', 'Gözlem Notu']);
+                ziyaretKayitlari.forEach(function (z, index) {
+                    s2Data.push([
+                        index + 1,
+                        z.tarihStr,
+                        z.ilce,
+                        z.koy,
+                        z.tuzakNo,
+                        z.tuzakTipi,
+                        z.bocekSayisi,
+                        z.personel,
+                        z.gozlemNotu
+                    ]);
+                });
+            }
 
             var ws2 = XLSX.utils.aoa_to_sheet(s2Data);
             XLSX.utils.book_append_sheet(workbook, ws2, "Ziyaret Geçmişi");
 
-            // SAYFA 3: Tarih Bazlı Sayımlar (Pivot görünüm)
+            // SAYFA 3: Tarih Bazlı Sayımlar / Ölçümler (Pivot görünüm)
             var s3Data = [];
-            var s3Baslik = ['İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat', 'Toplam Böcek'];
-            tumTarihler.forEach(function (t) { s3Baslik.push(t); });
-            s3Data.push(s3Baslik);
+            var s3Baslik = [];
+            var sheet3Name = "Tarih Bazlı Sayımlar";
 
-            tuzakSatirlari.forEach(function (ts) {
-                var satir = [ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.ondalik, ts.dms, ts.toplamBocek];
-                tumTarihler.forEach(function (t) {
-                    satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                s3Baslik = ['İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat', 'Toplam Böcek'];
+                tumTarihler.forEach(function (t) { s3Baslik.push(t); });
+                s3Data.push(s3Baslik);
+
+                tuzakSatirlari.forEach(function (ts) {
+                    var satir = [ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.ondalik, ts.dms, ts.toplamBocek];
+                    tumTarihler.forEach(function (t) {
+                        satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
+                    });
+                    s3Data.push(satir);
                 });
-                s3Data.push(satir);
-            });
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                sheet3Name = "Tarih Bazlı Ölçümler";
+                s3Baslik = ['İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Bahçe Alanı (m²)', 'Ondalık Koordinat', 'DMS Koordinat', 'Son Ağaç/Bitki Sayısı'];
+                tumTarihler.forEach(function (t) { s3Baslik.push(t); });
+                s3Data.push(s3Baslik);
+
+                tuzakSatirlari.forEach(function (ts) {
+                    var satir = [ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.bahceAlani, ts.ondalik, ts.dms, ts.toplamBocek];
+                    tumTarihler.forEach(function (t) {
+                        satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
+                    });
+                    s3Data.push(satir);
+                });
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                sheet3Name = "Tarih Bazlı Ölçümler";
+                s3Baslik = ['İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Yetiştirilen Ürün', 'Ondalık Koordinat', 'DMS Koordinat', 'Son Alan (m²)'];
+                tumTarihler.forEach(function (t) { s3Baslik.push(t); });
+                s3Data.push(s3Baslik);
+
+                tuzakSatirlari.forEach(function (ts) {
+                    var satir = [ts.ilce, ts.koy, ts.tuzakNo, ts.tuzakTipi, ts.yetiştirilenUrun, ts.ondalik, ts.dms, ts.toplamBocek];
+                    tumTarihler.forEach(function (t) {
+                        satir.push(ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0);
+                    });
+                    s3Data.push(satir);
+                });
+            }
 
             var ws3 = XLSX.utils.aoa_to_sheet(s3Data);
-            XLSX.utils.book_append_sheet(workbook, ws3, "Tarih Bazlı Sayımlar");
+            XLSX.utils.book_append_sheet(workbook, ws3, sheet3Name);
 
             // İndir
-            var filename = "Kokarca_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
+            var safeModulAd = slugify(aktifModul ? aktifModul.ad : "Modul");
+            var filename = safeModulAd + "_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
             XLSX.writeFile(workbook, filename);
         }
 
@@ -4507,10 +5260,23 @@
                         koySelect.value = gercekKoy;
                     }
 
-                    document.getElementById('tuzakNo').value = data.tuzakNo || "";
-                    document.getElementById('bocekSayisi').value = data.bocekSayisi !== undefined ? data.bocekSayisi : "";
-                    var tSayisiElem = document.getElementById('tupSayisi');
-                    if (tSayisiElem) tSayisiElem.value = data.tupSayisi !== undefined ? data.tupSayisi : "";
+                    var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+                    if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                        document.getElementById('tuzakNo').value = data.tuzakNo || "";
+                        document.getElementById('bocekSayisi').value = data.bocekSayisi !== undefined ? data.bocekSayisi : "";
+                        var tSayisiElem = document.getElementById('tupSayisi');
+                        if (tSayisiElem) tSayisiElem.value = data.tupSayisi !== undefined ? data.tupSayisi : "";
+                    } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                        document.getElementById("bahceUrunTuru").value = data.tuzakTipi || "Kivi";
+                        document.getElementById("bahceAdi").value = data.tuzakNo || "";
+                        document.getElementById("bahceAlani").value = data.bahceAlani !== undefined ? data.bahceAlani : "";
+                        document.getElementById("bahceAgacSayisi").value = data.agacSayisi !== undefined ? data.agacSayisi : "";
+                    } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                        document.getElementById("seraTipi").value = data.tuzakTipi || "Plastik Sera";
+                        document.getElementById("seraAdi").value = data.tuzakNo || "";
+                        document.getElementById("seraAlani").value = data.seraAlani !== undefined ? data.seraAlani : "";
+                        document.getElementById("seraUrun").value = data.yetiştirilenUrun || "";
+                    }
 
                     // Load photo if exists
                     if (data.fotograf) {
@@ -4660,16 +5426,43 @@
         });
 
         function kayitTuruDegisti() {
-            var tur = document.getElementById("tuzakTipi").value;
+            var tuzakTipiGrup = document.getElementById("tuzakTipiGrup");
             var tuzakAlanlari = document.getElementById("tuzakAlanlari");
             var ariSalimiAlanlari = document.getElementById("ariSalimiAlanlari");
+            var bahceAlanlari = document.getElementById("bahceAlanlari");
+            var seraAlanlari = document.getElementById("seraAlanlari");
+            var lblTuzakFoto = document.getElementById("lblTuzakFoto");
 
-            if (tur === "Samuray Arısı Salımı") {
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                if (tuzakTipiGrup) tuzakTipiGrup.style.display = "block";
+                if (bahceAlanlari) bahceAlanlari.style.display = "none";
+                if (seraAlanlari) seraAlanlari.style.display = "none";
+                if (lblTuzakFoto) lblTuzakFoto.innerHTML = "📷 Tuzak / Konum Fotoğrafı";
+
+                var tur = document.getElementById("tuzakTipi").value;
+                if (tur === "Samuray Arısı Salımı") {
+                    if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
+                    if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "block";
+                } else {
+                    if (tuzakAlanlari) tuzakAlanlari.style.display = "block";
+                    if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                }
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                if (tuzakTipiGrup) tuzakTipiGrup.style.display = "none";
                 if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
-                if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "block";
-            } else {
-                if (tuzakAlanlari) tuzakAlanlari.style.display = "block";
                 if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                if (bahceAlanlari) bahceAlanlari.style.display = "block";
+                if (seraAlanlari) seraAlanlari.style.display = "none";
+                if (lblTuzakFoto) lblTuzakFoto.innerHTML = "📷 Bahçe / Konum Fotoğrafı";
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                if (tuzakTipiGrup) tuzakTipiGrup.style.display = "none";
+                if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
+                if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                if (bahceAlanlari) bahceAlanlari.style.display = "none";
+                if (seraAlanlari) seraAlanlari.style.display = "block";
+                if (lblTuzakFoto) lblTuzakFoto.innerHTML = "📷 Sera / Konum Fotoğrafı";
             }
         }
 
@@ -4697,6 +5490,18 @@
             document.getElementById('bocekSayisi').value = "";
             document.getElementById('tuzakTipi').value = "Huni";
             document.getElementById('duzenlenenDocId').value = "";
+
+            // Clear bahce fields
+            if (document.getElementById('bahceAdi')) document.getElementById('bahceAdi').value = "";
+            if (document.getElementById('bahceAlani')) document.getElementById('bahceAlani').value = "";
+            if (document.getElementById('bahceAgacSayisi')) document.getElementById('bahceAgacSayisi').value = "";
+            if (document.getElementById('bahceUrunTuru')) document.getElementById('bahceUrunTuru').selectedIndex = 0;
+
+            // Clear sera fields
+            if (document.getElementById('seraAdi')) document.getElementById('seraAdi').value = "";
+            if (document.getElementById('seraAlani')) document.getElementById('seraAlani').value = "";
+            if (document.getElementById('seraTipi')) document.getElementById('seraTipi').selectedIndex = 0;
+            if (document.getElementById('seraUrun')) document.getElementById('seraUrun').value = "";
 
             // Clear photo inputs
             document.getElementById('tuzakFotoInput').value = '';
@@ -4762,6 +5567,7 @@
             document.getElementById("yeniKayitTarihi").value = "";
             document.getElementById("yeniKayitTarihi").disabled = false;
             document.getElementById("yeniKayitBocek").value = "";
+            document.getElementById("yeniKayitGozlem").value = "";
             document.getElementById("yeniKayitTarihiGunu").innerHTML = "";
             document.getElementById("duzenlenenKayitTarih").value = "";
             document.getElementById("btnKayitIptal").style.display = "none";
@@ -4773,16 +5579,64 @@
             if (!data) return;
 
             var detayDiv = document.getElementById("tuzakKayitlariDetay");
-            var tipStr = data.tuzakTipi === "Yapışkan" ? "🟨 Yapışkan Tuzak" : "🟢 Huni (Funnel) Tuzak";
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var lblZiyaretSayisal = document.getElementById("lblZiyaretSayisal");
+            var tblZiyaretSayisalBaslik = document.getElementById("tblZiyaretSayisalBaslik");
+            var yeniKayitBocekKutusu = document.getElementById("yeniKayitBocekKutusu");
+            var tipStr = data.tuzakTipi || "-";
             var koyStr = data.koy || data.ad || "-";
-            detayDiv.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
-                    <div><b>Köy:</b> ${koyStr}</div>
-                    <div><b>Tuzak Tipi:</b> ${tipStr}</div>
-                    <div><b>Tuzak No:</b> ${data.tuzakNo || "-"}</div>
-                </div>
-            `;
+
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                if (lblZiyaretSayisal) lblZiyaretSayisal.innerText = "Böcek / Sayı";
+                if (tblZiyaretSayisalBaslik) {
+                    tblZiyaretSayisalBaslik.innerText = "Sayı";
+                    tblZiyaretSayisalBaslik.style.display = "";
+                }
+                if (yeniKayitBocekKutusu) yeniKayitBocekKutusu.style.display = "flex";
+                
+                var isArı = (tipStr === "Samuray Arısı Salımı");
+                var isYapiskan = (tipStr === "Yapışkan");
+                var resolvedTip = isArı ? "🐝 Samuray Arısı Salımı" : (isYapiskan ? "🟨 Yapışkan Tuzak" : "🟢 Huni (Funnel) Tuzak");
+                var labelName = isArı ? "Salınan Tüp Sayısı" : "Tuzak No";
+                var labelVal = isArı ? (data.tupSayisi || "-") : (data.tuzakNo || "-");
+                if (lblZiyaretSayisal && isArı) lblZiyaretSayisal.innerText = "Tüp Sayısı";
+                if (tblZiyaretSayisalBaslik && isArı) tblZiyaretSayisalBaslik.innerText = "Tüp Sayısı";
+
+                detayDiv.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
+                        <div><b>Köy:</b> ${koyStr}</div>
+                        <div><b>Tuzak Tipi:</b> ${resolvedTip}</div>
+                        <div><b>${labelName}:</b> ${labelVal}</div>
+                    </div>
+                `;
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                if (tblZiyaretSayisalBaslik) tblZiyaretSayisalBaslik.style.display = "none";
+                if (yeniKayitBocekKutusu) yeniKayitBocekKutusu.style.display = "none";
+
+                detayDiv.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
+                        <div><b>Köy:</b> ${koyStr}</div>
+                        <div><b>Ürün/Bahçe Türü:</b> ${data.tuzakTipi || "-"}</div>
+                        <div><b>Bahçe Sahibi/Adı:</b> ${data.tuzakNo || "-"}</div>
+                        <div><b>Bahçe Alanı (m²):</b> ${data.bahceAlani !== undefined ? data.bahceAlani : "-"}</div>
+                    </div>
+                `;
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                if (tblZiyaretSayisalBaslik) tblZiyaretSayisalBaslik.style.display = "none";
+                if (yeniKayitBocekKutusu) yeniKayitBocekKutusu.style.display = "none";
+
+                detayDiv.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><b>Bölge:</b> ${data.il} / ${data.ilce}</div>
+                        <div><b>Köy:</b> ${koyStr}</div>
+                        <div><b>Sera Tipi:</b> ${data.tuzakTipi || "-"}</div>
+                        <div><b>Sera Adı/Sahibi:</b> ${data.tuzakNo || "-"}</div>
+                        <div><b>Yetiştirilen Ürün:</b> ${data.yetiştirilenUrun || "-"}</div>
+                    </div>
+                `;
+            }
 
             // Use the actual latest docId for adding new records in this modal
             document.getElementById("kayitDetayDocId").value = data.enGuncelDocId;
@@ -4805,11 +5659,15 @@
             var tbody = document.getElementById("tuzakKayitlariTabloGovde");
             tbody.innerHTML = "";
 
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var showSayi = (kat === "Tarımsal Hastalık ve Zararlılar");
+
             var kayitlar = data.kayitlar || [];
             if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
                 kayitlar = [{
                     tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
                     bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                    gozlemNotu: data.sonGozlemNotu || "",
                     kaydeden: data.adSoyad || 'Sistem',
                     kaydedenUnvan: data.unvan || '',
                     kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
@@ -4822,7 +5680,8 @@
             });
 
             if (siraliKayitlar.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:15px; color:var(--text-muted);'>Kayıtlı sayım bulunamadı.</td></tr>";
+                var colspanCount = showSayi ? 5 : 4;
+                tbody.innerHTML = "<tr><td colspan='" + colspanCount + "' style='text-align:center; padding:15px; color:var(--text-muted);'>Kayıtlı sayım bulunamadı.</td></tr>";
                 return;
             }
 
@@ -4838,17 +5697,21 @@
 
                 var islemButonlari = "";
                 if (isAuthorized) {
+                    var safeGozlem = (k.gozlemNotu || "").replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     islemButonlari = `
-                        <button class="popup-btn btn-edit" style="padding: 3px 6px; font-size: 11px; flex: none;" onclick="tuzakKayitDuzenle('${k.tarih}', ${k.bocekSayisi})">Düzelt</button>
+                        <button class="popup-btn btn-edit" style="padding: 3px 6px; font-size: 11px; flex: none;" onclick="tuzakKayitDuzenle('${k.tarih}', ${k.bocekSayisi}, '${safeGozlem}')">Düzelt</button>
                         <button class="popup-btn btn-delete" style="padding: 3px 6px; font-size: 11px; flex: none;" onclick="tuzakKayitSil('${k.tarih}')">Sil</button>
                     `;
                 } else {
                     islemButonlari = `<span style="font-size:11px; color:var(--text-muted);">Yetki Yok</span>`;
                 }
 
+                var sayiTd = showSayi ? `<td style="text-align:center; font-weight:bold; color:var(--danger);">${k.bocekSayisi}</td>` : "";
+
                 tr.innerHTML = `
                     <td>${k.tarih}</td>
-                    <td style="text-align:center; font-weight:bold; color:var(--danger);">${k.bocekSayisi}</td>
+                    ${sayiTd}
+                    <td>${k.gozlemNotu || "-"}</td>
                     <td style="font-size:12px;">${kaydeden}</td>
                     <td style="text-align:center; display:flex; gap:4px; justify-content:center;">${islemButonlari}</td>
                 `;
@@ -4856,11 +5719,12 @@
             });
         }
 
-        function tuzakKayitDuzenle(tarihStr, bocekSayisi) {
+        function tuzakKayitDuzenle(tarihStr, bocekSayisi, gozlemNotu) {
             document.getElementById("duzenlenenKayitTarih").value = tarihStr;
             document.getElementById("yeniKayitTarihi").value = turkishDateToInput(tarihStr);
             document.getElementById("yeniKayitTarihi").disabled = true;
             document.getElementById("yeniKayitBocek").value = bocekSayisi;
+            document.getElementById("yeniKayitGozlem").value = gozlemNotu || "";
             yeniKayitTarihiDegisti();
             document.getElementById("btnKayitIptal").style.display = "inline-flex";
             document.getElementById("btnKayitEkle").innerText = "Güncelle";
@@ -4870,13 +5734,15 @@
             var docId = document.getElementById("kayitDetayDocId").value;
             var inputTarih = document.getElementById("yeniKayitTarihi").value;
             var bocekSayisiStr = document.getElementById("yeniKayitBocek").value.trim();
+            var gozlemNotuStr = document.getElementById("yeniKayitGozlem").value.trim();
             var duzenlenenTarih = document.getElementById("duzenlenenKayitTarih").value;
 
             if (!inputTarih) {
                 alert("Lütfen sayım tarihini seçiniz.");
                 return;
             }
-            if (bocekSayisiStr === "") {
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            if (kat === "Tarımsal Hastalık ve Zararlılar" && bocekSayisiStr === "") {
                 alert("Lütfen böcek sayısını giriniz.");
                 return;
             }
@@ -4898,6 +5764,7 @@
                     kayitlar = [{
                         tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
                         bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                        gozlemNotu: data.sonGozlemNotu || "",
                         kaydeden: data.adSoyad || 'Sistem',
                         kaydedenTel: data.telefon || '',
                         kaydedenUnvan: data.unvan || '',
@@ -4909,6 +5776,7 @@
                     var index = kayitlar.findIndex(function (k) { return k.tarih === duzenlenenTarih; });
                     if (index > -1) {
                         kayitlar[index].bocekSayisi = bocekSayisi;
+                        kayitlar[index].gozlemNotu = gozlemNotuStr;
                         kayitlar[index].sonGuncelleyen = aktifKullanici.adSoyad;
                         kayitlar[index].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
                     }
@@ -4917,6 +5785,7 @@
                     if (ayniTarihliIndex > -1) {
                         if (confirm(secilenTarihStr + " tarihine ait bir kayıt zaten mevcut. Bu kaydı güncellemek istiyor musunuz?")) {
                             kayitlar[ayniTarihliIndex].bocekSayisi = bocekSayisi;
+                            kayitlar[ayniTarihliIndex].gozlemNotu = gozlemNotuStr;
                             kayitlar[ayniTarihliIndex].sonGuncelleyen = aktifKullanici.adSoyad;
                             kayitlar[ayniTarihliIndex].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
                         } else {
@@ -4926,6 +5795,7 @@
                         kayitlar.push({
                             tarih: secilenTarihStr,
                             bocekSayisi: bocekSayisi,
+                            gozlemNotu: gozlemNotuStr,
                             kaydeden: aktifKullanici.adSoyad,
                             kaydedenTel: aktifKullanici.telefon,
                             kaydedenUnvan: aktifKullanici.unvan,
@@ -4940,10 +5810,15 @@
                 });
 
                 var enSonKayit = kayitlar[kayitlar.length - 1];
+                var bocekSayisiVal = data.bocekSayisi || 0;
+                if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                    bocekSayisiVal = enSonKayit ? enSonKayit.bocekSayisi : 0;
+                }
 
                 var guncelleData = {
                     kayitlar: kayitlar,
-                    bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
+                    bocekSayisi: bocekSayisiVal,
+                    sonGozlemNotu: enSonKayit ? enSonKayit.gozlemNotu || "" : "",
                     sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
                     sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
                     sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
@@ -4951,8 +5826,8 @@
                 };
 
                 db.collection("tuzaklar").doc(docId).update(guncelleData).then(function () {
-                    alert("Sayım kaydı başarıyla kaydedildi.");
-                    logEkle("Tuzak Sayımı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", No: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Böcek: " + bocekSayisi);
+                    alert("Kayıt başarıyla güncellendi.");
+                    logEkle("Ziyaret Kaydı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", Tip: " + data.tuzakTipi + ", No/Ad: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Not: " + gozlemNotuStr);
 
                     tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
                     guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
@@ -4966,7 +5841,7 @@
 
         function tuzakKayitSil(tarihStr) {
             var docId = document.getElementById("kayitDetayDocId").value;
-            if (!confirm(tarihStr + " tarihli sayım kaydını silmek istediğinize emin misiniz?")) return;
+            if (!confirm(tarihStr + " tarihli kaydı silmek istediğinize emin misiniz?")) return;
 
             db.collection("tuzaklar").doc(docId).get().then(function (doc) {
                 if (!doc.exists) return;
@@ -4982,6 +5857,7 @@
                     kayitlar = [{
                         tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
                         bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                        gozlemNotu: data.sonGozlemNotu || "",
                         kaydeden: data.adSoyad || 'Sistem',
                         kaydedenTel: data.telefon || '',
                         kaydedenUnvan: data.unvan || '',
@@ -4997,10 +5873,16 @@
                 });
 
                 var enSonKayit = kayitlar[kayitlar.length - 1];
+                var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+                var bocekSayisiVal = data.bocekSayisi || 0;
+                if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                    bocekSayisiVal = enSonKayit ? enSonKayit.bocekSayisi : 0;
+                }
 
                 var guncelleData = {
                     kayitlar: kayitlar,
-                    bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
+                    bocekSayisi: bocekSayisiVal,
+                    sonGozlemNotu: enSonKayit ? enSonKayit.gozlemNotu || "" : "",
                     sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
                     sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
                     sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
@@ -5008,8 +5890,8 @@
                 };
 
                 db.collection("tuzaklar").doc(docId).update(guncelleData).then(function () {
-                    alert("Sayım kaydı silindi.");
-                    logEkle("Tuzak Sayımı Silindi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", No: " + data.tuzakNo + ", Tarih: " + tarihStr);
+                    alert("Kayıt silindi.");
+                    logEkle("Ziyaret Kaydı Silindi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", Tip: " + data.tuzakTipi + ", No/Ad: " + data.tuzakNo + ", Tarih: " + tarihStr);
 
                     tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
                     guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
@@ -5056,10 +5938,6 @@
             var il = document.getElementById('il').value;
             var ilce = document.getElementById('ilce').value;
             var koy = document.getElementById('koy').value.trim();
-            var tuzakNo = document.getElementById('tuzakNo').value.trim();
-            var bocekSayisi = document.getElementById('bocekSayisi').value.trim();
-            var tuzakTipi = document.getElementById('tuzakTipi').value;
-            var tupSayisiStr = document.getElementById('tupSayisi') ? document.getElementById('tupSayisi').value.trim() : "";
             var docId = document.getElementById('duzenlenenDocId').value;
 
             if (koy === "") {
@@ -5067,97 +5945,130 @@
                 return;
             }
 
-            if (secilenKonum) {
-                var fotoBase64 = document.getElementById('tuzakFotoBase64').value;
-                var saveData = {
-                    il: il,
-                    ilce: ilce,
-                    koy: koy,
-                    ad: koy, // Compatibility
-                    tuzakTipi: tuzakTipi,
-                    lat: secilenKonum.lat,
-                    lng: secilenKonum.lng,
-                    fotograf: fotoBase64 || "",
-                    sonGuncelleyen: aktifKullanici.adSoyad,
-                    sonGuncelleyenTel: aktifKullanici.telefon,
-                    sonGuncelleyenUnvan: aktifKullanici.unvan,
-                    sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR')
-                };
+            if (!secilenKonum) {
+                alert("Lütfen haritada bir konum seçin.");
+                return;
+            }
 
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var fotoBase64 = document.getElementById('tuzakFotoBase64').value;
+            var saveData = {
+                il: il,
+                ilce: ilce,
+                koy: koy,
+                ad: koy, // Compatibility
+                lat: secilenKonum.lat,
+                lng: secilenKonum.lng,
+                fotograf: fotoBase64 || "",
+                sonGuncelleyen: aktifKullanici.adSoyad,
+                sonGuncelleyenTel: aktifKullanici.telefon,
+                sonGuncelleyenUnvan: aktifKullanici.unvan,
+                sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR')
+            };
+
+            var logTuru = "Kayıt";
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                logTuru = "Tuzak";
+                var tuzakTipi = document.getElementById('tuzakTipi').value;
+                saveData.tuzakTipi = tuzakTipi;
                 if (tuzakTipi === "Samuray Arısı Salımı") {
+                    var tupSayisiStr = document.getElementById('tupSayisi') ? document.getElementById('tupSayisi').value.trim() : "";
                     saveData.tupSayisi = tupSayisiStr ? parseInt(tupSayisiStr) : 0;
                     saveData.tuzakNo = "";
                     saveData.bocekSayisi = 0;
                 } else {
-                    saveData.tuzakNo = tuzakNo;
+                    saveData.tuzakNo = document.getElementById('tuzakNo').value.trim();
+                    var bocekSayisi = document.getElementById('bocekSayisi').value.trim();
                     saveData.bocekSayisi = bocekSayisi ? parseInt(bocekSayisi) : 0;
                 }
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                logTuru = "Bahçe";
+                saveData.tuzakTipi = document.getElementById("bahceUrunTuru").value;
+                saveData.tuzakNo = document.getElementById("bahceAdi").value.trim();
+                var alani = document.getElementById("bahceAlani").value.trim();
+                var agac = document.getElementById("bahceAgacSayisi").value.trim();
+                saveData.bahceAlani = alani ? parseInt(alani) : 0;
+                saveData.agacSayisi = agac ? parseInt(agac) : 0;
+                saveData.bocekSayisi = saveData.agacSayisi; // for sorting/stat compatibility
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                logTuru = "Sera";
+                saveData.tuzakTipi = document.getElementById("seraTipi").value;
+                saveData.tuzakNo = document.getElementById("seraAdi").value.trim();
+                var alani = document.getElementById("seraAlani").value.trim();
+                saveData.seraAlani = alani ? parseInt(alani) : 0;
+                saveData.yetiştirilenUrun = document.getElementById("seraUrun").value.trim();
+                saveData.bocekSayisi = saveData.seraAlani; // for sorting/stat compatibility
+            }
 
-                // Standart kullanıcıların kendi ilçesi dışına kayıt yapması engellenir
-                if (aktifKullanici && !isAdmin()) {
-                    saveData.il = "Rize";
-                    saveData.ilce = aktifKullanici.ilce;
-                }
+            // Standart kullanıcıların kendi ilçesi dışına kayıt yapması engellenir
+            if (aktifKullanici && !isAdmin()) {
+                saveData.il = "Rize";
+                saveData.ilce = aktifKullanici.ilce;
+            }
 
-                if (docId) {
-                    db.collection("tuzaklar").doc(docId).get().then(function (docSnap) {
-                        var existingData = docSnap.exists ? docSnap.data() : {};
-                        var kayitlar = existingData.kayitlar || [];
-                        var bocekCount = saveData.bocekSayisi;
+            if (docId) {
+                db.collection("tuzaklar").doc(docId).get().then(function (docSnap) {
+                    var existingData = docSnap.exists ? docSnap.data() : {};
+                    var kayitlar = existingData.kayitlar || [];
+                    var bocekCount = saveData.bocekSayisi;
 
-                        if (kayitlar.length > 0) {
-                            kayitlar[kayitlar.length - 1].bocekSayisi = bocekCount;
-                        } else {
-                            kayitlar = [{
-                                tarih: existingData.tarih || existingData.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
-                                bocekSayisi: bocekCount,
-                                kaydeden: existingData.adSoyad || aktifKullanici.adSoyad,
-                                kaydedenTel: existingData.telefon || aktifKullanici.telefon,
-                                kaydedenUnvan: existingData.unvan || aktifKullanici.unvan,
-                                kayitTarihiStr: existingData.tarih || new Date().toLocaleString('tr-TR')
-                            }];
-                        }
-                        saveData.kayitlar = kayitlar;
+                    if (kayitlar.length > 0) {
+                        kayitlar[kayitlar.length - 1].bocekSayisi = bocekCount;
+                    } else {
+                        kayitlar = [{
+                            tarih: existingData.tarih || existingData.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                            bocekSayisi: bocekCount,
+                            gozlemNotu: existingData.sonGozlemNotu || "",
+                            kaydeden: existingData.adSoyad || aktifKullanici.adSoyad,
+                            kaydedenTel: existingData.telefon || aktifKullanici.telefon,
+                            kaydedenUnvan: existingData.unvan || aktifKullanici.unvan,
+                            kayitTarihiStr: existingData.tarih || new Date().toLocaleString('tr-TR')
+                        }];
+                    }
+                    saveData.kayitlar = kayitlar;
+                    var lastKayit = kayitlar[kayitlar.length - 1];
+                    saveData.sonGozlemNotu = lastKayit ? (lastKayit.gozlemNotu || "") : "";
 
-                        db.collection("tuzaklar").doc(docId).update(saveData).then(function () {
-                            alert("Kayıt başarıyla güncellendi.");
-                            logEkle("Tuzak Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
-                            kullaniciAktifliginiGuncelle();
-                            if (tuzakVerileri[docId]) {
-                                Object.assign(tuzakVerileri[docId], saveData);
-                            }
-                            kapatModal();
-                        }).catch(function (error) {
-                            alert("Güncelleme başarısız oldu: " + error.message);
-                        });
-                    }).catch(function (error) {
-                        alert("Veri okuma hatası: " + error.message);
-                    });
-                } else {
-                    saveData.adSoyad = aktifKullanici.adSoyad;
-                    saveData.unvan = aktifKullanici.unvan;
-                    saveData.telefon = aktifKullanici.telefon;
-                    saveData.tarih = new Date().toLocaleDateString('tr-TR');
-
-                    var initialBocek = bocekSayisi ? parseInt(bocekSayisi) : 0;
-                    saveData.kayitlar = [{
-                        tarih: saveData.tarih,
-                        bocekSayisi: initialBocek,
-                        kaydeden: aktifKullanici.adSoyad,
-                        kaydedenTel: aktifKullanici.telefon,
-                        kaydedenUnvan: aktifKullanici.unvan,
-                        kayitTarihiStr: new Date().toLocaleString('tr-TR')
-                    }];
-
-                    db.collection("tuzaklar").add(saveData).then(function () {
-                        alert("Kayıt başarıyla eklendi.");
-                        logEkle("Tuzak Eklendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No: " + saveData.tuzakNo + ", Böcek Sayısı: " + saveData.bocekSayisi);
+                    db.collection("tuzaklar").doc(docId).update(saveData).then(function () {
+                        alert("Kayıt başarıyla güncellendi.");
+                        logEkle(logTuru + " Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No/Ad: " + saveData.tuzakNo);
                         kullaniciAktifliginiGuncelle();
+                        if (tuzakVerileri[docId]) {
+                            Object.assign(tuzakVerileri[docId], saveData);
+                        }
                         kapatModal();
                     }).catch(function (error) {
-                        alert("Kayıt başarısız oldu: " + error.message);
+                        alert("Güncelleme başarısız oldu: " + error.message);
                     });
-                }
+                }).catch(function (error) {
+                    alert("Veri okuma hatası: " + error.message);
+                });
+            } else {
+                saveData.adSoyad = aktifKullanici.adSoyad;
+                saveData.unvan = aktifKullanici.unvan;
+                saveData.telefon = aktifKullanici.telefon;
+                saveData.tarih = new Date().toLocaleDateString('tr-TR');
+
+                var initialBocek = saveData.bocekSayisi;
+                saveData.sonGozlemNotu = "";
+                saveData.kayitlar = [{
+                    tarih: saveData.tarih,
+                    bocekSayisi: initialBocek,
+                    gozlemNotu: "",
+                    kaydeden: aktifKullanici.adSoyad,
+                    kaydedenTel: aktifKullanici.telefon,
+                    kaydedenUnvan: aktifKullanici.unvan,
+                    kayitTarihiStr: new Date().toLocaleString('tr-TR')
+                }];
+
+                db.collection("tuzaklar").add(saveData).then(function () {
+                    alert("Kayıt başarıyla eklendi.");
+                    logEkle(logTuru + " Eklendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No/Ad: " + saveData.tuzakNo);
+                    kullaniciAktifliginiGuncelle();
+                    kapatModal();
+                }).catch(function (error) {
+                    alert("Kayıt başarısız oldu: " + error.message);
+                });
             }
         }
 
@@ -5418,6 +6329,9 @@
                 localStorage.removeItem("aktifPersonel");
                 aktifKullanici = null;
 
+                var banner = document.getElementById("aktifModulBanner");
+                if (banner) banner.style.display = "none";
+
                 var profCard = document.getElementById("userProfileCard");
                 var dashCards = document.getElementById("dashboardCards");
                 if (profCard) {
@@ -5579,6 +6493,18 @@
         function guncelleArayuzRolBazli() {
             if (!aktifKullanici) return;
 
+            // Show and update active module banner
+            var banner = document.getElementById("aktifModulBanner");
+            if (banner) {
+                banner.style.display = "flex";
+                if (aktifModul) {
+                    var labelEl = document.getElementById("aktifModulAdiTxt");
+                    if (labelEl) labelEl.innerText = aktifModul.ad;
+                    var iconEl = document.getElementById("aktifModulIcon");
+                    if (iconEl) iconEl.innerText = aktifModul.icon || "🦠";
+                }
+            }
+
             // Build dynamic side menu
             var sideMenu = document.getElementById("sideMenu");
 
@@ -5633,6 +6559,50 @@
                 el.innerHTML = '<span>' + emoji + '</span> ' + etiket;
                 el.addEventListener('click', tikla);
                 return el;
+            }
+
+            // ── 0. KATEGORİLENDİRİLMİŞ DİNAMİK MODÜLLER ──
+            var katTasarim = {
+                "Tarımsal Hastalık ve Zararlılar": { emoji: "🦠", renk: "#ef4444" },
+                "Meyve ve Sebze Bahçeleri": { emoji: "🌳", renk: "#10b981" },
+                "Örtüaltı Yetiştiriciliği": { emoji: "🍓", renk: "#f59e0b" }
+            };
+
+            varsayilanKategoriler.forEach(function (kat) {
+                var c = katTasarim[kat] || { emoji: "🌳", renk: "#10b981" };
+                
+                var katModulleri = tumModuller.filter(m => m.kategori === kat);
+                // Eğer modül yoksa bile kategoriyi ekleyelim ki boş durmasın, dinamik eklenebilsin
+                var katGrubu = menuGrubuOlustur(kat, c.emoji, c.renk, katModulleri.length > 0);
+                
+                if (katModulleri.length === 0) {
+                    var elBos = document.createElement('div');
+                    elBos.style = 'padding: 8px 24px; font-size:12px; color:var(--text-muted); font-style:italic;';
+                    elBos.innerText = 'Kayıtlı modül bulunmamaktadır.';
+                    katGrubu.appendChild(elBos);
+                } else {
+                    katModulleri.forEach(function (m) {
+                        var isActive = (aktifModul && aktifModul.id === m.id);
+                        var el = menuOgesi(m.icon || c.emoji, m.ad, isActive ? '#059669' : null, function () {
+                            modulDegistir(m.id);
+                        });
+                        if (isActive) {
+                            el.style.background = 'rgba(5, 150, 105, 0.1)';
+                            el.style.fontWeight = 'bold';
+                            el.style.color = '#059669';
+                        }
+                        katGrubu.appendChild(el);
+                    });
+                }
+            });
+
+            // Yeni Modül Ekleme Düğmesi (Yalnızca Yöneticiler için)
+            if (isAdmin()) {
+                var modYonetim = menuGrubuOlustur("Modül Yönetimi", "⚙️", "#6366f1", false);
+                modYonetim.appendChild(menuOgesi("➕", "Yeni Kayıt Modülü Ekle", "#6366f1", function () {
+                    toggleMenu();
+                    acYeniModulModal();
+                }));
             }
 
             // --- HARİTA ARAÇLARI (TÜM KULLANICILAR İÇİN) ---
@@ -5750,9 +6720,6 @@
                     }));
                     adminGrubu.appendChild(menuOgesi('🟢', 'Sistemdekiler', '#059669', function () {
                         acAktifKullanicilarModal();
-                    }));
-                    adminGrubu.appendChild(menuOgesi('📊', 'Tarih Bazlı Excel İndir', '#0369a1', function () {
-                        toggleMenu(); tarihBazliExcelIndir();
                     }));
                     adminGrubu.appendChild(menuOgesi('🕐', 'Oturum Geçmişi', '#7c3aed', function () {
                         acOturumGecmisiModal();
@@ -5981,6 +6948,10 @@
 
         function kapatRapor() {
             document.getElementById("raporModal").classList.remove("active");
+            if (currentIlceKarsilastirmaChart) {
+                currentIlceKarsilastirmaChart.destroy();
+                currentIlceKarsilastirmaChart = null;
+            }
         }
 
         function kapatPersonelModal() {
@@ -6870,16 +7841,30 @@
                 lokasyonlar: null
             };
 
-            // Tüm tuzakları al
-            db.collection('tuzaklar').get().then(function (snap) {
-                snap.forEach(function (doc) {
-                    var d = doc.data();
-                    d._id = doc.id;
-                    yedekVeri.tuzaklar.push(d);
+            // Tüm tuzak/bahçe/sera kayıtlarını al (bütün kayıt kategorilerindeki verileri birleştirerek yedekler)
+            var fetchTrapsPromises = tumModuller.map(function (m) {
+                return db.rawCollection(m.koleksiyon).get().then(function (snap) {
+                    var list = [];
+                    snap.forEach(function (doc) {
+                        var d = doc.data();
+                        d._id = doc.id;
+                        d._modulId = m.id; // Modül etiketini ekleyelim
+                        list.push(d);
+                    });
+                    return list;
+                }).catch(function (err) {
+                    console.warn(m.id + " koleksiyonu okunamadı (boş veya yetki yok):", err);
+                    return [];
+                });
+            });
+
+            Promise.all(fetchTrapsPromises).then(function (allTrapsLists) {
+                allTrapsLists.forEach(function (list) {
+                    yedekVeri.tuzaklar = yedekVeri.tuzaklar.concat(list);
                 });
 
                 // Tüm personelleri al
-                return db.collection('personeller').get();
+                return db.rawCollection('personeller').get();
             }).then(function (snap) {
                 snap.forEach(function (doc) {
                     var d = doc.data();
@@ -6888,12 +7873,10 @@
                 });
 
                 // Lokasyonları al
-                return db.collection('lokasyonlar').get();
-            }).then(function (snap) {
-                if (!snap.empty) {
-                    snap.forEach(function (doc) {
-                        yedekVeri.lokasyonlar = doc.data();
-                    });
+                return db.rawCollection('ayarlar').doc('lokasyonlar').get();
+            }).then(function (doc) {
+                if (doc.exists) {
+                    yedekVeri.lokasyonlar = doc.data();
                 }
 
                 // JSON dosyası oluştur ve indir
@@ -6963,6 +7946,29 @@
             if (el) el.innerText = enYogunIlce;
             el = document.getElementById('dashOrt');
             if (el) el.innerText = ort;
+
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+            var label1 = "Toplam Tuzak";
+            var label2 = "Toplam Böcek";
+            var labelOrt = "Ort. Böcek/Tuzak";
+
+            if (kat === "Meyve ve Sebze Bahçeleri") {
+                label1 = "Toplam Bahçe";
+                label2 = "Toplam Ağaç/Bitki";
+                labelOrt = "Ort. Ağaç/Bahçe";
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                label1 = "Toplam Sera";
+                label2 = "Toplam Alan (m²)";
+                labelOrt = "Ort. Alan/Sera";
+            }
+
+            var lblDashTuzak = document.getElementById("lblDashTuzakSayi");
+            var lblDashBocek = document.getElementById("lblDashBocekSayi");
+            var lblDashOrtVal = document.getElementById("lblDashOrt");
+
+            if (lblDashTuzak) lblDashTuzak.innerText = label1;
+            if (lblDashBocek) lblDashBocek.innerText = label2;
+            if (lblDashOrtVal) lblDashOrtVal.innerText = labelOrt;
 
             var dash = document.getElementById('dashboardCards');
             if (dash) {
