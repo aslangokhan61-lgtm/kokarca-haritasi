@@ -22,6 +22,15 @@ service cloud.firestore {
         && (data.lng is number);
     }
 
+    // Şema Doğrulama: Dinamik Bahçe ve Sera konumlarının geçerli bir yapıda olduğunu kontrol eder
+    function isValidLocationItem(data) {
+      return data.il is string
+        && data.ilce is string
+        && data.koy is string
+        && (data.lat is number)
+        && (data.lng is number);
+    }
+
     // Şema Doğrulama: Personel kaydının geçerli bir yapıda olduğunu kontrol eder
     function isValidPersonnel(data) {
       return data.adSoyad is string
@@ -35,6 +44,12 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isValidTrap(request.resource.data);
       allow delete: if true; 
+    }
+
+    match /tuzaklar_{meyve}/{trapId} {
+      allow read: if true;
+      allow create, update: if isValidLocationItem(request.resource.data);
+      allow delete: if true;
     }
 
     match /personeller/{personelId} {
@@ -63,6 +78,11 @@ service cloud.firestore {
     match /haftalikRaporlar/{raporId} {
       allow read: if true;
       allow write: if true; // Haftalık arşiv oluşturma
+    }
+
+    match /haftalikRaporlar_{meyve}/{raporId} {
+      allow read: if true;
+      allow write: if true;
     }
 
     /*
