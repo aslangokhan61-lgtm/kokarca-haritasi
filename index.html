@@ -193,6 +193,23 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid var(--border-glass);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom premium scrollbar for side menu */
+        .side-menu::-webkit-scrollbar {
+            width: 5px;
+        }
+        .side-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .side-menu::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .side-menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .side-menu.open {
@@ -200,6 +217,9 @@
         }
 
         .menu-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
             padding: 28px 24px;
             font-size: 20px;
             font-weight: 800;
