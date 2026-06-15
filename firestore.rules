@@ -85,6 +85,16 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    match /mucadeleler/{mucadeleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /mucadeleler_{meyve}/{mucadeleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     /*
       ==========================================================================
       YÖNTEM B: TAM GÜVENLİ YAPILANDIRMA (Firebase Auth Etkinleştirildiğinde)
