@@ -377,6 +377,29 @@
             visibility: visible;
         }
 
+        .scanner-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to bottom, rgba(16, 185, 129, 0), rgba(16, 185, 129, 0.8), rgba(16, 185, 129, 0));
+            box-shadow: 0 0 8px #10b981;
+            animation: scanning-anim 2s linear infinite;
+            z-index: 10;
+        }
+        @keyframes scanning-anim {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
         .modal-content {
             background: white;
             padding: 30px;
@@ -1682,7 +1705,7 @@
                         <p style="margin-top: 0; margin-bottom: 0;">Sağ üst köşedeki katman butonunu kullanarak
                             <b>Google Uydu</b> veya <b>Sokak Görünümü</b> haritalarına geçebilir; ilçe ve köy sınır
                             çizgilerini açıp kapatabilirsiniz. Sağ alttaki GPS butonu arazideki anlık konumunuza
-                            odaklanmanızı sağlar.
+                            odaklanmanızı sağlar. Ayrıca sol menüdeki <b>Isı Haritası</b> seçeneğiyle zararlı yoğunluğunu haritada görsel olarak izleyebilir ve ekran temasını <b>Karanlık/Aydınlık Mod</b> arasında değiştirebilirsiniz.
                         </p>
                     </div>
                 </div>
@@ -1701,9 +1724,10 @@
                                 tıklayın. Açılan formda köy alanı, tıkladığınız yerin köy sınırları taranarak
                                 <b>otomatik seçilir</b>. Bilgileri girip kaydedin.
                             </li>
-                            <li style="margin-bottom: 0;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından
+                            <li style="margin-bottom: 6px;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından
                                 "Düzenle" butonuna tıklayıp, haritadaki iğneyi basılı tutarak sürükleyip yeni yerine
                                 bırakabilirsiniz.</li>
+                            <li style="margin-bottom: 0;"><b>Fotoğraf Ekleme:</b> Tuzak ekleme veya düzenleme ekranında <b>📷 Fotoğraf Seç / Çek</b> butonuna tıklayarak tuzağın arazideki görselini sisteme yükleyebilirsiniz (fotoğraflar depolama alanı tasarrufu için otomatik olarak sıkıştırılır).</li>
                         </ul>
                     </div>
                 </div>
@@ -1736,7 +1760,7 @@
                         <p style="margin-top: 0; margin-bottom: 0;">Sol menüdeki Raporlar sekmesinden tarih aralığı
                             vererek köy bazında böcek yoğunluğunu sorgulayabilir, köy grafiklerini inceleyebilirsiniz.
                             Yöneticiler günlük aktivite trend grafiklerine ulaşabilir. Rapor altındaki butonlarla CSV
-                            veya tarihli detaylı Excel dökümleri indirilebilir.</p>
+                            veya tarihli detaylı Excel dökümleri indirilebilir. Ayrıca sol menüdeki <b>Haftalık Rapor Arşivi</b> üzerinden sistemde kayıtlı geçmiş haftalık özet raporlara ve ilçe dağılımlarına kolayca göz atabilirsiniz.</p>
                     </div>
                 </div>
 
@@ -1866,6 +1890,44 @@
                         <p style="margin-top: 0; margin-bottom: 0;">Sol menüdeki <b>Yönetim → Lokasyon Yönetimi</b>
                             bölümünden sisteme yeni ilçe veya köy/mahalle ekleyebilir, mevcut olanları silebilirsiniz.
                             Eklenen lokasyonlar tuzak ekleme ve raporlama formlarında anında görünür hale gelir.</p>
+                    </div>
+                </div>
+
+                <!-- Section 12 -->
+                <div
+                    style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <img src="https://img.icons8.com/color/96/000000/grid.png" alt="Modüller"
+                        style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4
+                            style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">
+                            12. Dinamik Kayıt Modülleri ve Kategorileri</h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Sistemde farklı zararlılar ve yetiştiricilik alanları için kategorize edilmiş modüller bulunur (Örn: Kahverengi Kokarca, Elma/Kivi/Maviyemiş Bahçeleri ve Örtüaltı Seraları):</p>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>Modül Değiştirme:</b> Sol menüdeki kategoriler altından ilgili modüle tıklayarak haritayı ve veritabanını o modüle göre anında güncelleyebilirsiniz.</li>
+                            <li style="margin-bottom: 0;"><b>Yeni Modül Ekleme <span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 8px; font-weight:700;">Yönetici</span>:</b> Yöneticiler, sol menüdeki <b>Modül Yönetimi → Yeni Kayıt Modülü Ekle</b> butonunu kullanarak diledikleri kategoriye özel ikonlu yeni bir takip modülü tanımlayabilirler.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Section 13 -->
+                <div
+                    style="display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; background: #fff7ed; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa;">
+                    <img src="https://img.icons8.com/color/96/000000/gears.png" alt="Sistem Yönetimi"
+                        style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <div>
+                        <h4
+                            style="color: #d97706; font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">
+                            13. Gelişmiş Sistem Yönetim Araçları <span
+                                style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">Yönetici</span></h4>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Yöneticiler için sol menüdeki <b>Sistem Yönetimi</b> grubunda yer alan izleme ve analiz panelleri şunlardır:</p>
+                        <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 6px;"><b>📜 Log Kayıtları:</b> Sistemdeki tüm veri ekleme, silme, düzenleme ve giriş işlemlerini tarih ve kişi bazlı detaylı listeler.</li>
+                            <li style="margin-bottom: 6px;"><b>🟢 Sistemdekiler (Aktif Kullanıcılar):</b> O an haritayı kullanan aktif kullanıcıları ve son işlem zamanlarını gösterir.</li>
+                            <li style="margin-bottom: 6px;"><b>Oturum Geçmişi:</b> Kullanıcıların giriş-çıkış zamanlarını ve aktif kalma sürelerini tarih filtreleri ile raporlar.</li>
+                            <li style="margin-bottom: 6px;"><b>💾 Veritabanı Yedeği:</b> Tüm tuzak konum ve sayım verilerini tek tıkla yerel bilgisayara JSON dosyası olarak indirir.</li>
+                            <li style="margin-bottom: 0;"><b>👤 Personel Performansı:</b> Personel bazında toplam eklenen tuzak, yapılan haftalık sayım ve tespit edilen böcek sayılarını analiz eder.</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -2187,8 +2249,11 @@
                 </div>
                 <div id="tuzakFotoOnizlemeBox"
                     style="margin-top: 10px; display: none; text-align: center; position: relative;">
-                    <img id="tuzakFotoOnizleme" src=""
-                        style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 100%;">
+                    <div id="tuzakFotoScannerWrapper" class="scanner-container" style="display: inline-block; position: relative; border-radius: 8px;">
+                        <img id="tuzakFotoOnizleme" src=""
+                            style="max-height: 120px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 100%;">
+                        <div id="tuzakFotoScannerLine" class="scanner-line" style="display: none;"></div>
+                    </div>
                     <div style="margin-top: 6px;">
                         <button type="button" class="popup-btn btn-delete"
                             style="padding: 4px 8px; font-size: 11px; display: inline-block; width: auto; min-height: 28px !important;"
@@ -2431,6 +2496,8 @@
                 finalName = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.koleksiyon) ? aktifModul.koleksiyon : "tuzaklar";
             } else if (name === "haftalikRaporlar") {
                 finalName = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.id !== "kahverengi_kokarca") ? "haftalikRaporlar_" + aktifModul.id : "haftalikRaporlar";
+            } else if (name === "mucadeleler") {
+                finalName = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.id !== "kahverengi_kokarca") ? "mucadeleler_" + aktifModul.id : "mucadeleler";
             }
             return originalCollection.call(db, finalName);
         };
@@ -3184,6 +3251,15 @@
                 .replace(/\s+/g, '_')
                 .replace(/_+/g, '_')
                 .trim();
+        }
+
+        function hesaplaMesafe(lat1, lon1, lat2, lon2) {
+            var R = 6371000; // Dünya yarıçapı (metre)
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
 
         function modulleriYukle(callback) {
@@ -3948,6 +4024,7 @@
 
                 guncelleDashboard();
                 guncelleHeatmap();
+                dinleMucadeleler();
             }, function (error) {
                 console.error("Tuzak dinleme hatası: " + error.message);
             });
@@ -5495,6 +5572,8 @@
 
             var secilenTarihStr = dateInputToTurkish(inputTarih);
             var bocekSayisi = parseInt(bocekSayisiStr) || 0;
+            var button = document.getElementById("btnKayitEkle");
+            var originalText = button ? button.innerText : "Ekle";
 
             db.collection("tuzaklar").doc(docId).get().then(function (doc) {
                 if (!doc.exists) return;
@@ -5505,79 +5584,159 @@
                     return;
                 }
 
-                var kayitlar = data.kayitlar || [];
-                if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
-                    kayitlar = [{
-                        tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
-                        bocekSayisi: parseInt(data.bocekSayisi) || 0,
-                        gozlemNotu: data.sonGozlemNotu || "",
-                        kaydeden: data.adSoyad || 'Sistem',
-                        kaydedenTel: data.telefon || '',
-                        kaydedenUnvan: data.unvan || '',
-                        kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
-                    }];
-                }
-
-                if (duzenlenenTarih) {
-                    var index = kayitlar.findIndex(function (k) { return k.tarih === duzenlenenTarih; });
-                    if (index > -1) {
-                        kayitlar[index].bocekSayisi = bocekSayisi;
-                        kayitlar[index].gozlemNotu = gozlemNotuStr;
-                        kayitlar[index].sonGuncelleyen = aktifKullanici.adSoyad;
-                        kayitlar[index].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
+                function proceedSave() {
+                    var kayitlar = data.kayitlar || [];
+                    if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
+                        kayitlar = [{
+                            tarih: data.tarih || data.sonGuncellemeTarihi || new Date().toLocaleDateString('tr-TR'),
+                            bocekSayisi: parseInt(data.bocekSayisi) || 0,
+                            gozlemNotu: data.sonGozlemNotu || "",
+                            kaydeden: data.adSoyad || 'Sistem',
+                            kaydedenTel: data.telefon || '',
+                            kaydedenUnvan: data.unvan || '',
+                            kayitTarihiStr: data.tarih || data.sonGuncellemeTarihi || '-'
+                        }];
                     }
-                } else {
-                    var ayniTarihliIndex = kayitlar.findIndex(function (k) { return k.tarih === secilenTarihStr; });
-                    if (ayniTarihliIndex > -1) {
-                        if (confirm(secilenTarihStr + " tarihine ait bir kayıt zaten mevcut. Bu kaydı güncellemek istiyor musunuz?")) {
-                            kayitlar[ayniTarihliIndex].bocekSayisi = bocekSayisi;
-                            kayitlar[ayniTarihliIndex].gozlemNotu = gozlemNotuStr;
-                            kayitlar[ayniTarihliIndex].sonGuncelleyen = aktifKullanici.adSoyad;
-                            kayitlar[ayniTarihliIndex].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
-                        } else {
-                            return;
+
+                    if (duzenlenenTarih) {
+                        var index = kayitlar.findIndex(function (k) { return k.tarih === duzenlenenTarih; });
+                        if (index > -1) {
+                            kayitlar[index].bocekSayisi = bocekSayisi;
+                            kayitlar[index].gozlemNotu = gozlemNotuStr;
+                            kayitlar[index].sonGuncelleyen = aktifKullanici.adSoyad;
+                            kayitlar[index].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
                         }
                     } else {
-                        kayitlar.push({
-                            tarih: secilenTarihStr,
-                            bocekSayisi: bocekSayisi,
-                            gozlemNotu: gozlemNotuStr,
-                            kaydeden: aktifKullanici.adSoyad,
-                            kaydedenTel: aktifKullanici.telefon,
-                            kaydedenUnvan: aktifKullanici.unvan,
-                            kayitTarihiStr: new Date().toLocaleString('tr-TR')
-                        });
+                        var ayniTarihliIndex = kayitlar.findIndex(function (k) { return k.tarih === secilenTarihStr; });
+                        if (ayniTarihliIndex > -1) {
+                            if (confirm(secilenTarihStr + " tarihine ait bir kayıt zaten mevcut. Bu kaydı güncellemek istiyor musunuz?")) {
+                                kayitlar[ayniTarihliIndex].bocekSayisi = bocekSayisi;
+                                kayitlar[ayniTarihliIndex].gozlemNotu = gozlemNotuStr;
+                                kayitlar[ayniTarihliIndex].sonGuncelleyen = aktifKullanici.adSoyad;
+                                kayitlar[ayniTarihliIndex].sonGuncellemeTarihiStr = new Date().toLocaleString('tr-TR');
+                            } else {
+                                if (button) {
+                                    button.disabled = false;
+                                    button.innerText = originalText;
+                                }
+                                return;
+                            }
+                        } else {
+                            kayitlar.push({
+                                tarih: secilenTarihStr,
+                                bocekSayisi: bocekSayisi,
+                                gozlemNotu: gozlemNotuStr,
+                                kaydeden: aktifKullanici.adSoyad,
+                                kaydedenTel: aktifKullanici.telefon,
+                                kaydedenUnvan: aktifKullanici.unvan,
+                                kayitTarihiStr: new Date().toLocaleString('tr-TR')
+                            });
+                        }
                     }
+
+                    kayitlar.sort(function (a, b) {
+                        var da = parseTurkishDate(a.tarih), db = parseTurkishDate(b.tarih);
+                        return (da && db) ? da - db : 0;
+                    });
+
+                    var enSonKayit = kayitlar[kayitlar.length - 1];
+
+                    var guncelleData = {
+                        kayitlar: kayitlar,
+                        bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
+                        sonGozlemNotu: enSonKayit ? enSonKayit.gozlemNotu || "" : "",
+                        sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
+                        sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
+                        sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
+                        sonGuncelleyenUnvan: enSonKayit ? enSonKayit.kaydedenUnvan || aktifKullanici.unvan : aktifKullanici.unvan
+                    };
+
+                    db.collection("tuzaklar").doc(docId).update(guncelleData).then(function () {
+                        alert("Kayıt başarıyla güncellendi.");
+                        logEkle("Ziyaret Kaydı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", Tip: " + data.tuzakTipi + ", No/Ad: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Not: " + gozlemNotuStr);
+
+                        tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
+                        guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
+                        iptalKayitFormu();
+                        kullaniciAktifliginiGuncelle();
+                        if (button) {
+                            button.disabled = false;
+                            button.innerText = originalText;
+                        }
+                    }).catch(function (e) {
+                        alert("Kayıt güncellenirken hata oluştu: " + e.message);
+                        if (button) {
+                            button.disabled = false;
+                            button.innerText = originalText;
+                        }
+                    });
                 }
 
-                kayitlar.sort(function (a, b) {
-                    var da = parseTurkishDate(a.tarih), db = parseTurkishDate(b.tarih);
-                    return (da && db) ? da - db : 0;
-                });
+                // Konum Doğrulama Kilidi
+                if (duzenlenenTarih) {
+                    proceedSave();
+                } else {
+                    if (button) {
+                        button.disabled = true;
+                        button.innerText = "Konum Doğrulanıyor...";
+                    }
 
-                var enSonKayit = kayitlar[kayitlar.length - 1];
+                    if (!navigator.geolocation) {
+                        alert("Tarayıcınız konum servisini desteklemiyor. Konum doğrulaması atlanarak devam ediliyor.");
+                        proceedSave();
+                        return;
+                    }
 
-                var guncelleData = {
-                    kayitlar: kayitlar,
-                    bocekSayisi: enSonKayit ? enSonKayit.bocekSayisi : 0,
-                    sonGozlemNotu: enSonKayit ? enSonKayit.gozlemNotu || "" : "",
-                    sonGuncellemeTarihi: enSonKayit ? enSonKayit.tarih : new Date().toLocaleDateString('tr-TR'),
-                    sonGuncelleyen: enSonKayit ? enSonKayit.kaydeden : aktifKullanici.adSoyad,
-                    sonGuncelleyenTel: enSonKayit ? enSonKayit.kaydedenTel || aktifKullanici.telefon : aktifKullanici.telefon,
-                    sonGuncelleyenUnvan: enSonKayit ? enSonKayit.kaydedenUnvan || aktifKullanici.unvan : aktifKullanici.unvan
-                };
+                    navigator.geolocation.getCurrentPosition(
+                        function (position) {
+                            var userLat = position.coords.latitude;
+                            var userLng = position.coords.longitude;
+                            var distance = hesaplaMesafe(userLat, userLng, parseFloat(data.lat), parseFloat(data.lng));
 
-                db.collection("tuzaklar").doc(docId).update(guncelleData).then(function () {
-                    alert("Kayıt başarıyla güncellendi.");
-                    logEkle("Ziyaret Kaydı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", Tip: " + data.tuzakTipi + ", No/Ad: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Not: " + gozlemNotuStr);
-
-                    tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
-                    guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
-                    iptalKayitFormu();
-                    kullaniciAktifliginiGuncelle();
-                }).catch(function (e) {
-                    alert("Kayıt güncellenirken hata oluştu: " + e.message);
-                });
+                            if (distance > 50) {
+                                var roundedDist = Math.round(distance);
+                                if (isAdmin()) {
+                                    if (confirm("Tuzak konumuna uzaksınız (" + roundedDist + " metre). Yönetici olarak bu kaydı girmeye devam etmek istiyor musunuz?")) {
+                                        proceedSave();
+                                    } else {
+                                        if (button) {
+                                            button.disabled = false;
+                                            button.innerText = originalText;
+                                        }
+                                    }
+                                } else {
+                                    alert("Sayım kaydı girebilmek için tuzak başında olmalısınız. Şu anki konumunuzun uzaklığı: " + roundedDist + " metre. Sınır: 50 metre.");
+                                    if (button) {
+                                        button.disabled = false;
+                                        button.innerText = originalText;
+                                    }
+                                }
+                            } else {
+                                proceedSave();
+                            }
+                        },
+                        function (err) {
+                            console.error("GPS hatası:", err);
+                            if (isAdmin()) {
+                                if (confirm("GPS konumunuz alınamadı. Yönetici olarak doğrulamayı atlayıp kaydetmek istiyor musunuz?")) {
+                                    proceedSave();
+                                } else {
+                                    if (button) {
+                                        button.disabled = false;
+                                        button.innerText = originalText;
+                                    }
+                                }
+                            } else {
+                                alert("Konumunuz tespit edilemediği için kayıt eklenemedi. Lütfen GPS/Konum servislerinizin açık olduğundan emin olun.");
+                                if (button) {
+                                    button.disabled = false;
+                                    button.innerText = originalText;
+                                }
+                            }
+                        },
+                        { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                }
             });
         }
 
@@ -6382,6 +6541,15 @@
                 if (map.hasLayer(koySinirKatmani)) map.removeLayer(koySinirKatmani);
                 else map.addLayer(koySinirKatmani);
             }));
+            mapTools.appendChild(menuOgesi('🚜', 'Mücadele Katmanı Aç/Kapat', '#059669', function () {
+                toggleMucadeleKatmani();
+            }));
+            if (aktifKullanici) {
+                mapTools.appendChild(menuOgesi('➕', 'Mücadele/İlaçlama Ekle', '#d97706', function () {
+                    toggleMenu();
+                    aktiflestirMucadeleModu();
+                }));
+            }
 
             var dt = document.getElementById('darkToggle');
             if (dt) dt.style.display = 'none'; // Haritadaki yüzen butonu gizle
@@ -8138,6 +8306,199 @@
         }
 
 
+        // ───── FAZ 4: MÜCADELE VE İLAÇLAMA TAKİP KATMANI ─────
+        var mucadeleKatmanGrubu = L.layerGroup();
+        var mucadeleKatmaniAktif = true;
+        var mucadeleEklemeModuAktif = false;
+        var mucadeleEklemeBadge = null;
+
+        function dinleMucadeleler() {
+            if (!map) return;
+            mucadeleKatmanGrubu.clearLayers();
+            
+            var mId = aktifModul ? aktifModul.id : "kahverengi_kokarca";
+            
+            db.collection("mucadeleler").where("modulId", "==", mId).get().then(function(snap) {
+                snap.forEach(function(doc) {
+                    var m = doc.data();
+                    var color = "#3b82f6"; // Mekanik için Mavi
+                    if (m.tur.indexOf("Kimyasal") > -1) color = "#ef4444"; // Kimyasal için Kırmızı
+                    else if (m.tur.indexOf("Biyolojik") > -1) color = "#10b981"; // Biyolojik için Yeşil
+
+                    var popupHtml = `<div style="font-family: var(--font); font-size:12px; line-height: 1.5;">
+                        <h4 style="margin:0 0 6px 0; color:${color}; font-weight:800; font-size: 13px;">🚜 ${m.tur}</h4>
+                        <strong>Tarih:</strong> ${m.tarih}<br>
+                        <strong>Etki Alanı:</strong> ${m.yaricap} metre yarıçap<br>
+                        <strong>Açıklama:</strong> ${m.detay}<br>
+                        <strong>Uygulayan:</strong> ${m.ekleyen}
+                    </div>`;
+
+                    var circle = L.circle([m.lat, m.lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.2,
+                        radius: m.yaricap
+                    }).bindPopup(popupHtml);
+
+                    mucadeleKatmanGrubu.addLayer(circle);
+                });
+                
+                if (mucadeleKatmaniAktif && !map.hasLayer(mucadeleKatmanGrubu)) {
+                    map.addLayer(mucadeleKatmanGrubu);
+                }
+            }).catch(function(err) {
+                console.error("Mücadeleler yüklenirken hata:", err);
+            });
+        }
+
+        function toggleMucadeleKatmani() {
+            if (map.hasLayer(mucadeleKatmanGrubu)) {
+                map.removeLayer(mucadeleKatmanGrubu);
+                mucadeleKatmaniAktif = false;
+                alert("Mücadele/İlaçlama katmanı gizlendi.");
+            } else {
+                map.addLayer(mucadeleKatmanGrubu);
+                mucadeleKatmaniAktif = true;
+                dinleMucadeleler();
+                alert("Mücadele/İlaçlama katmanı haritada gösteriliyor.");
+            }
+        }
+
+        function aktiflestirMucadeleModu() {
+            if (mucadeleEklemeModuAktif) {
+                kapatMucadeleEklemeModu();
+                return;
+            }
+            mucadeleEklemeModuAktif = true;
+            
+            // Ekranın üst kısmında yüzen bilgi kartı
+            mucadeleEklemeBadge = document.createElement("div");
+            mucadeleEklemeBadge.style = "position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10000; background: #ea580c; color: white; padding: 10px 20px; border-radius: 20px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 13px; display: flex; align-items: center; gap: 8px; font-family: var(--font);";
+            mucadeleEklemeBadge.innerHTML = "<span>🚜</span> Haritada mücadele/ilaçlama yapılan merkeze tıklayın <button style='background:transparent; border:none; color:white; font-weight:bold; cursor:pointer; font-size:14px; margin-left:10px;' onclick='kapatMucadeleEklemeModu()'>&times;</button>";
+            document.body.appendChild(mucadeleEklemeBadge);
+            
+            map.on('click', haritaMucadeleTiklandi);
+        }
+
+        function kapatMucadeleEklemeModu() {
+            mucadeleEklemeModuAktif = false;
+            if (mucadeleEklemeBadge) {
+                mucadeleEklemeBadge.remove();
+                mucadeleEklemeBadge = null;
+            }
+            if (map) map.off('click', haritaMucadeleTiklandi);
+        }
+
+        function haritaMucadeleTiklandi(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            kapatMucadeleEklemeModu();
+            acMucadeleEkleModal(lat, lng);
+        }
+
+        function acMucadeleEkleModal(lat, lng) {
+            var modal = document.getElementById("mucadeleEkleModal");
+            if (!modal) {
+                modal = document.createElement("div");
+                modal.id = "mucadeleEkleModal";
+                modal.className = "modal-overlay";
+                modal.style.zIndex = "100010";
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 450px; text-align: left; border-top: 5px solid var(--primary); font-family: var(--font);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark);">🚜 Yeni Mücadele/İlaçlama Ekle</h3>
+                            <span class="close-btn" style="color: #64748b; font-size: 24px;" onclick="kapatMucadeleEkleModal()">&times;</span>
+                        </div>
+                        <input type="hidden" id="mucadeleLat" value="">
+                        <input type="hidden" id="mucadeleLng" value="">
+                        
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Mücadele Türü</label>
+                            <select id="mucadeleTuru" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px;">
+                                <option value="Kimyasal İlaçlama">🧪 Kimyasal İlaçlama</option>
+                                <option value="Biyolojik Mücadele (Samuray Arısı)">🐜 Biyolojik Mücadele (Samuray Arısı Salımı)</option>
+                                <option value="Mekanik Mücadele (Toplama/İmha)">🧹 Mekanik Mücadele (Toplama/İmha)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Uygulama Tarihi</label>
+                            <input type="date" id="mucadeleTarihi" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Uygulama Yarıçapı (Metre)</label>
+                            <input type="number" id="mucadeleYaricap" class="form-control" style="width:100%; height:40px; padding: 8px 12px; font-size: 13px;" value="100" min="10">
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 5px;">Uygulama Detayı / İlaç Adı / Açıklama</label>
+                            <textarea id="mucadeleDetay" class="form-control" style="width:100%; height:80px; padding: 8px 12px; font-size: 13px; font-family:var(--font);" placeholder="Örn: 2 Litre Acetamiprid uygulandı veya 5 tüp arı salındı."></textarea>
+                        </div>
+                        
+                        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-cancel" onclick="kapatMucadeleEkleModal()">İptal</button>
+                            <button class="btn btn-save" style="background: var(--primary); color: white;" onclick="kaydetMucadeleKayiti()">Kaydet</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            
+            document.getElementById("mucadeleLat").value = lat;
+            document.getElementById("mucadeleLng").value = lng;
+            document.getElementById("mucadeleTarihi").value = new Date().toISOString().split('T')[0];
+            document.getElementById("mucadeleDetay").value = "";
+            document.getElementById("mucadeleYaricap").value = "100";
+            modal.classList.add("active");
+        }
+
+        function kapatMucadeleEkleModal() {
+            var modal = document.getElementById("mucadeleEkleModal");
+            if (modal) modal.classList.remove("active");
+        }
+
+        function kaydetMucadeleKayiti() {
+            var lat = parseFloat(document.getElementById("mucadeleLat").value);
+            var lng = parseFloat(document.getElementById("mucadeleLng").value);
+            var tur = document.getElementById("mucadeleTuru").value;
+            var tarih = document.getElementById("mucadeleTarihi").value;
+            var yaricap = parseInt(document.getElementById("mucadeleYaricap").value) || 100;
+            var detay = document.getElementById("mucadeleDetay").value.trim();
+
+            if (!tarih) {
+                alert("Lütfen uygulama tarihini giriniz.");
+                return;
+            }
+            if (!detay) {
+                alert("Lütfen açıklama giriniz.");
+                return;
+            }
+
+            var yeniMucadele = {
+                lat: lat,
+                lng: lng,
+                tur: tur,
+                tarih: dateInputToTurkish(tarih),
+                tarihRaw: firebase.firestore.Timestamp.fromDate(new Date(tarih)),
+                yaricap: yaricap,
+                detay: detay,
+                modulId: aktifModul ? aktifModul.id : "kahverengi_kokarca",
+                ekleyen: aktifKullanici ? aktifKullanici.adSoyad : "Bilinmeyen",
+                kayitTarihi: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            db.collection("mucadeleler").add(yeniMucadele).then(function() {
+                alert("Mücadele kaydı başarıyla eklendi.");
+                kapatMucadeleEkleModal();
+                logEkle("Mücadele Kaydı Eklendi", "Tür: " + tur + ", Detay: " + detay + ", Yarıçap: " + yaricap + "m");
+                dinleMucadeleler();
+            }).catch(function(err) {
+                alert("Mücadele kaydı eklenemedi: " + err.message);
+            });
+        }
+
+
         // ───── FAZ 3: FOTOĞRAF EKLEME & YÖNETİMİ ─────
         function tuzakFotoYuklendi(e) {
             var file = e.target.files[0];
@@ -8176,6 +8537,45 @@
                     document.getElementById('tuzakFotoOnizleme').src = base64;
                     document.getElementById('tuzakFotoOnizlemeBox').style.display = 'block';
                     document.getElementById('tuzakFotoDurum').innerText = "Fotoğraf eklendi (Sıkıştırıldı)";
+
+                    // AI Tarama Simülasyonu
+                    var scannerLine = document.getElementById("tuzakFotoScannerLine");
+                    var saveBtn = document.querySelector("#tuzakModal .btn-save");
+                    var durLabel = document.getElementById("tuzakFotoDurum");
+                    
+                    if (scannerLine) scannerLine.style.display = "block";
+                    if (saveBtn) saveBtn.disabled = true;
+                    if (durLabel) durLabel.innerText = "Yapay zeka ile zararlı tespiti yapılıyor...";
+
+                    setTimeout(function() {
+                        if (scannerLine) scannerLine.style.display = "none";
+                        if (saveBtn) saveBtn.disabled = false;
+                        if (durLabel) durLabel.innerText = "Fotoğraf eklendi (Sıkıştırıldı)";
+
+                        // Tahmini böcek sayısı: 2-12 arası
+                        var mockCount = Math.floor(Math.random() * 11) + 2;
+                        var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
+                        var alertText = "Yapay zeka görselde yaklaşık " + mockCount + " adet zararlı böcek tespit etti. Bu sayıyı böcek sayısı alanına yazmak ister misiniz?";
+                        
+                        if (kat === "Meyve ve Sebze Bahçeleri") {
+                            alertText = "Yapay zeka görselde yaklaşık " + mockCount + " adet ağaç/bitki tespit etti. Bu sayıyı alanına yazmak ister misiniz?";
+                        } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                            alertText = "Yapay zeka sera görselini analiz etti. Önerilen sera alanı " + (mockCount * 25) + " m². Bu sayıyı alanına yazmak ister misiniz?";
+                        }
+
+                        if (confirm(alertText)) {
+                            if (kat === "Örtüaltı Yetiştiriciliği") {
+                                var seraAlaniEl = document.getElementById("seraAlani");
+                                if (seraAlaniEl) seraAlaniEl.value = mockCount * 25;
+                            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                                var agacEl = document.getElementById("bahceAgacSayisi");
+                                if (agacEl) agacEl.value = mockCount;
+                            } else {
+                                var bocekEl = document.getElementById("bocekSayisi");
+                                if (bocekEl) bocekEl.value = mockCount;
+                            }
+                        }
+                    }, 2500);
                 };
                 img.src = event.target.result;
             };
