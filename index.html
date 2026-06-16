@@ -706,9 +706,9 @@
             background: #ef4444;
         }
 
-        /* Samuray Arısı -> Mavi */
+        /* Samuray Arısı -> Kırmızı */
         .marker-ari {
-            background: #3b82f6;
+            background: #ef4444;
             border-radius: 50%;
             color: white;
         }
@@ -855,7 +855,7 @@
         }
 
         .marker-ari {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+            background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
             border-radius: 50%;
             border: 2px solid white;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -1807,7 +1807,7 @@
                                 skalası: <span style="color:#fbbf24; font-weight:700;">■Amber</span> (0-19), <span
                                     style="color:#ea580c; font-weight:700;">■Turuncu</span> (20-49), <span
                                     style="color:#9333ea; font-weight:700;">■Mor</span> (50+).</li>
-                            <li style="margin-bottom: 0;"><b>🔵 Samuray Arısı Salımı:</b> Mavi yuvarlak işaretçi. Bu
+                            <li style="margin-bottom: 0;"><b>🔴 Samuray Arısı Salımı:</b> Kırmızı yuvarlak işaretçi. Bu
                                 kayıt türünde böcek sayısı yerine <b>salınan tüp sayısı</b> girilir. Sayım kaydı
                                 tutulmaz.</li>
                         </ul>
@@ -3996,7 +3996,7 @@
                     if (kat === "Tarımsal Hastalık ve Zararlılar") {
                         var tipIkonStr = "🟢 Huni (Funnel) Tuzak";
                         if (gData.tuzakTipi === "Yapışkan") tipIkonStr = "🟨 Yapışkan Tuzak";
-                        else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔵 Samuray Arısı Salımı";
+                        else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔴 Samuray Arısı Salımı";
                         else if (gData.tuzakTipi === "Kışlak Mücadelesi") tipIkonStr = "🏠 Kışlak Mücadelesi";
 
                         popupIcerik += "<b>Kayıt Türü:</b> " + tipIkonStr + "<br>";
@@ -4082,7 +4082,7 @@
                     popupIcerik += "<button class='popup-btn btn-delete' onclick='tuzakSil(\"" + gData.enGuncelDocId + "\")'>Sil</button>";
                     popupIcerik += "</div>";
 
-                    var customIcon = createCustomMarkerIcon(gData.tuzakTipi, gData.bocekSayisi);
+                    var customIcon = createCustomMarkerIcon(gData.tuzakTipi, gData.bocekSayisi, gData.tupSayisi);
                     var marker = L.marker([gData.lat, gData.lng], { icon: customIcon }).bindPopup(popupIcerik);
                     markerListesi[gKey] = marker;
                     markerGosterGizle(gKey);
