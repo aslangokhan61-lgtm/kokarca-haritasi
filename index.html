@@ -6852,6 +6852,26 @@
             };
             sideMenu.appendChild(kilavuzMenu);
 
+            // Ortak Mücadele Dokümanları (Tüm Roller İçin)
+            var salimRehberiMenu = document.createElement("div");
+            salimRehberiMenu.className = "menu-item";
+            salimRehberiMenu.style.borderLeft = "3px solid var(--primary)";
+            salimRehberiMenu.innerHTML = '<span>🐝</span> Samuray Arısı Salım Rehberi';
+            salimRehberiMenu.onclick = function () {
+                toggleMenu();
+                window.open('salim_rehberi.html', '_blank');
+            };
+            sideMenu.appendChild(salimRehberiMenu);
+
+            var uygulamaTalimatiMenu = document.createElement("div");
+            uygulamaTalimatiMenu.className = "menu-item";
+            uygulamaTalimatiMenu.style.borderLeft = "3px solid var(--secondary-blue)";
+            uygulamaTalimatiMenu.innerHTML = '<span>📋</span> Mücadele Uygulama Talimatı';
+            uygulamaTalimatiMenu.onclick = function () {
+                toggleMenu();
+                window.open('uygulama_talimati.html', '_blank');
+            };
+            sideMenu.appendChild(uygulamaTalimatiMenu);
 
             // Yerleşimi ekran genişliğine göre yap (Masaüstü/Mobil)
             yerlestirPanelleri();
