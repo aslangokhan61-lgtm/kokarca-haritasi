@@ -713,6 +713,15 @@
             color: white;
         }
 
+        /* Kışlak Mücadelesi -> Kahverengi */
+        .marker-kislak {
+            border-radius: 50%;
+            background: linear-gradient(135deg, #78350f, #b45309) !important;
+            color: white !important;
+            border: 2px solid white !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+        }
+
         /* Yapışkan tuzak renk skalası (amber → turuncu → mor) */
         .marker-yp-az {
             background: #fbbf24;
@@ -2140,6 +2149,7 @@
                     <option value="Huni" selected>Huni (Funnel) Tuzak</option>
                     <option value="Yapışkan">Yapışkan Tuzak</option>
                     <option value="Samuray Arısı Salımı">Samuray Arısı Salımı</option>
+                    <option value="Kışlak Mücadelesi">Kışlak Mücadelesi</option>
                 </select>
             </div>
 
@@ -2172,11 +2182,51 @@
                     <label>Yakalanan Böcek Sayısı</label>
                     <input type="number" id="bocekSayisi" class="form-control" placeholder="Örn: 15" min="0">
                 </div>
+                <div class="form-group">
+                    <label>Bulunduğu Bitki Türü</label>
+                    <select id="tuzakBitkiTuru" class="form-control">
+                        <option value="Fındık" selected>🌳 Fındık</option>
+                        <option value="Mandalina">🍊 Mandalina</option>
+                        <option value="Kivi">🥝 Kivi</option>
+                        <option value="Elma">🍎 Elma</option>
+                        <option value="Mısır">🌽 Mısır</option>
+                        <option value="Karalahana">🥬 Karalahana</option>
+                        <option value="Üzüm">🍇 Üzüm</option>
+                        <option value="Diğer">🌳 Diğer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Feromonun Etki Ettiği Alan (da)</label>
+                    <input type="number" id="tuzakEtkiAlani" class="form-control" placeholder="Örn: 5" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Feromonun İlk Asıldığı Tarih</label>
+                    <input type="date" id="tuzakİlkAsiliTarih" class="form-control">
+                </div>
             </div>
             <div id="ariSalimiAlanlari" style="display: none;">
                 <div class="form-group">
                     <label>Salınan Tüp Sayısı</label>
                     <input type="number" id="tupSayisi" class="form-control" placeholder="Örn: 5" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Tespit Edilen Yumurta Paketi Sayısı</label>
+                    <input type="number" id="ariYumurtaPaketSayisi" class="form-control" placeholder="Örn: 3" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Parazitlenme Durumu</label>
+                    <select id="ariParazitlenmeDurumu" class="form-control">
+                        <option value="Bilinmiyor" selected>Bilinmiyor</option>
+                        <option value="Parazitlendi">🟢 Parazitlendi</option>
+                        <option value="Parazitlenmedi">🔴 Parazitlenmedi</option>
+                        <option value="Kısmen Parazitlendi">🟡 Kısmen Parazitlendi</option>
+                    </select>
+                </div>
+            </div>
+            <div id="kislakAlanlari" style="display: none;">
+                <div class="form-group">
+                    <label>Uygulama Yapılan Hane Sayısı</label>
+                    <input type="number" id="kislakHaneSayisi" class="form-control" placeholder="Örn: 5" min="1" value="1">
                 </div>
             </div>
 
@@ -3880,7 +3930,13 @@
                             agacSayisi: data.agacSayisi || 0,
                             seraAlani: data.seraAlani || 0,
                             yetiştirilenUrun: data.yetiştirilenUrun || data.yetiştirilenÜrün || "",
-                            sonGozlemNotu: data.sonGozlemNotu || ""
+                            sonGozlemNotu: data.sonGozlemNotu || "",
+                            tuzakBitkiTuru: data.tuzakBitkiTuru || "",
+                            tuzakEtkiAlani: data.tuzakEtkiAlani || 0,
+                            tuzakİlkAsiliTarih: data.tuzakİlkAsiliTarih || "",
+                            ariYumurtaPaketSayisi: data.ariYumurtaPaketSayisi || 0,
+                            ariParazitlenmeDurumu: data.ariParazitlenmeDurumu || "Bilinmiyor",
+                            kislakHaneSayisi: data.kislakHaneSayisi || 0
                         };
                     }
 
@@ -3941,13 +3997,23 @@
                         var tipIkonStr = "🟢 Huni (Funnel) Tuzak";
                         if (gData.tuzakTipi === "Yapışkan") tipIkonStr = "🟨 Yapışkan Tuzak";
                         else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔵 Samuray Arısı Salımı";
+                        else if (gData.tuzakTipi === "Kışlak Mücadelesi") tipIkonStr = "🏠 Kışlak Mücadelesi";
 
                         popupIcerik += "<b>Kayıt Türü:</b> " + tipIkonStr + "<br>";
 
                         if (gData.tuzakTipi === "Samuray Arısı Salımı") {
                             popupIcerik += "<b>Salınan Tüp Sayısı:</b> " + (gData.tupSayisi || 0) + " tüp<br>";
+                            popupIcerik += "<b>Tespit Edilen Yumurta Paketi Sayısı:</b> " + (gData.ariYumurtaPaketSayisi || 0) + " adet<br>";
+                            popupIcerik += "<b>Parazitlenme Durumu:</b> " + (gData.ariParazitlenmeDurumu || "Bilinmiyor") + "<br>";
+                        } else if (gData.tuzakTipi === "Kışlak Mücadelesi") {
+                            popupIcerik += "<b>Uygulama Yapılan Hane Sayısı:</b> " + (gData.kislakHaneSayisi || 0) + " hane<br>";
                         } else {
                             if (gData.tuzakNo && gData.tuzakNo !== "Toplu") popupIcerik += "<b>Tuzak No:</b> " + gData.tuzakNo + "<br>";
+                            popupIcerik += "<b>Bulunduğu Bitki Türü:</b> " + (gData.tuzakBitkiTuru || "Belirtilmedi") + "<br>";
+                            popupIcerik += "<b>Feromon Etki Alanı:</b> " + (gData.tuzakEtkiAlani || 0) + " da<br>";
+                            if (gData.tuzakİlkAsiliTarih) {
+                                popupIcerik += "<b>İlk Asıldığı Tarih:</b> " + gData.tuzakİlkAsiliTarih + "<br>";
+                            }
                             popupIcerik += "<b>Toplam Yakalanan Böcek:</b> " + gData.bocekSayisi + " adet<br>";
                             if (gData.bocekSayisi >= 50) {
                                 popupIcerik += "<div style='background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:6px; margin:6px 0; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px;'>⚠️ YÜKSEK YOĞUNLUK ALARMI (50+)</div>";
@@ -4755,7 +4821,14 @@
                     bahceAlani: data.bahceAlani || 0,
                     agacSayisi: data.agacSayisi || 0,
                     seraAlani: data.seraAlani || 0,
-                    yetiştirilenUrun: data.yetiştirilenUrun || '-'
+                    yetiştirilenUrun: data.yetiştirilenUrun || '-',
+                    tuzakBitkiTuru: data.tuzakBitkiTuru || '-',
+                    tuzakEtkiAlani: data.tuzakEtkiAlani || 0,
+                    tuzakİlkAsiliTarih: data.tuzakİlkAsiliTarih || '-',
+                    tupSayisi: data.tupSayisi || 0,
+                    ariYumurtaPaketSayisi: data.ariYumurtaPaketSayisi || 0,
+                    ariParazitlenmeDurumu: data.ariParazitlenmeDurumu || '-',
+                    kislakHaneSayisi: data.kislakHaneSayisi || 0
                 });
             }
 
@@ -4781,8 +4854,16 @@
             var s1Data = [];
             var sheet1Name = "Tuzak Listesi";
             if (kat === "Tarımsal Hastalık ve Zararlılar") {
-                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Ondalık Koordinat', 'DMS Koordinat']);
+                s1Data.push([
+                    'Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No/Salım No', 'Tuzak Çeşidi', 
+                    'Ondalık Koordinat', 'DMS Koordinat', 'Bulunduğu Bitki Türü', 
+                    'Feromon Etki Alanı (da)', 'Feromon İlk Asılı Tarih', 
+                    'Salınan Tüp Sayısı', 'Tespit Edilen Yumurta Paket Sayısı', 
+                    'Parazitlenme Durumu', 'Uygulama Yapılan Hane Sayısı'
+                ]);
                 tuzakSatirlari.forEach(function (ts, index) {
+                    var isSamuray = ts.tuzakTipi === "Samuray Arısı Salımı";
+                    var isKislak = ts.tuzakTipi === "Kışlak Mücadelesi";
                     s1Data.push([
                         index + 1,
                         ts.ilce,
@@ -4790,7 +4871,14 @@
                         ts.tuzakNo,
                         ts.tuzakTipi,
                         ts.ondalik,
-                        ts.dms
+                        ts.dms,
+                        (!isSamuray && !isKislak) ? ts.tuzakBitkiTuru : '-',
+                        (!isSamuray && !isKislak) ? ts.tuzakEtkiAlani : '-',
+                        (!isSamuray && !isKislak) ? ts.tuzakİlkAsiliTarih : '-',
+                        isSamuray ? ts.tupSayisi : '-',
+                        isSamuray ? ts.ariYumurtaPaketSayisi : '-',
+                        isSamuray ? ts.ariParazitlenmeDurumu : '-',
+                        isKislak ? ts.kislakHaneSayisi : '-'
                     ]);
                 });
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
@@ -5087,6 +5175,26 @@
                         document.getElementById('bocekSayisi').value = data.bocekSayisi !== undefined ? data.bocekSayisi : "";
                         var tSayisiElem = document.getElementById('tupSayisi');
                         if (tSayisiElem) tSayisiElem.value = data.tupSayisi !== undefined ? data.tupSayisi : "";
+
+                        // Populate new fields
+                        if (document.getElementById('tuzakBitkiTuru')) {
+                            document.getElementById('tuzakBitkiTuru').value = data.tuzakBitkiTuru || "Fındık";
+                        }
+                        if (document.getElementById('tuzakEtkiAlani')) {
+                            document.getElementById('tuzakEtkiAlani').value = data.tuzakEtkiAlani !== undefined ? data.tuzakEtkiAlani : "";
+                        }
+                        if (document.getElementById('tuzakİlkAsiliTarih')) {
+                            document.getElementById('tuzakİlkAsiliTarih').value = data.tuzakİlkAsiliTarih || "";
+                        }
+                        if (document.getElementById('ariYumurtaPaketSayisi')) {
+                            document.getElementById('ariYumurtaPaketSayisi').value = data.ariYumurtaPaketSayisi !== undefined ? data.ariYumurtaPaketSayisi : "";
+                        }
+                        if (document.getElementById('ariParazitlenmeDurumu')) {
+                            document.getElementById('ariParazitlenmeDurumu').value = data.ariParazitlenmeDurumu || "Bilinmiyor";
+                        }
+                        if (document.getElementById('kislakHaneSayisi')) {
+                            document.getElementById('kislakHaneSayisi').value = data.kislakHaneSayisi !== undefined ? data.kislakHaneSayisi : "1";
+                        }
                     } else if (kat === "Meyve ve Sebze Bahçeleri") {
                         document.getElementById("bahceUrunTuru").value = data.tuzakTipi || "Kivi";
                         document.getElementById("bahceAdi").value = data.tuzakNo || "";
@@ -5250,6 +5358,7 @@
             var tuzakTipiGrup = document.getElementById("tuzakTipiGrup");
             var tuzakAlanlari = document.getElementById("tuzakAlanlari");
             var ariSalimiAlanlari = document.getElementById("ariSalimiAlanlari");
+            var kislakAlanlari = document.getElementById("kislakAlanlari");
             var bahceAlanlari = document.getElementById("bahceAlanlari");
             var seraAlanlari = document.getElementById("seraAlanlari");
 
@@ -5264,20 +5373,28 @@
                 if (tur === "Samuray Arısı Salımı") {
                     if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
                     if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "block";
+                    if (kislakAlanlari) kislakAlanlari.style.display = "none";
+                } else if (tur === "Kışlak Mücadelesi") {
+                    if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
+                    if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                    if (kislakAlanlari) kislakAlanlari.style.display = "block";
                 } else {
                     if (tuzakAlanlari) tuzakAlanlari.style.display = "block";
                     if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                    if (kislakAlanlari) kislakAlanlari.style.display = "none";
                 }
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
                 if (tuzakTipiGrup) tuzakTipiGrup.style.display = "none";
                 if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
                 if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                if (kislakAlanlari) kislakAlanlari.style.display = "none";
                 if (bahceAlanlari) bahceAlanlari.style.display = "block";
                 if (seraAlanlari) seraAlanlari.style.display = "none";
             } else if (kat === "Örtüaltı Yetiştiriciliği") {
                 if (tuzakTipiGrup) tuzakTipiGrup.style.display = "none";
                 if (tuzakAlanlari) tuzakAlanlari.style.display = "none";
                 if (ariSalimiAlanlari) ariSalimiAlanlari.style.display = "none";
+                if (kislakAlanlari) kislakAlanlari.style.display = "none";
                 if (bahceAlanlari) bahceAlanlari.style.display = "none";
                 if (seraAlanlari) seraAlanlari.style.display = "block";
             }
@@ -5313,6 +5430,15 @@
             if (document.getElementById('bahceAlani')) document.getElementById('bahceAlani').value = "";
             if (document.getElementById('bahceAgacSayisi')) document.getElementById('bahceAgacSayisi').value = "";
             if (document.getElementById('bahceUrunTuru')) document.getElementById('bahceUrunTuru').selectedIndex = 0;
+
+            // Clear new fields
+            if (document.getElementById('tuzakBitkiTuru')) document.getElementById('tuzakBitkiTuru').selectedIndex = 0;
+            if (document.getElementById('tuzakEtkiAlani')) document.getElementById('tuzakEtkiAlani').value = "";
+            if (document.getElementById('tuzakİlkAsiliTarih')) document.getElementById('tuzakİlkAsiliTarih').value = "";
+            if (document.getElementById('tupSayisi')) document.getElementById('tupSayisi').value = "";
+            if (document.getElementById('ariYumurtaPaketSayisi')) document.getElementById('ariYumurtaPaketSayisi').value = "";
+            if (document.getElementById('ariParazitlenmeDurumu')) document.getElementById('ariParazitlenmeDurumu').selectedIndex = 0;
+            if (document.getElementById('kislakHaneSayisi')) document.getElementById('kislakHaneSayisi').value = "1";
 
             // Clear sera fields
             if (document.getElementById('seraAdi')) document.getElementById('seraAdi').value = "";
@@ -5408,11 +5534,30 @@
 
                 var isArı = (tipStr === "Samuray Arısı Salımı");
                 var isYapiskan = (tipStr === "Yapışkan");
-                var resolvedTip = isArı ? "🐝 Samuray Arısı Salımı" : (isYapiskan ? "🟨 Yapışkan Tuzak" : "🟢 Huni (Funnel) Tuzak");
-                var labelName = isArı ? "Salınan Tüp Sayısı" : "Tuzak No";
-                var labelVal = isArı ? (data.tupSayisi || "-") : (data.tuzakNo || "-");
+                var isKislak = (tipStr === "Kışlak Mücadelesi");
+                var resolvedTip = isArı ? "🐝 Samuray Arısı Salımı" : (isYapiskan ? "🟨 Yapışkan Tuzak" : (isKislak ? "🏠 Kışlak Mücadelesi" : "🟢 Huni (Funnel) Tuzak"));
+                var labelName = isArı ? "Salınan Tüp Sayısı" : (isKislak ? "Uygulama Yapılan Hane Sayısı" : "Tuzak No");
+                var labelVal = isArı ? (data.tupSayisi || "-") : (isKislak ? (data.kislakHaneSayisi || "-") : (data.tuzakNo || "-"));
                 if (lblZiyaretSayisal && isArı) lblZiyaretSayisal.innerText = "Tüp Sayısı";
                 if (tblZiyaretSayisalBaslik && isArı) tblZiyaretSayisalBaslik.innerText = "Tüp Sayısı";
+                if (lblZiyaretSayisal && isKislak) lblZiyaretSayisal.innerText = "Hane Sayısı";
+                if (tblZiyaretSayisalBaslik && isKislak) tblZiyaretSayisalBaslik.innerText = "Hane Sayısı";
+
+                var ekSatirlar = "";
+                if (isArı) {
+                    ekSatirlar = `
+                        <div><b>Yumurta Paket Sayısı:</b> ${data.ariYumurtaPaketSayisi || 0} adet</div>
+                        <div><b>Parazitlenme Durumu:</b> ${data.ariParazitlenmeDurumu || "Bilinmiyor"}</div>
+                    `;
+                } else if (isKislak) {
+                    ekSatirlar = "";
+                } else {
+                    ekSatirlar = `
+                        <div><b>Bulunduğu Bitki Türü:</b> ${data.tuzakBitkiTuru || "Belirtilmedi"}</div>
+                        <div><b>Feromon Etki Alanı:</b> ${data.tuzakEtkiAlani || 0} da</div>
+                        <div><b>İlk Asıldığı Tarih:</b> ${data.tuzakİlkAsiliTarih || "Belirtilmedi"}</div>
+                    `;
+                }
 
                 detayDiv.innerHTML = `
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -5420,6 +5565,7 @@
                         <div><b>Köy:</b> ${koyStr}</div>
                         <div><b>Tuzak Tipi:</b> ${resolvedTip}</div>
                         <div><b>${labelName}:</b> ${labelVal}</div>
+                        ${ekSatirlar}
                     </div>
                 `;
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
@@ -5872,10 +6018,24 @@
                     saveData.tupSayisi = tupSayisiStr ? parseInt(tupSayisiStr) : 0;
                     saveData.tuzakNo = "";
                     saveData.bocekSayisi = 0;
+                    
+                    var yumurtaPaketStr = document.getElementById('ariYumurtaPaketSayisi') ? document.getElementById('ariYumurtaPaketSayisi').value.trim() : "";
+                    saveData.ariYumurtaPaketSayisi = yumurtaPaketStr ? parseInt(yumurtaPaketStr) : 0;
+                    saveData.ariParazitlenmeDurumu = document.getElementById('ariParazitlenmeDurumu') ? document.getElementById('ariParazitlenmeDurumu').value : "Bilinmiyor";
+                } else if (tuzakTipi === "Kışlak Mücadelesi") {
+                    var haneSayisiStr = document.getElementById('kislakHaneSayisi') ? document.getElementById('kislakHaneSayisi').value.trim() : "";
+                    saveData.kislakHaneSayisi = haneSayisiStr ? parseInt(haneSayisiStr) : 1;
+                    saveData.tuzakNo = "";
+                    saveData.bocekSayisi = 0;
                 } else {
                     saveData.tuzakNo = document.getElementById('tuzakNo').value.trim();
                     var bocekSayisi = document.getElementById('bocekSayisi').value.trim();
                     saveData.bocekSayisi = bocekSayisi ? parseInt(bocekSayisi) : 0;
+                    
+                    saveData.tuzakBitkiTuru = document.getElementById('tuzakBitkiTuru') ? document.getElementById('tuzakBitkiTuru').value : "Fındık";
+                    var etkiAlaniStr = document.getElementById('tuzakEtkiAlani') ? document.getElementById('tuzakEtkiAlani').value.trim() : "";
+                    saveData.tuzakEtkiAlani = etkiAlaniStr ? parseFloat(etkiAlaniStr) : 0;
+                    saveData.tuzakİlkAsiliTarih = document.getElementById('tuzakİlkAsiliTarih') ? document.getElementById('tuzakİlkAsiliTarih').value : "";
                 }
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
                 logTuru = "Bahçe";
