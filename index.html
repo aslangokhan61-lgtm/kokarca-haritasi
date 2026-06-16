@@ -1807,7 +1807,7 @@
                                 skalası: <span style="color:#fbbf24; font-weight:700;">■Amber</span> (0-19), <span
                                     style="color:#ea580c; font-weight:700;">■Turuncu</span> (20-49), <span
                                     style="color:#9333ea; font-weight:700;">■Mor</span> (50+).</li>
-                            <li style="margin-bottom: 0;"><b>🔴 Samuray Arısı Salımı:</b> Kırmızı yuvarlak işaretçi. Bu
+                            <li style="margin-bottom: 0;"><b>⭐ Samuray Arısı Salımı:</b> Kırmızı yıldız işaretçi. Bu
                                 kayıt türünde böcek sayısı yerine <b>salınan tüp sayısı</b> girilir. Sayım kaydı
                                 tutulmaz.</li>
                         </ul>
@@ -3774,16 +3774,26 @@
             }
 
             var isArı = (typeVal === "Samuray Arısı Salımı");
+            if (isArı) {
+                var svgHtml = '<svg viewBox="0 0 24 24" width="38" height="38" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));">' +
+                              '<polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#ef4444" stroke="white" stroke-width="1.5" />' +
+                              '<text x="12" y="12" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7px" font-family="sans-serif" font-weight="900">A</text>' +
+                              '<text x="12" y="17.5" dominant-baseline="middle" text-anchor="middle" fill="#fef08a" font-size="6.5px" font-family="sans-serif" font-weight="900">' + tupCount + '</text>' +
+                              '</svg>';
+                return L.divIcon({
+                    className: 'custom-marker marker-ari-svg',
+                    html: '<div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">' + svgHtml + '</div>',
+                    iconSize: [42, 42],
+                    iconAnchor: [21, 21],
+                    popupAnchor: [0, -18]
+                });
+            }
+
             var isYapiskan = (typeVal === "Yapışkan");
-
             var shapeClass = isYapiskan ? "marker-yapiskan" : "marker-huni";
-            if (isArı) shapeClass = "marker-ari";
-
             var colorClass = "";
 
-            if (isArı) {
-                colorClass = ""; // Using direct CSS background for marker-ari
-            } else if (isYapiskan) {
+            if (isYapiskan) {
                 if (bocekCount >= 50) colorClass = "marker-yp-cok";
                 else if (bocekCount >= 20) colorClass = "marker-yp-orta";
                 else colorClass = "marker-yp-az";
@@ -3996,7 +4006,7 @@
                     if (kat === "Tarımsal Hastalık ve Zararlılar") {
                         var tipIkonStr = "🟢 Huni (Funnel) Tuzak";
                         if (gData.tuzakTipi === "Yapışkan") tipIkonStr = "🟨 Yapışkan Tuzak";
-                        else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "🔴 Samuray Arısı Salımı";
+                        else if (gData.tuzakTipi === "Samuray Arısı Salımı") tipIkonStr = "⭐ Samuray Arısı Salımı";
                         else if (gData.tuzakTipi === "Kışlak Mücadelesi") tipIkonStr = "🏠 Kışlak Mücadelesi";
 
                         popupIcerik += "<b>Kayıt Türü:</b> " + tipIkonStr + "<br>";
