@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>DOCX Table and Text Extractor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { border-collapse: collapse; margin: 15px 0; width: 100%; }
+        th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+        th { background: #eee; }
+        .doc-content { border: 1px solid #ccc; padding: 20px; background: #fafafa; margin-top: 20px; }
+        p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h2>Select DOCX file to extract contents:</h2>
+    <input type="file" id="fileInput">
+    <div id="status"></div>
+    <div id="output" class="doc-content"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('status').innerText = "Loading " + file.name + "...";
+            
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                JSZip.loadAsync(evt.target.result).then(function(zip) {
+                    var docFile = zip.file("word/document.xml");
+                    if (!docFile) throw new Error("word/document.xml not found");
+                    return docFile.async("text");
+                }).then(function(xmlText) {
+                    document.getElementById('status').innerText = "Parsing XML...";
+                    var parser = new DOMParser();
+                    var xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                    var body = xmlDoc.getElementsByTagName("w:body")[0];
+                    if (!body) throw new Error("w:body element not found");
+                    
+                    var outContainer = document.getElementById('output');
+                    outContainer.innerHTML = "";
+                    
+                    // Iterate child elements of body
+                    for (var i = 0; i < body.childNodes.length; i++) {
+                        var node = body.childNodes[i];
+                        if (node.nodeName === "w:p") {
+                            var pText = getParagraphText(node);
+                            if (pText.trim()) {
+                                var p = document.createElement('p');
+                                p.innerText = pText;
+                                outContainer.appendChild(p);
+                            }
+                        } else if (node.nodeName === "w:tbl") {
+                            var tbl = parseTable(node);
+                            outContainer.appendChild(tbl);
+                        }
+                    }
+                    
+                    document.getElementById('status').innerText = "Extraction complete.";
+                }).catch(function(err) {
+                    document.getElementById('status').innerText = "Error: " + err.message;
+                    console.error(err);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function getParagraphText(pNode) {
+            var tElements = pNode.getElementsByTagName("w:t");
+            var text = "";
+            for (var i = 0; i < tElements.length; i++) {
+                text += tElements[i].textContent;
+            }
+            return text;
+        }
+
+        function parseTable(tblNode) {
+            var htmlTbl = document.createElement('table');
+            var trs = tblNode.getElementsByTagName("w:tr");
+            for (var i = 0; i < trs.length; i++) {
+                var xmlTr = trs[i];
+                var htmlTr = document.createElement('tr');
+                
+                // For nested tables, get only direct child cells of this row
+                var tcs = [];
+                for (var j = 0; j < xmlTr.childNodes.length; j++) {
+                    if (xmlTr.childNodes[j].nodeName === "w:tc") {
+                        tcs.push(xmlTr.childNodes[j]);
+                    }
+                }
+                
+                for (var j = 0; j < tcs.length; j++) {
+                    var xmlTc = tcs[j];
+                    var htmlTd = document.createElement('td');
+                    
+                    // Extract text from paragraphs in this cell
+                    var cellText = "";
+                    var cellPs = xmlTc.getElementsByTagName("w:p");
+                    for (var k = 0; k < cellPs.length; k++) {
+                        cellText += getParagraphText(cellPs[k]) + "\n";
+                    }
+                    htmlTd.innerText = cellText.trim();
+                    htmlTr.appendChild(htmlTd);
+                }
+                htmlTbl.appendChild(htmlTr);
+            }
+            return htmlTbl;
+        }
+    </script>
+</body>
+</html>
