@@ -2435,7 +2435,7 @@
                 <label
                     style="font-weight: 700; color: var(--text-dark); font-size: 13px; display: block; margin-bottom: 8px;">Rapor
                     Türü</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div id="excelRaporTuruSecenekleri" style="display: flex; flex-direction: column; gap: 8px;">
                     <label
                         style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;"
                         class="excel-rapor-tur-label">
@@ -4974,6 +4974,7 @@
         function excelModulDegisti() {
             var selectedModulId = document.getElementById('excelModulDropdown').value;
             var tipDropdown = document.getElementById('excelTipDropdown');
+            var seceneklerDiv = document.getElementById('excelRaporTuruSecenekleri');
             if (!tipDropdown) return;
 
             var m = tumModuller.find(x => x.id === selectedModulId);
@@ -4986,16 +4987,87 @@
                 tipDropdown.innerHTML += '<option value="Yapışkan">Yapışkan Tuzak</option>';
                 tipDropdown.innerHTML += '<option value="Samuray Arısı Salımı">Samuray Arısı Salımı</option>';
                 tipDropdown.innerHTML += '<option value="Kışlak Mücadelesi">Kışlak Mücadelesi</option>';
+
+                if (seceneklerDiv) {
+                    seceneklerDiv.innerHTML = `
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="detayli" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">📅 Detaylı Tarihsel Veri Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Tuzak listeleri, sayımlar, gözlemler ve tarih bazlı pivot görünüm.</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="bakanlik" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🏛️ Bakanlık Yıl Sonu Özet Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">İlçe bazlı mücadele alanı, tuzak sayısı, salınan arı ve kışlak istatistikleri.</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="samuray_ek1" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🐝 Samuray Arısı EK-1 Salim Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Biyolojik mücadele kapsamındaki salım koordinatları ve tüp adetleri.</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="urun_bazli" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🌿 Ürün Bazlı Mücadele Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Ürün bazlı mücadele metotları, uygulama adetleri ve kullanılan feromon detayları.</span>
+                            </div>
+                        </label>
+                    `;
+                }
             } else if (m.kategori === "Meyve ve Sebze Bahçeleri") {
                 var meyveler = ["Fındık", "Mandalina", "Kivi", "Elma", "Mısır", "Karalahana", "Üzüm", "İncir", "Dut", "Kiraz", "Kızılağaç", "Hurma", "Yenidünya", "Muşmula"];
                 meyveler.forEach(function(meyve) {
                     tipDropdown.innerHTML += '<option value="' + meyve + '">' + meyve + '</option>';
                 });
+
+                if (seceneklerDiv) {
+                    seceneklerDiv.innerHTML = `
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="detayli" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">📅 Detaylı Tarihsel Veri Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Bahçe listeleri, koordinatlar, alanlar ve tarih bazlı ölçüm geçmişi.</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="bahce_ozet" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🌳 Bahçe Üretim Özet Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Ürün bazlı toplam bahçe alanı, ağaç sayıları ve ortalama bahçe büyüklükleri.</span>
+                            </div>
+                        </label>
+                    `;
+                }
             } else if (m.kategori === "Örtüaltı Yetiştiriciliği") {
                 tipDropdown.innerHTML += '<option value="Plastik Sera">Plastik Sera</option>';
                 tipDropdown.innerHTML += '<option value="Cam Sera">Cam Sera</option>';
                 tipDropdown.innerHTML += '<option value="Yüksek Tünel">Yüksek Tünel</option>';
                 tipDropdown.innerHTML += '<option value="Topraksız Tarım Serası">Topraksız Tarım Serası</option>';
+
+                if (seceneklerDiv) {
+                    seceneklerDiv.innerHTML = `
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="detayli" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">📅 Detaylı Tarihsel Veri Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Sera listeleri, tipleri, yetiştirilen ürünler ve alan değişim geçmişi.</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="sera_ozet" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🏠 Sera Yetiştiriciliği Özet Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Sera tiplerine ve yetiştirilen ürünlere göre toplam sera alanı ve sayıları.</span>
+                            </div>
+                        </label>
+                    `;
+                }
             }
         }
 
@@ -5150,6 +5222,10 @@
                 samurayArisiEk1RaporuExcelIndir(kapsam, veriler);
             } else if (raporTuru === 'urun_bazli') {
                 urunBazliMucadeleExcelIndir(kapsam, veriler);
+            } else if (raporTuru === 'bahce_ozet') {
+                bahceOzetRaporuExcelIndir(kapsam, veriler);
+            } else if (raporTuru === 'sera_ozet') {
+                seraOzetRaporuExcelIndir(kapsam, veriler);
             }
         }
 
@@ -5606,6 +5682,237 @@
             logEkle("Ürün Bazlı Excel İndirildi", "Kapsam: " + kapsam);
         }
 
+        function bahceOzetRaporuExcelIndir(kapsam, opsiyonelVeriler) {
+            if (typeof XLSX === 'undefined') {
+                alert("Excel modülü yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.");
+                return;
+            }
+
+            var workbook = XLSX.utils.book_new();
+            var sheetData = [];
+
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliTip = filtreler.tip;
+
+            var yil = new Date().getFullYear();
+            var title2 = (seciliIlce ? seciliIlce + " İlçesi " : "Rize İl Geneli ") + yil + " Yılı Bahçe Üretim Özet İstatistikleri";
+
+            sheetData.push(["RİZE İLİ MEYVE VE SEBZE BAHÇELERİ ÜRETİM ÖZET RAPORU"]);
+            sheetData.push([title2]);
+            sheetData.push([]); // Boş satır
+
+            sheetData.push([
+                'Ürün Türü', 
+                'Bahçe Sayısı', 
+                'Toplam Bahçe Alanı (m²)', 
+                'Toplam Ağaç/Bitki Sayısı', 
+                'Ortalama Bahçe Alanı (m²)', 
+                'Ortalama Ağaç/Bitki Sayısı'
+            ]);
+
+            var summary = {};
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var urunTuru = data.tuzakTipi || "Diğer";
+                if (seciliTip !== 'Tümü' && urunTuru !== seciliTip) continue;
+
+                var alan = parseFloat(data.bahceAlani) || 0;
+                var agac = parseInt(data.agacSayisi) || 0;
+
+                if (!summary[urunTuru]) {
+                    summary[urunTuru] = {
+                        sayi: 0,
+                        toplamAlan: 0,
+                        toplamAgac: 0
+                    };
+                }
+
+                summary[urunTuru].sayi++;
+                summary[urunTuru].toplamAlan += alan;
+                summary[urunTuru].toplamAgac += agac;
+            }
+
+            var sortedUrunler = Object.keys(summary).sort(function(a, b) {
+                return a.localeCompare(b, 'tr');
+            });
+
+            var genelBahceSayisi = 0;
+            var genelAlan = 0;
+            var genelAgac = 0;
+
+            sortedUrunler.forEach(function(urun) {
+                var s = summary[urun];
+                var ortAlan = s.sayi > 0 ? Math.round(s.toplamAlan / s.sayi) : 0;
+                var ortAgac = s.sayi > 0 ? Math.round(s.toplamAgac / s.sayi) : 0;
+
+                sheetData.push([
+                    urun + " Bahçesi",
+                    s.sayi,
+                    s.toplamAlan,
+                    s.toplamAgac,
+                    ortAlan,
+                    ortAgac
+                ]);
+
+                genelBahceSayisi += s.sayi;
+                genelAlan += s.toplamAlan;
+                genelAgac += s.toplamAgac;
+            });
+
+            var genelOrtAlan = genelBahceSayisi > 0 ? Math.round(genelAlan / genelBahceSayisi) : 0;
+            var genelOrtAgac = genelBahceSayisi > 0 ? Math.round(genelAgac / genelBahceSayisi) : 0;
+
+            sheetData.push([
+                'GENEL TOPLAM',
+                genelBahceSayisi,
+                genelAlan,
+                genelAgac,
+                genelOrtAlan,
+                genelOrtAgac
+            ]);
+
+            var ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+            // Kolon Genişliklerini Ayarla
+            ws['!cols'] = [
+                { wch: 20 }, // Ürün Türü
+                { wch: 15 }, // Bahçe Sayısı
+                { wch: 22 }, // Toplam Bahçe Alanı
+                { wch: 22 }, // Toplam Ağaç/Bitki Sayısı
+                { wch: 25 }, // Ortalama Bahçe Alanı
+                { wch: 25 }  // Ortalama Ağaç/Bitki Sayısı
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, ws, "Bahçe Üretim Özeti");
+
+            var filename = "Bahce_Uretim_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
+            XLSX.writeFile(workbook, filename);
+            
+            logEkle("Bahçe Özet Excel İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function seraOzetRaporuExcelIndir(kapsam, opsiyonelVeriler) {
+            if (typeof XLSX === 'undefined') {
+                alert("Excel modülü yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyin.");
+                return;
+            }
+
+            var workbook = XLSX.utils.book_new();
+            var sheetData = [];
+
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliTip = filtreler.tip;
+
+            var yil = new Date().getFullYear();
+            var title2 = (seciliIlce ? seciliIlce + " İlçesi " : "Rize İl Geneli ") + yil + " Yılı Sera Yetiştiriciliği Özet İstatistikleri";
+
+            sheetData.push(["RİZE İLİ ÖRTÜALTI SERA YETİŞTİRİCİLİĞİ ÖZET RAPORU"]);
+            sheetData.push([title2]);
+            sheetData.push([]); // Boş satır
+
+            sheetData.push([
+                'Sera Tipi', 
+                'Sera Sayısı', 
+                'Toplam Sera Alanı (m²)', 
+                'Ortalama Sera Alanı (m²)', 
+                'Yetiştirilen Ürünler (Özet)'
+            ]);
+
+            var summary = {};
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var seraTipi = data.tuzakTipi || "Diğer";
+                if (seciliTip !== 'Tümü' && seraTipi !== seciliTip) continue;
+
+                var alan = parseFloat(data.seraAlani) || 0;
+                var urun = (data.yetiştirilenUrun || "").trim();
+
+                if (!summary[seraTipi]) {
+                    summary[seraTipi] = {
+                        sayi: 0,
+                        toplamAlan: 0,
+                        urunlerSet: new Set()
+                    };
+                }
+
+                summary[seraTipi].sayi++;
+                summary[seraTipi].toplamAlan += alan;
+                if (urun && urun !== "-" && urun !== "") {
+                    urun.split(',').forEach(function(u) {
+                        var trimmed = u.trim();
+                        if (trimmed) summary[seraTipi].urunlerSet.add(trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase());
+                    });
+                }
+            }
+
+            var sortedTipler = Object.keys(summary).sort(function(a, b) {
+                return a.localeCompare(b, 'tr');
+            });
+
+            var genelSeraSayisi = 0;
+            var genelAlan = 0;
+            var genelUrunlerSet = new Set();
+
+            sortedTipler.forEach(function(tip) {
+                var s = summary[tip];
+                var ortAlan = s.sayi > 0 ? Math.round(s.toplamAlan / s.sayi) : 0;
+                var urunlerList = Array.from(s.urunlerSet).join(', ') || '-';
+
+                sheetData.push([
+                    tip,
+                    s.sayi,
+                    s.toplamAlan,
+                    ortAlan,
+                    urunlerList
+                ]);
+
+                genelSeraSayisi += s.sayi;
+                genelAlan += s.toplamAlan;
+                s.urunlerSet.forEach(function(u) { genelUrunlerSet.add(u); });
+            });
+
+            var genelOrtAlan = genelSeraSayisi > 0 ? Math.round(genelAlan / genelSeraSayisi) : 0;
+            var genelUrunlerList = Array.from(genelUrunlerSet).join(', ') || '-';
+
+            sheetData.push([
+                'GENEL TOPLAM',
+                genelSeraSayisi,
+                genelAlan,
+                genelOrtAlan,
+                genelUrunlerList
+            ]);
+
+            var ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+            // Kolon Genişliklerini Ayarla
+            ws['!cols'] = [
+                { wch: 25 }, // Sera Tipi
+                { wch: 15 }, // Sera Sayısı
+                { wch: 22 }, // Toplam Alan
+                { wch: 22 }, // Ortalama Alan
+                { wch: 35 }  // Yetiştirilen Ürünler
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, ws, "Sera Yetiştiriciliği Özeti");
+
+            var filename = "Sera_Yetistiriciligi_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
+            XLSX.writeFile(workbook, filename);
+            
+            logEkle("Sera Özet Excel İndirildi", "Kapsam: " + kapsam);
+        }
+
         function normalizeDateStr(dateStr) {
             if (!dateStr) return 'Tarihsiz';
             var parts = dateStr.split('.');
@@ -5770,14 +6077,14 @@
             // SAYFA 2: Ziyaret / Sayım Geçmişi (Tüm Kayıtlar Alt Alta)
             var s2Data = [];
             var ziyaretKayitlari = [];
-            for (var gKey in tuzakVerileri) {
-                var data = tuzakVerileri[gKey];
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
 
                 // İlçe bazlı kısıtlama
-                if (finalKapsam === 'kendi' && aktifKullanici && data.ilce !== aktifKullanici.ilce) continue;
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
 
                 // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
-                if (seciliRaporFiltre !== 'Tümü' && seciliRaporFiltre !== 'Trend' && data.tuzakTipi !== seciliRaporFiltre) continue;
+                if (seciliTip !== 'Tümü' && data.tuzakTipi !== seciliTip) continue;
 
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
