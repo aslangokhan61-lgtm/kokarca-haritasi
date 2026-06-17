@@ -2425,7 +2425,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3
                     style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
-                    📊 Excel Raporlama Paneli
+                    📊 Raporlama Paneli
                 </h3>
                 <span class="close-btn" style="color: #64748b;" onclick="kapatExcelKapsamModal()">&times;</span>
             </div>
@@ -2533,12 +2533,15 @@
                 </div>
             </div>
 
-            <!-- İndirme Butonu ve İptal -->
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+            <!-- İndirme Butonları ve İptal -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap;">
                 <button class="btn btn-cancel" onclick="kapatExcelKapsamModal()">İptal</button>
                 <button class="btn btn-save"
-                    style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white;"
-                    onclick="excelRaporuIndir()">📥 Raporu İndir</button>
+                    style="background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; display: inline-flex; align-items: center; gap: 4px;"
+                    onclick="wordRaporuIndir()">📝 Word İndir</button>
+                <button class="btn btn-save"
+                    style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; display: inline-flex; align-items: center; gap: 4px;"
+                    onclick="excelRaporuIndir()">📊 Excel İndir</button>
             </div>
         </div>
     </div>
@@ -5289,7 +5292,8 @@
             sheetData.push([
                 'İlçe Adı',
                 'Mücadele Yapılan Alan (da)',
-                'Kullanılan Feromonlu Tuzak Sayısı (adet)',
+                'Kullanılan Feromonlu Huni Tuzak Sayısı (adet)',
+                'Kullanılan Yapışkan Tuzak Sayısı (adet)',
                 'Salınan Tüp Sayısı (adet)',
                 'Biyolojik Mücadele İçin Salım Yapılan Samuray Arısı (adet)',
                 'Kışlak Mücadelesi Yapılan Hane Sayısı (adet)'
@@ -5301,7 +5305,8 @@
             rizeIlceleriList.forEach(function (ilceName) {
                 ilceIstatistikleri[ilceName] = {
                     mucadeleAlani: 0,
-                    tuzakSayisi: 0,
+                    huniSayisi: 0,
+                    yapiskanSayisi: 0,
                     tupSayisi: 0,
                     samuraySayisi: 0,
                     kislakHaneSayisi: 0
@@ -5323,7 +5328,8 @@
                 if (!ilceIstatistikleri[ilce]) {
                     ilceIstatistikleri[ilce] = {
                         mucadeleAlani: 0,
-                        tuzakSayisi: 0,
+                        huniSayisi: 0,
+                        yapiskanSayisi: 0,
                         tupSayisi: 0,
                         samuraySayisi: 0,
                         kislakHaneSayisi: 0
@@ -5332,8 +5338,19 @@
 
                 var tip = data.tuzakTipi || "Huni";
 
-                if (tip === "Huni" || tip === "Yapışkan") {
-                    ilceIstatistikleri[ilce].tuzakSayisi++;
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (tip === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                if (tip === "Huni") {
+                    ilceIstatistikleri[ilce].huniSayisi++;
+                    ilceIstatistikleri[ilce].mucadeleAlani += (parseFloat(data.tuzakEtkiAlani) || 0);
+                } else if (tip === "Yapışkan") {
+                    ilceIstatistikleri[ilce].yapiskanSayisi++;
                     ilceIstatistikleri[ilce].mucadeleAlani += (parseFloat(data.tuzakEtkiAlani) || 0);
                 } else if (tip === "Samuray Arısı Salımı") {
                     var tps = parseInt(data.tupSayisi) || 0;
@@ -5355,7 +5372,8 @@
             }
 
             var toplamMucadeleAlani = 0;
-            var toplamTuzakSayisi = 0;
+            var toplamHuniSayisi = 0;
+            var toplamYapiskanSayisi = 0;
             var toplamTupSayisi = 0;
             var toplamSamuraySayisi = 0;
             var toplamKislakHane = 0;
@@ -5365,14 +5383,16 @@
                 sheetData.push([
                     ilce,
                     stats.mucadeleAlani,
-                    stats.tuzakSayisi,
+                    stats.huniSayisi,
+                    stats.yapiskanSayisi,
                     stats.tupSayisi,
                     stats.samuraySayisi,
                     stats.kislakHaneSayisi
                 ]);
 
                 toplamMucadeleAlani += stats.mucadeleAlani;
-                toplamTuzakSayisi += stats.tuzakSayisi;
+                toplamHuniSayisi += stats.huniSayisi;
+                toplamYapiskanSayisi += stats.yapiskanSayisi;
                 toplamTupSayisi += stats.tupSayisi;
                 toplamSamuraySayisi += stats.samuraySayisi;
                 toplamKislakHane += stats.kislakHaneSayisi;
@@ -5381,7 +5401,8 @@
             sheetData.push([
                 'TOPLAM',
                 toplamMucadeleAlani,
-                toplamTuzakSayisi,
+                toplamHuniSayisi,
+                toplamYapiskanSayisi,
                 toplamTupSayisi,
                 toplamSamuraySayisi,
                 toplamKislakHane
@@ -5555,6 +5576,14 @@
 
                 var tip = data.tuzakTipi || "Huni";
                 if (tip !== "Huni" && tip !== "Yapışkan") continue;
+
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (tip === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
 
                 if (tip === "Huni") {
                     huniCount++;
@@ -5952,6 +5981,14 @@
                 // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
                 if (seciliTip !== 'Tümü' && data.tuzakTipi !== seciliTip) continue;
 
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (data.tuzakTipi === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
                 var kayitlar = data.kayitlar || [];
                 var tarihBazliSayim = {};
 
@@ -6086,6 +6123,14 @@
                 // Rapor sekmesi filtre kısıtlaması (Huni, Yapışkan, Tümü vb.)
                 if (seciliTip !== 'Tümü' && data.tuzakTipi !== seciliTip) continue;
 
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (data.tuzakTipi === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
                     ziyaretKayitlari.push({
@@ -6215,6 +6260,939 @@
             var safeModulAd = slugify(aktifModul ? aktifModul.ad : "Modul");
             var filename = safeModulAd + "_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
             XLSX.writeFile(workbook, filename);
+        }
+
+        // 📝 Word (.doc) Raporlama Entegrasyonu 📝
+        function saveAsWordFile(htmlContent, filename) {
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+                         "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+                         "xmlns='http://www.w3.org/TR/REC-html40'>" +
+                         "<head><title>Rapor</title><meta charset='utf-8'>" +
+                         "<style>" +
+                         "body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 11pt; color: #1e293b; line-height: 1.5; margin: 1in; }" +
+                         "h1 { font-size: 17pt; font-weight: bold; color: #004d24; text-align: center; margin-top: 10px; margin-bottom: 5px; text-transform: uppercase; }" +
+                         "h2 { font-size: 13pt; font-weight: bold; color: #008e43; border-bottom: 2.5px solid #008e43; padding-bottom: 4px; margin-top: 25px; margin-bottom: 12px; }" +
+                         "h3 { font-size: 11.5pt; font-weight: bold; color: #005fa6; margin-top: 15px; margin-bottom: 5px; }" +
+                         "table { border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 15px; }" +
+                         "th, td { border: 1.5px solid #cbd5e1; padding: 10px; text-align: left; vertical-align: top; font-size: 9.5pt; }" +
+                         "th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border-bottom: 2px solid #94a3b8; }" +
+                         ".header-container { text-align: center; margin-bottom: 25px; border-bottom: 1px double #94a3b8; padding-bottom: 15px; }" +
+                         ".gov-header { font-size: 13pt; font-weight: bold; color: #1e293b; margin: 0; }" +
+                         ".sub-header { font-size: 11pt; color: #475569; margin: 5px 0 0 0; }" +
+                         ".footer-line { font-size: 8.5pt; color: #64748b; text-align: right; margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 5px; }" +
+                         ".summary-box { background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-left: 5px solid #008e43; padding: 15px; margin-bottom: 20px; border-radius: 6px; font-size: 10.5pt; }" +
+                         "tr.total-row { font-weight: bold; background-color: #f8fafc; border-top: 2px solid #94a3b8; }" +
+                         "</style>" +
+                         "</head><body>";
+            var footer = "<p class='footer-line'>Tuzak Takip ve Saha İzleme Sistemi - Word Raporlama Modülü</p></body></html>";
+            var fullHtml = header + htmlContent + footer;
+            var blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function toTurkishUpperCaseWord(str) {
+            if (!str) return '';
+            return str.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+        }
+
+        function wordRaporuIndir() {
+            var selectedRadio = document.querySelector('input[name="excelRaporTuru"]:checked');
+            if (!selectedRadio) {
+                alert("Lütfen bir rapor türü seçin.");
+                return;
+            }
+            var raporTuru = selectedRadio.value;
+            var kapsam = 'kendi';
+
+            var kapsamAlani = document.getElementById('excelKapsamSecimAlani');
+            if (kapsamAlani && kapsamAlani.style.display !== 'none') {
+                var selectedKapsamRadio = document.querySelector('input[name="excelKapsam"]:checked');
+                if (selectedKapsamRadio) {
+                    kapsam = selectedKapsamRadio.value;
+                }
+            }
+
+            var selectedModulId = document.getElementById('excelModulDropdown').value;
+            var targetModul = tumModuller.find(x => x.id === selectedModulId);
+
+            if (!targetModul) {
+                alert("Seçilen modül bulunamadı.");
+                return;
+            }
+
+            if (targetModul.id === (aktifModul ? aktifModul.id : 'kahverengi_kokarca')) {
+                kapatExcelKapsamModal();
+                runWordReport(raporTuru, kapsam, tuzakVerileri, targetModul);
+            } else {
+                var dlBtn = document.querySelector('button[onclick="wordRaporuIndir()"]');
+                var originalText = dlBtn.innerHTML;
+                dlBtn.innerHTML = "⏳ Veriler Yükleniyor...";
+                dlBtn.disabled = true;
+
+                db.rawCollection(targetModul.koleksiyon).get().then(function(qs) {
+                    var tempTuzakVerileri = cozumleSnapshotVerileri(qs);
+                    dlBtn.innerHTML = originalText;
+                    dlBtn.disabled = false;
+                    kapatExcelKapsamModal();
+                    runWordReport(raporTuru, kapsam, tempTuzakVerileri, targetModul);
+                }).catch(function(err) {
+                    dlBtn.innerHTML = originalText;
+                    dlBtn.disabled = false;
+                    alert("Veri indirme hatası: " + err.message);
+                });
+            }
+        }
+
+        function runWordReport(raporTuru, kapsam, veriler, targetModulObj) {
+            if (raporTuru === 'detayli') {
+                tarihBazliWordIndir(kapsam, veriler, targetModulObj);
+            } else if (raporTuru === 'bakanlik') {
+                bakanlikYilSonuRaporuWordIndir(kapsam, veriler);
+            } else if (raporTuru === 'samuray_ek1') {
+                samurayArisiEk1RaporuWordIndir(kapsam, veriler);
+            } else if (raporTuru === 'urun_bazli') {
+                urunBazliMucadeleWordIndir(kapsam, veriler);
+            } else if (raporTuru === 'bahce_ozet') {
+                bahceOzetRaporuWordIndir(kapsam, veriler);
+            } else if (raporTuru === 'sera_ozet') {
+                seraOzetRaporuWordIndir(kapsam, veriler);
+            }
+        }
+
+        function tarihBazliWordIndir(kapsam, opsiyonelVeriler, targetModulObj) {
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliTip = filtreler.tip;
+
+            var tumTarihlerSet = new Set();
+            var tuzakSatirlari = [];
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+                if (seciliTip !== 'Tümü' && data.tuzakTipi !== seciliTip) continue;
+
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (data.tuzakTipi === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                var kayitlar = data.kayitlar || [];
+                var tarihBazliSayim = {};
+                kayitlar.forEach(function (k) {
+                    var t = normalizeDateStr(k.tarih);
+                    tumTarihlerSet.add(t);
+                    tarihBazliSayim[t] = (tarihBazliSayim[t] || 0) + (parseInt(k.bocekSayisi) || 0);
+                });
+
+                var ondalikStr = data.lat !== undefined && data.lng !== undefined ? parseFloat(data.lat).toFixed(6) + ", " + parseFloat(data.lng).toFixed(6) : '-';
+                var dmsStr = data.lat !== undefined && data.lng !== undefined ? toDMS(data.lat, data.lng) : '-';
+
+                tuzakSatirlari.push({
+                    il: data.il || '-',
+                    ilce: data.ilce || '-',
+                    koy: data.koy || data.ad || '-',
+                    tuzakNo: data.tuzakNo || '-',
+                    tuzakTipi: data.tuzakTipi || 'Huni',
+                    ondalik: ondalikStr,
+                    dms: dmsStr,
+                    toplamBocek: data.bocekSayisi || 0,
+                    tarihSayimlari: tarihBazliSayim,
+                    bahceAlani: data.bahceAlani || 0,
+                    agacSayisi: data.agacSayisi || 0,
+                    seraAlani: data.seraAlani || 0,
+                    yetiştirilenUrun: data.yetiştirilenUrun || '-',
+                    tuzakBitkiTuru: data.tuzakBitkiTuru || '-',
+                    tuzakEtkiAlani: data.tuzakEtkiAlani || 0,
+                    tuzakİlkAsiliTarih: data.tuzakİlkAsiliTarih || '-',
+                    tupSayisi: data.tupSayisi || 0,
+                    ariYumurtaPaketSayisi: data.ariYumurtaPaketSayisi || 0,
+                    ariParazitlenmeDurumu: data.ariParazitlenmeDurumu || '-',
+                    kislakHaneSayisi: data.kislakHaneSayisi || 0
+                });
+            }
+
+            tuzakSatirlari.sort(function (a, b) {
+                var c1 = a.koy.localeCompare(b.koy, 'tr');
+                if (c1 !== 0) return c1;
+                var n1 = parseInt(a.tuzakNo) || 0;
+                var n2 = parseInt(b.tuzakNo) || 0;
+                if (n1 !== 0 && n2 !== 0) return n1 - n2;
+                return String(a.tuzakNo).localeCompare(String(b.tuzakNo), 'tr');
+            });
+
+            var tumTarihler = Array.from(tumTarihlerSet).sort(function (a, b) {
+                var da = parseTurkishDate(a), db = parseTurkishDate(b);
+                if (da && db) return da - db;
+                return a.localeCompare(b, 'tr');
+            });
+
+            var kat = (targetModulObj && targetModulObj.kategori) ? targetModulObj.kategori : ((aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar");
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            var modulAd = targetModulObj ? targetModulObj.ad : (aktifModul ? aktifModul.ad : "Modül");
+            var baslik = toTurkishUpperCaseWord(modulAd) + " DETAYLI TARİHSEL VERİ RAPORU";
+            html += '<h1>' + baslik + '</h1>';
+            
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            var filtreMetni = seciliTip === "Tümü" ? "Tüm Tipler" : seciliTip;
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + ' | Filtre: ' + filtreMetni + '</p>';
+
+            var secimLabel = "Tuzak";
+            if (kat === "Meyve ve Sebze Bahçeleri") secimLabel = "Bahçe";
+            else if (kat === "Örtüaltı Yetiştiriciliği") secimLabel = "Sera";
+
+            html += '<h2>1. ' + secimLabel + ' Listesi</h2>';
+            html += '<table><thead><tr>';
+
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                html += '<th>S.No</th><th>İlçe</th><th>Köy/Mahalle</th><th>Tuzak/Salım No</th><th>Tuzak Çeşidi</th><th>Ondalık Koordinat</th><th>Bulunduğu Bitki</th><th>Feromon Etki Alanı (da)</th><th>Asılı Tarih</th>';
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                html += '<th>S.No</th><th>İlçe</th><th>Köy/Mahalle</th><th>Bahçe Sahibi/Adı</th><th>Ürün Türü</th><th>Bahçe Alanı (m²)</th><th>Ağaç Sayısı</th><th>Ondalık Koordinat</th>';
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                html += '<th>S.No</th><th>İlçe</th><th>Köy/Mahalle</th><th>Sera Adı/Sahibi</th><th>Sera Tipi</th><th>Sera Alanı (m²)</th><th>Yetiştirilen Ürün</th><th>Ondalık Koordinat</th>';
+            }
+            html += '</tr></thead><tbody>';
+
+            tuzakSatirlari.forEach(function (ts, index) {
+                html += '<tr>';
+                if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                    var isSamuray = ts.tuzakTipi === "Samuray Arısı Salımı";
+                    var isKislak = ts.tuzakTipi === "Kışlak Mücadelesi";
+                    html += '<td>' + (index + 1) + '</td>' +
+                            '<td>' + ts.ilce + '</td>' +
+                            '<td>' + ts.koy + '</td>' +
+                            '<td>' + ts.tuzakNo + '</td>' +
+                            '<td>' + ts.tuzakTipi + '</td>' +
+                            '<td>' + ts.ondalik + '</td>' +
+                            '<td>' + ((!isSamuray && !isKislak) ? ts.tuzakBitkiTuru : '-') + '</td>' +
+                            '<td>' + ((!isSamuray && !isKislak) ? ts.tuzakEtkiAlani : '-') + '</td>' +
+                            '<td>' + ((!isSamuray && !isKislak) ? ts.tuzakİlkAsiliTarih : '-') + '</td>';
+                } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                    html += '<td>' + (index + 1) + '</td>' +
+                            '<td>' + ts.ilce + '</td>' +
+                            '<td>' + ts.koy + '</td>' +
+                            '<td>' + ts.tuzakNo + '</td>' +
+                            '<td>' + ts.tuzakTipi + '</td>' +
+                            '<td>' + ts.bahceAlani + '</td>' +
+                            '<td>' + ts.agacSayisi + '</td>' +
+                            '<td>' + ts.ondalik + '</td>';
+                } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                    html += '<td>' + (index + 1) + '</td>' +
+                            '<td>' + ts.ilce + '</td>' +
+                            '<td>' + ts.koy + '</td>' +
+                            '<td>' + ts.tuzakNo + '</td>' +
+                            '<td>' + ts.tuzakTipi + '</td>' +
+                            '<td>' + ts.seraAlani + '</td>' +
+                            '<td>' + ts.yetiştirilenUrun + '</td>' +
+                            '<td>' + ts.ondalik + '</td>';
+                }
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            // Bölüm 2: Ziyaret Geçmişi
+            html += '<h2>2. Ziyaret ve Gözlem Geçmişi</h2>';
+            html += '<table><thead><tr>';
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                html += '<th>S.No</th><th>Tarih</th><th>İlçe</th><th>Köy/Mahalle</th><th>Tuzak No</th><th>Tuzak Tipi</th><th>Sayılan Böcek</th><th>Personel</th><th>Gözlem Notu</th>';
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                html += '<th>S.No</th><th>Tarih</th><th>İlçe</th><th>Köy/Mahalle</th><th>Bahçe Sahibi/Adı</th><th>Ürün Türü</th><th>Ağaç/Bitki Sayısı</th><th>Personel</th><th>Gözlem Notu</th>';
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                html += '<th>S.No</th><th>Tarih</th><th>İlçe</th><th>Köy/Mahalle</th><th>Sera Adı/Sahibi</th><th>Sera Tipi</th><th>Sera Alanı (m²)</th><th>Personel</th><th>Gözlem Notu</th>';
+            }
+            html += '</tr></thead><tbody>';
+
+            var ziyaretKayitlari = [];
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+                if (seciliTip !== 'Tümü' && data.tuzakTipi !== seciliTip) continue;
+
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (data.tuzakTipi === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                var kayitlar = data.kayitlar || [];
+                kayitlar.forEach(function (k) {
+                    ziyaretKayitlari.push({
+                        tarihStr: normalizeDateStr(k.tarih),
+                        ilce: data.ilce || '-',
+                        koy: data.koy || data.ad || '-',
+                        tuzakNo: data.tuzakNo || '-',
+                        tuzakTipi: data.tuzakTipi || 'Huni',
+                        bocekSayisi: parseInt(k.bocekSayisi) || 0,
+                        gozlemNotu: k.gozlemNotu || '-',
+                        personel: k.kaydeden || 'Saha Personeli'
+                    });
+                });
+            }
+
+            ziyaretKayitlari.sort(function (a, b) {
+                var da = parseTurkishDate(a.tarihStr), db = parseTurkishDate(b.tarihStr);
+                if (da && db && (da - db !== 0)) return da - db;
+                var c1 = a.koy.localeCompare(b.koy, 'tr');
+                if (c1 !== 0) return c1;
+                var n1 = parseInt(a.tuzakNo) || 0;
+                var n2 = parseInt(b.tuzakNo) || 0;
+                if (n1 !== 0 && n2 !== 0) return n1 - n2;
+                return String(a.tuzakNo).localeCompare(String(b.tuzakNo), 'tr');
+            });
+
+            ziyaretKayitlari.forEach(function (z, index) {
+                html += '<tr>' +
+                        '<td>' + (index + 1) + '</td>' +
+                        '<td>' + z.tarihStr + '</td>' +
+                        '<td>' + z.ilce + '</td>' +
+                        '<td>' + z.koy + '</td>' +
+                        '<td>' + z.tuzakNo + '</td>' +
+                        '<td>' + z.tuzakTipi + '</td>' +
+                        '<td>' + z.bocekSayisi + '</td>' +
+                        '<td>' + z.personel + '</td>' +
+                        '<td>' + z.gozlemNotu + '</td>' +
+                        '</tr>';
+            });
+            html += '</tbody></table>';
+
+            // Bölüm 3: Tarih Bazlı Sayımlar
+            var s3Baslik = "Tarih Bazlı Sayımlar";
+            if (kat !== "Tarımsal Hastalık ve Zararlılar") s3Baslik = "Tarih Bazlı Ölçümler";
+
+            html += '<h2>3. ' + s3Baslik + '</h2>';
+            html += '<table><thead><tr>';
+            
+            var colHeaders = [];
+            if (kat === "Tarımsal Hastalık ve Zararlılar") {
+                colHeaders = ['İlçe', 'Köy/Mahalle', 'Tuzak No', 'Tuzak Çeşidi', 'Toplam Böcek'];
+            } else if (kat === "Meyve ve Sebze Bahçeleri") {
+                colHeaders = ['İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Son Ağaç Sayısı'];
+            } else if (kat === "Örtüaltı Yetiştiriciliği") {
+                colHeaders = ['İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Son Alan (m²)'];
+            }
+            
+            colHeaders.forEach(function (h) { html += '<th>' + h + '</th>'; });
+            tumTarihler.forEach(function (t) { html += '<th>' + t + '</th>'; });
+            html += '</tr></thead><tbody>';
+
+            tuzakSatirlari.forEach(function (ts) {
+                html += '<tr>';
+                html += '<td>' + ts.ilce + '</td>' +
+                        '<td>' + ts.koy + '</td>' +
+                        '<td>' + ts.tuzakNo + '</td>' +
+                        '<td>' + ts.tuzakTipi + '</td>' +
+                        '<td>' + ts.toplamBocek + '</td>';
+                tumTarihler.forEach(function (t) {
+                    html += '<td>' + (ts.tarihSayimlari[t] !== undefined ? ts.tarihSayimlari[t] : 0) + '</td>';
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            var safeModulAd = slugify(modulAd);
+            var filename = safeModulAd + "_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Detaylı Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function bakanlikYilSonuRaporuWordIndir(kapsam, opsiyonelVeriler) {
+            var ilceIstatistikleri = {};
+            var rizeIlceleriList = ["Merkez", "Ardeşen", "Çamlıhemşin", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "Hemşin", "İkizdere", "İyidere", "Kalkandere", "Pazar"];
+
+            rizeIlceleriList.forEach(function (ilceName) {
+                ilceIstatistikleri[ilceName] = {
+                    mucadeleAlani: 0,
+                    huniSayisi: 0,
+                    yapiskanSayisi: 0,
+                    tupSayisi: 0,
+                    samuraySayisi: 0,
+                    kislakHaneSayisi: 0
+                };
+            });
+
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var ilce = data.ilce || "Bilinmiyor";
+                if (ilce === "-" || ilce === "") continue;
+
+                if (!ilceIstatistikleri[ilce]) {
+                    ilceIstatistikleri[ilce] = {
+                        mucadeleAlani: 0,
+                        huniSayisi: 0,
+                        yapiskanSayisi: 0,
+                        tupSayisi: 0,
+                        samuraySayisi: 0,
+                        kislakHaneSayisi: 0
+                    };
+                }
+
+                var tip = data.tuzakTipi || "Huni";
+
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (tip === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                if (tip === "Huni") {
+                    ilceIstatistikleri[ilce].huniSayisi++;
+                    ilceIstatistikleri[ilce].mucadeleAlani += (parseFloat(data.tuzakEtkiAlani) || 0);
+                } else if (tip === "Yapışkan") {
+                    ilceIstatistikleri[ilce].yapiskanSayisi++;
+                    ilceIstatistikleri[ilce].mucadeleAlani += (parseFloat(data.tuzakEtkiAlani) || 0);
+                } else if (tip === "Samuray Arısı Salımı") {
+                    var tps = parseInt(data.tupSayisi) || 0;
+                    ilceIstatistikleri[ilce].tupSayisi += tps;
+                    ilceIstatistikleri[ilce].samuraySayisi += (tps * 56);
+                } else if (tip === "Kışlak Mücadelesi") {
+                    ilceIstatistikleri[ilce].kislakHaneSayisi += (parseInt(data.kislakHaneSayisi) || 0);
+                }
+            }
+
+            var sortedIlceler = Object.keys(ilceIstatistikleri).sort(function (a, b) {
+                return a.localeCompare(b, 'tr');
+            });
+
+            if (seciliIlce) {
+                sortedIlceler = sortedIlceler.filter(function (ilce) {
+                    return ilce === seciliIlce;
+                });
+            }
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>BAKANLIK YIL SONU ÖZET RAPORU</h1>';
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + '</p>';
+
+            html += '<table><thead><tr>' +
+                    '<th>İlçe Adı</th>' +
+                    '<th>Mücadele Yapılan Alan (da)</th>' +
+                    '<th>Kullanılan Feromonlu Huni Tuzak Sayısı (adet)</th>' +
+                    '<th>Kullanılan Yapışkan Tuzak Sayısı (adet)</th>' +
+                    '<th>Salınan Tüp Sayısı (adet)</th>' +
+                    '<th>Salınan Samuray Arısı (adet)</th>' +
+                    '<th>Kışlak Mücadelesi Yapılan Hane Sayısı (adet)</th>' +
+                    '</tr></thead><tbody>';
+
+            var toplamMucadeleAlani = 0;
+            var toplamHuniSayisi = 0;
+            var toplamYapiskanSayisi = 0;
+            var toplamTupSayisi = 0;
+            var toplamSamuraySayisi = 0;
+            var toplamKislakHane = 0;
+
+            sortedIlceler.forEach(function (ilce) {
+                var stats = ilceIstatistikleri[ilce];
+                html += '<tr>' +
+                        '<td><b>' + ilce + '</b></td>' +
+                        '<td>' + stats.mucadeleAlani.toFixed(1) + '</td>' +
+                        '<td>' + stats.huniSayisi + '</td>' +
+                        '<td>' + stats.yapiskanSayisi + '</td>' +
+                        '<td>' + stats.tupSayisi + '</td>' +
+                        '<td>' + stats.samuraySayisi + '</td>' +
+                        '<td>' + stats.kislakHaneSayisi + '</td>' +
+                        '</tr>';
+
+                toplamMucadeleAlani += stats.mucadeleAlani;
+                toplamHuniSayisi += stats.huniSayisi;
+                toplamYapiskanSayisi += stats.yapiskanSayisi;
+                toplamTupSayisi += stats.tupSayisi;
+                toplamSamuraySayisi += stats.samuraySayisi;
+                toplamKislakHane += stats.kislakHaneSayisi;
+            });
+
+            html += '<tr class="total-row">' +
+                    '<td>TOPLAM</td>' +
+                    '<td>' + toplamMucadeleAlani.toFixed(1) + '</td>' +
+                    '<td>' + toplamHuniSayisi + '</td>' +
+                    '<td>' + toplamYapiskanSayisi + '</td>' +
+                    '<td>' + toplamTupSayisi + '</td>' +
+                    '<td>' + toplamSamuraySayisi + '</td>' +
+                    '<td>' + toplamKislakHane + '</td>' +
+                    '</tr></tbody></table>';
+
+            var filename = "Bakanlik_Yil_Sonu_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Bakanlık Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function samurayArisiEk1RaporuWordIndir(kapsam, opsiyonelVeriler) {
+            var rows = [];
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+                if (data.tuzakTipi !== "Samuray Arısı Salımı") continue;
+
+                rows.push({
+                    il: data.il || "Rize",
+                    ilce: data.ilce || "-",
+                    koy: data.koy || data.ad || "-",
+                    salimTarihi: data.tuzakİlkAsiliTarih || data.tarih || "-",
+                    tupAdeti: parseInt(data.tupSayisi) || 0,
+                    lat: data.lat !== undefined ? parseFloat(data.lat) : 0,
+                    lng: data.lng !== undefined ? parseFloat(data.lng) : 0
+                });
+            }
+
+            rows.sort(function (a, b) {
+                var c1 = a.ilce.localeCompare(b.ilce, 'tr');
+                if (c1 !== 0) return c1;
+                var c2 = a.koy.localeCompare(b.koy, 'tr');
+                if (c2 !== 0) return c2;
+                return a.salimTarihi.localeCompare(b.salimTarihi, 'tr');
+            });
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>SAMURAY ARISI SALIM RAPORU (EK-1)</h1>';
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + '</p>';
+
+            html += '<table><thead><tr>' +
+                    '<th>Sıra No</th>' +
+                    '<th>İl</th>' +
+                    '<th>İlçe</th>' +
+                    '<th>Köy/Mahalle</th>' +
+                    '<th>Salım Tarihi</th>' +
+                    '<th>Salınan Tüp Adeti</th>' +
+                    '<th>Enlem (Y)</th>' +
+                    '<th>Boylam (X)</th>' +
+                    '</tr></thead><tbody>';
+
+            var toplamTup = 0;
+            rows.forEach(function (r, index) {
+                html += '<tr>' +
+                        '<td>' + (index + 1) + '</td>' +
+                        '<td>' + r.il + '</td>' +
+                        '<td>' + r.ilce + '</td>' +
+                        '<td>' + r.koy + '</td>' +
+                        '<td>' + r.salimTarihi + '</td>' +
+                        '<td>' + r.tupAdeti + '</td>' +
+                        '<td>' + r.lat.toFixed(6) + '</td>' +
+                        '<td>' + r.lng.toFixed(6) + '</td>' +
+                        '</tr>';
+                toplamTup += r.tupAdeti;
+            });
+
+            html += '<tr class="total-row">' +
+                    '<td colspan="5">TOPLAM</td>' +
+                    '<td>' + toplamTup + '</td>' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '</tr></tbody></table>';
+
+            var filename = "Samuray_Arisi_Ek1_Salim_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Samuray EK-1 Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function urunBazliMucadeleWordIndir(kapsam, opsiyonelVeriler) {
+            function toTurkishUpperCase(str) {
+                if (!str) return '';
+                return str.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+            }
+
+            function formatDateString(dateObj) {
+                if (!dateObj) return '-';
+                var d = dateObj.getDate();
+                var m = dateObj.getMonth() + 1;
+                var y = dateObj.getFullYear();
+                if (d < 10) d = '0' + d;
+                if (m < 10) m = '0' + m;
+                return d + '.' + m + '.' + y;
+            }
+
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+
+            var yil = new Date().getFullYear();
+            var defaultStart = new Date(yil, 4, 1);
+            var defaultEnd = new Date(yil, 9, 31);
+
+            var cropData = {};
+            var huniCount = 0;
+            var yapiskanCount = 0;
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var tip = data.tuzakTipi || "Huni";
+                if (tip !== "Huni" && tip !== "Yapışkan") continue;
+
+                // Yapışkan tuzaklarda deneme listeye dahil edilmeyecek
+                if (tip === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                if (tip === "Huni") {
+                    huniCount++;
+                } else if (tip === "Yapışkan") {
+                    yapiskanCount++;
+                }
+
+                var bitkiRaw = data.tuzakBitkiTuru || data.yetiştirilenUrun || "Diğer";
+                var bitki = toTurkishUpperCase(bitkiRaw.trim());
+                if (bitki === "" || bitki === "-") bitki = "DİĞER";
+
+                if (!cropData[bitki]) {
+                    cropData[bitki] = {
+                        adet: 0,
+                        earliestDate: null,
+                        latestDate: null
+                    };
+                }
+
+                cropData[bitki].adet++;
+
+                var asiliTarih = parseTurkishDate(data.tuzakİlkAsiliTarih);
+                if (asiliTarih) {
+                    if (!cropData[bitki].earliestDate || asiliTarih < cropData[bitki].earliestDate) {
+                        cropData[bitki].earliestDate = asiliTarih;
+                    }
+                    if (!cropData[bitki].latestDate || asiliTarih > cropData[bitki].latestDate) {
+                        cropData[bitki].latestDate = asiliTarih;
+                    }
+                }
+
+                var kayitlar = data.kayitlar || [];
+                kayitlar.forEach(function (k) {
+                    var obsTarih = parseTurkishDate(k.tarih);
+                    if (obsTarih) {
+                        if (!cropData[bitki].earliestDate || obsTarih < cropData[bitki].earliestDate) {
+                            cropData[bitki].earliestDate = obsTarih;
+                        }
+                        if (!cropData[bitki].latestDate || obsTarih > cropData[bitki].latestDate) {
+                            cropData[bitki].latestDate = obsTarih;
+                        }
+                    }
+                });
+            }
+
+            var sortedCrops = Object.keys(cropData).sort(function (a, b) {
+                var priority = { "FINDIK": 1, "MANDALİNA": 2, "KİVİ": 3 };
+                var pA = priority[a] || 99;
+                var pB = priority[b] || 99;
+                if (pA !== pB) return pA - pB;
+                return a.localeCompare(b, 'tr');
+            });
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>ÜRÜN ENTEGRE MÜCADELE UYGULAMA RAPORU (EK-18)</h1>';
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + '</p>';
+
+            html += '<h2>1. Mücadele Uygulama Program Takip Tablosu</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>Ürün</th>' +
+                    '<th>Zararlı Organizma</th>' +
+                    '<th>Uygulama Alanı</th>' +
+                    '<th>Mücadele Metodu</th>' +
+                    '<th>Uygulama Miktarı</th>' +
+                    '<th>Birimi</th>' +
+                    '<th>Tekerrür</th>' +
+                    '<th>Başlangıç Tarihi</th>' +
+                    '<th>Bitiş Tarihi</th>' +
+                    '</tr></thead><tbody>';
+
+            sortedCrops.forEach(function (crop) {
+                var stats = cropData[crop];
+                var baslangicDate = stats.earliestDate || defaultStart;
+                var bitisDate = stats.latestDate || defaultEnd;
+                if (bitisDate < defaultEnd) {
+                    bitisDate = defaultEnd;
+                }
+
+                html += '<tr>' +
+                        '<td><b>' + crop + '</b></td>' +
+                        '<td>Kahverengi Kokarca (Halyomorpha halys)</td>' +
+                        '<td>Rize İli ' + (seciliIlce ? seciliIlce + ' İlçesi' : 'Geneli') + '</td>' +
+                        '<td>Biyoteknik</td>' +
+                        '<td>' + stats.adet + '</td>' +
+                        '<td>adet</td>' +
+                        '<td>2</td>' +
+                        '<td>' + formatDateString(baslangicDate) + '</td>' +
+                        '<td>' + formatDateString(bitisDate) + '</td>' +
+                        '</tr>';
+            });
+            html += '</tbody></table>';
+
+            html += '<h2>2. Kullanılan Etkili Maddeler</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>Etkili Madde</th>' +
+                    '<th>İlaç Miktarı (Toplam)</th>' +
+                    '<th>Birimi</th>' +
+                    '<th>Formülasyon Tipi</th>' +
+                    '</tr></thead><tbody>' +
+                    '<tr>' +
+                    '<td>Methyl (2E, 4E, 6Z)-decatrienoate + MDT (15 mg)</td>' +
+                    '<td>' + huniCount + '</td>' +
+                    '<td>adet</td>' +
+                    '<td>Feromon</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                    '<td>Murgantiol + MDT</td>' +
+                    '<td>' + yapiskanCount + '</td>' +
+                    '<td>adet</td>' +
+                    '<td>Feromon</td>' +
+                    '</tr>' +
+                    '<tr class="total-row">' +
+                    '<td>TOPLAM</td>' +
+                    '<td>' + (huniCount + yapiskanCount) + '</td>' +
+                    '<td>adet</td>' +
+                    '<td>Feromon</td>' +
+                    '</tr></tbody></table>';
+
+            var filename = "Urun_Bazli_Mucadele_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Ürün Bazlı Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function bahceOzetRaporuWordIndir(kapsam, opsiyonelVeriler) {
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliTip = filtreler.tip;
+
+            var summary = {};
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var urunTuru = data.tuzakTipi || "Diğer";
+                if (seciliTip !== 'Tümü' && urunTuru !== seciliTip) continue;
+
+                var alan = parseFloat(data.bahceAlani) || 0;
+                var agac = parseInt(data.agacSayisi) || 0;
+
+                if (!summary[urunTuru]) {
+                    summary[urunTuru] = {
+                        sayi: 0,
+                        toplamAlan: 0,
+                        toplamAgac: 0
+                    };
+                }
+
+                summary[urunTuru].sayi++;
+                summary[urunTuru].toplamAlan += alan;
+                summary[urunTuru].toplamAgac += agac;
+            }
+
+            var sortedUrunler = Object.keys(summary).sort(function(a, b) {
+                return a.localeCompare(b, 'tr');
+            });
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>MEYVE VE SEBZE BAHÇELERİ ÜRETİM ÖZET RAPORU</h1>';
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            var filtreMetni = seciliTip === "Tümü" ? "Tüm Tipler" : seciliTip;
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + ' | Filtre: ' + filtreMetni + '</p>';
+
+            html += '<table><thead><tr>' +
+                    '<th>Ürün Türü</th>' +
+                    '<th>Bahçe Sayısı</th>' +
+                    '<th>Toplam Bahçe Alanı (m²)</th>' +
+                    '<th>Toplam Ağaç/Bitki Sayısı</th>' +
+                    '<th>Ortalama Bahçe Alanı (m²)</th>' +
+                    '<th>Ortalama Ağaç/Bitki Sayısı</th>' +
+                    '</tr></thead><tbody>';
+
+            var genelBahceSayisi = 0;
+            var genelAlan = 0;
+            var genelAgac = 0;
+
+            sortedUrunler.forEach(function(urun) {
+                var s = summary[urun];
+                var ortAlan = s.sayi > 0 ? Math.round(s.toplamAlan / s.sayi) : 0;
+                var ortAgac = s.sayi > 0 ? Math.round(s.toplamAgac / s.sayi) : 0;
+
+                html += '<tr>' +
+                        '<td><b>' + urun + ' Bahçesi</b></td>' +
+                        '<td>' + s.sayi + '</td>' +
+                        '<td>' + s.toplamAlan + '</td>' +
+                        '<td>' + s.toplamAgac + '</td>' +
+                        '<td>' + ortAlan + '</td>' +
+                        '<td>' + ortAgac + '</td>' +
+                        '</tr>';
+
+                genelBahceSayisi += s.sayi;
+                genelAlan += s.toplamAlan;
+                genelAgac += s.toplamAgac;
+            });
+
+            var genelOrtAlan = genelBahceSayisi > 0 ? Math.round(genelAlan / genelBahceSayisi) : 0;
+            var genelOrtAgac = genelBahceSayisi > 0 ? Math.round(genelAgac / genelBahceSayisi) : 0;
+
+            html += '<tr class="total-row">' +
+                    '<td>GENEL TOPLAM</td>' +
+                    '<td>' + genelBahceSayisi + '</td>' +
+                    '<td>' + genelAlan + '</td>' +
+                    '<td>' + genelAgac + '</td>' +
+                    '<td>' + genelOrtAlan + '</td>' +
+                    '<td>' + genelOrtAgac + '</td>' +
+                    '</tr></tbody></table>';
+
+            var filename = "Bahce_Uretim_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Bahçe Özet Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function seraOzetRaporuWordIndir(kapsam, opsiyonelVeriler) {
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliTip = filtreler.tip;
+
+            var summary = {};
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+
+                var seraTipi = data.tuzakTipi || "Diğer";
+                if (seciliTip !== 'Tümü' && seraTipi !== seciliTip) continue;
+
+                var alan = parseFloat(data.seraAlani) || 0;
+                var urun = (data.yetiştirilenUrun || "").trim();
+
+                if (!summary[seraTipi]) {
+                    summary[seraTipi] = {
+                        sayi: 0,
+                        toplamAlan: 0,
+                        urunlerSet: new Set()
+                    };
+                }
+
+                summary[seraTipi].sayi++;
+                summary[seraTipi].toplamAlan += alan;
+                if (urun && urun !== "-" && urun !== "") {
+                    urun.split(',').forEach(function(u) {
+                        var trimmed = u.trim();
+                        if (trimmed) summary[seraTipi].urunlerSet.add(trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase());
+                    });
+                }
+            }
+
+            var sortedTipler = Object.keys(summary).sort(function(a, b) {
+                return a.localeCompare(b, 'tr');
+            });
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>ÖRTÜALTI SERA YETİŞTİRİCİLİĞİ ÖZET RAPORU</h1>';
+            var kapsamMetni = seciliIlce ? seciliIlce + " İlçesi" : "Rize İl Geneli";
+            var filtreMetni = seciliTip === "Tümü" ? "Tüm Tipler" : seciliTip;
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kapsam: ' + kapsamMetni + ' | Filtre: ' + filtreMetni + '</p>';
+
+            html += '<table><thead><tr>' +
+                    '<th>Sera Tipi</th>' +
+                    '<th>Sera Sayısı</th>' +
+                    '<th>Toplam Sera Alanı (m²)</th>' +
+                    '<th>Ortalama Sera Alanı (m²)</th>' +
+                    '<th>Yetiştirilen Ürünler (Özet)</th>' +
+                    '</tr></thead><tbody>';
+
+            var genelSeraSayisi = 0;
+            var genelAlan = 0;
+            var genelUrunlerSet = new Set();
+
+            sortedTipler.forEach(function(tip) {
+                var s = summary[tip];
+                var ortAlan = s.sayi > 0 ? Math.round(s.toplamAlan / s.sayi) : 0;
+                var urunlerList = Array.from(s.urunlerSet).join(', ') || '-';
+
+                html += '<tr>' +
+                        '<td><b>' + tip + '</b></td>' +
+                        '<td>' + s.sayi + '</td>' +
+                        '<td>' + s.toplamAlan + '</td>' +
+                        '<td>' + ortAlan + '</td>' +
+                        '<td>' + urunlerList + '</td>' +
+                        '</tr>';
+
+                genelSeraSayisi += s.sayi;
+                genelAlan += s.toplamAlan;
+                s.urunlerSet.forEach(function(u) { genelUrunlerSet.add(u); });
+            });
+
+            var genelOrtAlan = genelSeraSayisi > 0 ? Math.round(genelAlan / genelSeraSayisi) : 0;
+            var genelUrunlerList = Array.from(genelUrunlerSet).join(', ') || '-';
+
+            html += '<tr class="total-row">' +
+                    '<td>GENEL TOPLAM</td>' +
+                    '<td>' + genelSeraSayisi + '</td>' +
+                    '<td>' + genelAlan + '</td>' +
+                    '<td>' + genelOrtAlan + '</td>' +
+                    '<td>' + genelUrunlerList + '</td>' +
+                    '</tr></tbody></table>';
+
+            var filename = "Sera_Yetistiriciligi_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Sera Özet Word Raporu İndirildi", "Kapsam: " + kapsam);
         }
 
         // Delete Trap (Checks District Access)
