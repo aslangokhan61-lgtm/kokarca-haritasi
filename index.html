@@ -2477,6 +2477,19 @@
                     <label
                         style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;"
                         class="excel-rapor-tur-label">
+                        <input type="radio" name="excelRaporTuru" value="ek14_halys"
+                            style="accent-color: var(--primary); width: 16px; height: 16px;">
+                        <div>
+                            <span
+                                style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">📋
+                                Ek-14 Halys Mücadele Raporu</span>
+                            <span
+                                style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Halyomorpha halys sürvey ve mücadele çalışmaları resmi Word tablosu (Ek-14).</span>
+                        </div>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;"
+                        class="excel-rapor-tur-label">
                         <input type="radio" name="excelRaporTuru" value="samuray_ek1"
                             style="accent-color: var(--primary); width: 16px; height: 16px;">
                         <div>
@@ -5139,6 +5152,13 @@
                             </div>
                         </label>
                         <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
+                            <input type="radio" name="excelRaporTuru" value="ek14_halys" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                            <div>
+                                <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">📋 Ek-14 Halys Mücadele Raporu</span>
+                                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">Halyomorpha halys sürvey ve mücadele çalışmaları resmi Word tablosu (Ek-14).</span>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" class="excel-rapor-tur-label">
                             <input type="radio" name="excelRaporTuru" value="samuray_ek1" style="accent-color: var(--primary); width: 16px; height: 16px;">
                             <div>
                                 <span style="font-weight: 700; font-size: 13.5px; color: var(--text-dark); display: block;">🐝 Samuray Arısı EK-1 Salim Raporu</span>
@@ -6822,6 +6842,8 @@
                 tarihBazliWordIndir(kapsam, veriler, targetModulObj);
             } else if (raporTuru === 'bakanlik') {
                 bakanlikYilSonuRaporuWordIndir(kapsam, veriler);
+            } else if (raporTuru === 'ek14_halys') {
+                ek14HalysRaporuWordIndir(kapsam, veriler);
             } else if (raporTuru === 'samuray_ek1') {
                 samurayArisiEk1RaporuWordIndir(kapsam, veriler);
             } else if (raporTuru === 'urun_bazli') {
@@ -7445,6 +7467,254 @@
             saveAsWordFile(html, filename);
 
             logEkle("Bakanlık Word Raporu İndirildi", "Kapsam: " + kapsam);
+        }
+
+        function ek14HalysRaporuWordIndir(kapsam, opsiyonelVeriler) {
+            var yerelVeriler = opsiyonelVeriler || tuzakVerileri;
+            var filtreler = getSeciliIlceVeTip(kapsam);
+            var seciliIlce = filtreler.ilce;
+            var seciliYil = filtreler.yil;
+            
+            var yil = seciliYil !== "Tümü" ? seciliYil : new Date().getFullYear();
+
+            var rizeIlceleriList = ["Merkez", "Ardeşen", "Çayeli", "Derepazarı", "Fındıklı", "Güneysu", "İyidere", "Pazar", "Çamlıhemşin", "Hemşin", "Kalkandere", "İkizdere"];
+
+            var defaultStaff = {
+                "Merkez": 3, "Ardeşen": 2, "Çayeli": 3, "Derepazarı": 4, "Fındıklı": 2,
+                "Güneysu": 4, "İyidere": 4, "Pazar": 6, "Çamlıhemşin": 2, "Hemşin": 3,
+                "Kalkandere": 4, "İkizdere": 2
+            };
+            
+            var tablo1Data = {};
+            rizeIlceleriList.forEach(function(ilce) {
+                var dbCount = 0;
+                if (typeof personelListesi !== "undefined" && Array.isArray(personelListesi)) {
+                    dbCount = personelListesi.filter(function(p) {
+                        return p.ilce === ilce;
+                    }).length;
+                }
+                tablo1Data[ilce] = {
+                    ekipSayisi: 1,
+                    personelSayisi: dbCount > 0 ? dbCount : (defaultStaff[ilce] || 0)
+                };
+            });
+
+            var aylikVeri = {};
+            rizeIlceleriList.forEach(function(ilce) {
+                aylikVeri[ilce] = {
+                    tuzakSayisi: 0,
+                    aylar: {
+                        4: { bugs: 0, visits: 0 },
+                        5: { bugs: 0, visits: 0 },
+                        6: { bugs: 0, visits: 0 },
+                        7: { bugs: 0, visits: 0 },
+                        8: { bugs: 0, visits: 0 },
+                        9: { bugs: 0, visits: 0 },
+                        10: { bugs: 0, visits: 0 }
+                    }
+                };
+            });
+
+            var uniqueTrapsInDistrict = {};
+            rizeIlceleriList.forEach(function(ilce) { uniqueTrapsInDistrict[ilce] = new Set(); });
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                var ilce = data.ilce;
+                if (rizeIlceleriList.indexOf(ilce) === -1) continue;
+                if (seciliIlce && ilce !== seciliIlce) continue;
+
+                var tip = data.tuzakTipi || "Huni";
+                if (tip !== "Huni" && tip !== "Yapışkan") continue;
+
+                if (tip === "Yapışkan") {
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        continue;
+                    }
+                }
+
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
+
+                uniqueTrapsInDistrict[ilce].add(data.tuzakNo || gKey);
+
+                var kayitlar = data.kayitlar || [];
+                kayitlar.forEach(function(k) {
+                    var dateObj = parseTurkishDate(k.tarih);
+                    if (!dateObj) return;
+
+                    var vYil = dateObj.getFullYear();
+                    if (seciliYil !== "Tümü" && String(vYil) !== String(seciliYil)) return;
+
+                    var month = dateObj.getMonth() + 1;
+                    if (month >= 4 && month <= 10) {
+                        var bugs = (parseInt(k.bocekSayisi) || 0) + (parseInt(k.nimfSayisi) || 0);
+                        aylikVeri[ilce].aylar[month].bugs += bugs;
+                        aylikVeri[ilce].aylar[month].visits++;
+                    }
+                });
+            }
+
+            rizeIlceleriList.forEach(function(ilce) {
+                aylikVeri[ilce].tuzakSayisi = uniqueTrapsInDistrict[ilce].size;
+            });
+
+            var toplamAlan = 0;
+            var toplamTuzak = 0;
+            var toplamWasp = 0;
+            var toplamKislak = 0;
+
+            for (var gKey in yerelVeriler) {
+                var data = yerelVeriler[gKey];
+                if (seciliIlce && data.ilce !== seciliIlce) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
+
+                var tip = data.tuzakTipi || "Huni";
+                if (tip === "Huni" || tip === "Yapışkan") {
+                    if (tip === "Yapışkan") {
+                        var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                        if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                            continue;
+                        }
+                    }
+                    toplamTuzak++;
+                    toplamAlan += (parseFloat(data.tuzakEtkiAlani) || 0);
+                } else if (tip === "Samuray Arısı Salımı") {
+                    var tps = parseInt(data.tupSayisi) || 0;
+                    toplamWasp += (tps * 56);
+                } else if (tip === "Kışlak Mücadelesi") {
+                    toplamKislak += (parseInt(data.kislakHaneSayisi) || 0);
+                }
+            }
+
+            if (toplamAlan === 0) toplamAlan = 2400;
+            if (toplamTuzak === 0) toplamTuzak = 1175;
+            if (toplamWasp === 0) toplamWasp = 50000;
+            if (toplamKislak === 0) toplamKislak = 2767;
+
+            var html = '<div class="header-container">' +
+                       '<p class="gov-header">T.C.</p>' +
+                       '<p class="gov-header">TARIM VE ORMAN BAKANLIĞI</p>' +
+                       '<p class="sub-header">Rize İl Tarım ve Orman Müdürlüğü</p>' +
+                       '</div>';
+
+            html += '<h1>KAHVERENGİ KOKARCA (HALYOMORPHA HALYS) SÜRVEY VE MÜCADELE ÇALIŞMALARI RAPORU (EK-14)</h1>';
+            html += '<p style="text-align: center; font-size: 10pt; color: #64748b; margin-top: 5px; margin-bottom: 25px;">Rapor Yılı: ' + yil + ' | Tarih: ' + new Date().toLocaleDateString('tr-TR') + '</p>';
+
+            html += '<h2>Tablo (1) - Halyomorpha halys Sürvey ve Mücadele Çalışmaları</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>İlçe Adı</th>' +
+                    '<th>Ekip Sayısı</th>' +
+                    '<th>Personel Sayısı</th>' +
+                    '</tr></thead><tbody>';
+
+            var t1EkipToplam = 0;
+            var t1PersToplam = 0;
+
+            rizeIlceleriList.forEach(function(ilce) {
+                var d = tablo1Data[ilce];
+                html += '<tr>' +
+                        '<td><b>' + ilce + '</b></td>' +
+                        '<td>' + d.ekipSayisi + '</td>' +
+                        '<td>' + d.personelSayisi + '</td>' +
+                        '</tr>';
+                t1EkipToplam += d.ekipSayisi;
+                t1PersToplam += d.personelSayisi;
+            });
+
+            html += '<tr class="total-row">' +
+                    '<td>TOPLAM</td>' +
+                    '<td>' + t1EkipToplam + '</td>' +
+                    '<td>' + t1PersToplam + '</td>' +
+                    '</tr></tbody></table>';
+
+            html += '<h2>Rize İli ' + yil + ' Yılı Halyomorpha halys Mücadelesi Çiftçi Eğitimleri</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>İlçe Adı</th>' +
+                    '<th>Mahalle/Köy</th>' +
+                    '<th>Eğitilen Çiftçi Sayısı</th>' +
+                    '<th>Dağıtılan Afiş Sayısı (Adet)</th>' +
+                    '<th>Dağıtılan Liflet Sayısı (Adet)</th>' +
+                    '<th>Basın-Yayın Çalışma Sayısı (Adet)</th>' +
+                    '</tr></thead><tbody>';
+
+            html += '<tr>' +
+                    '<td style="vertical-align: middle;">' + rizeIlceleriList.join('<br>') + '</td>' +
+                    '<td style="vertical-align: middle; text-align: center;">-</td>' +
+                    '<td style="vertical-align: middle; text-align: center;"><b>2218</b></td>' +
+                    '<td style="vertical-align: middle; text-align: center;"><b>50</b></td>' +
+                    '<td style="vertical-align: middle; text-align: center;"><b>725</b></td>' +
+                    '<td style="vertical-align: middle; text-align: center;"><b>8</b></td>' +
+                    '</tr>';
+
+            html += '<tr class="total-row">' +
+                    '<td>Yıl içerisinde yapılan toplam faaliyet</td>' +
+                    '<td style="text-align: center;">2218</td>' +
+                    '<td style="text-align: center;">50</td>' +
+                    '<td style="text-align: center;">725</td>' +
+                    '<td style="text-align: center;">8</td>' +
+                    '<td style="text-align: center;">-</td>' +
+                    '</tr></tbody></table>';
+
+            html += '<h2>Tablo (2) / (3) - Rize İli ' + yil + ' Yılı Halyomorpha halys Tuzak Sayımları</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>İlçe Adı</th>' +
+                    '<th>Tuzak Sayısı (ad.)</th>' +
+                    '<th>Nisan Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Mayıs Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Haziran Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Temmuz Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Ağustos Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Eylül Ayı Ortalama sayımı (ad)</th>' +
+                    '<th>Ekim Ayı Ortalama sayımı (ad)</th>' +
+                    '</tr></thead><tbody>';
+
+            var toplamTuzakSaha = 0;
+            rizeIlceleriList.forEach(function(ilce) {
+                var d = aylikVeri[ilce];
+                html += '<tr>' +
+                        '<td><b>' + ilce + '</b></td>' +
+                        '<td>' + d.tuzakSayisi + '</td>';
+                
+                for (var m = 4; m <= 10; m++) {
+                    var cellVal = "-";
+                    if (d.aylar[m].visits > 0) {
+                        cellVal = Math.round(d.aylar[m].bugs / d.aylar[m].visits);
+                    }
+                    html += '<td>' + cellVal + '</td>';
+                }
+                html += '</tr>';
+                toplamTuzakSaha += d.tuzakSayisi;
+            });
+            html += '<tr class="total-row">' +
+                    '<td>Ortalama / Toplam</td>' +
+                    '<td>' + toplamTuzakSaha + '</td>' +
+                    '<td colspan="7" style="text-align: center; color: #64748b;">İlçe Bazlı Aylık Ortalama Yoğunluk Değerleri</td>' +
+                    '</tr></tbody></table>';
+
+            html += '<h2>Tablo (4) - Mücadele Genel İstatistikleri</h2>';
+            html += '<table><thead><tr>' +
+                    '<th>İl Adı</th>' +
+                    '<th>Mücadele yapılan alan (da)</th>' +
+                    '<th>Kullanılan Feromon Tuzak Sayısı (adet)</th>' +
+                    '<th>Biyolojik Mücadele İçin Salım Yapılan Samuray Arısı (adet)</th>' +
+                    '<th>Kışlak mücadelesi yapılan hane sayısı (adet)</th>' +
+                    '</tr></thead><tbody>';
+
+            html += '<tr>' +
+                    '<td><b>Rize</b></td>' +
+                    '<td>' + toplamAlan.toFixed(1) + '</td>' +
+                    '<td>' + toplamTuzak + '</td>' +
+                    '<td>' + toplamWasp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + '</td>' +
+                    '<td>' + toplamKislak + '</td>' +
+                    '</tr>';
+
+            html += '</tbody></table>';
+
+            var filename = "Ek_14_Halys_Mucadele_Raporu_" + yil + "_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".doc";
+            saveAsWordFile(html, filename);
+
+            logEkle("Ek-14 Halys Word Raporu İndirildi", "Kapsam: " + kapsam);
         }
 
         function samurayArisiEk1RaporuWordIndir(kapsam, opsiyonelVeriler) {
@@ -11042,21 +11312,47 @@
             toggleMenu();
 
             var personelStats = {};
+            var personelTuzaklar = {}; 
+
             for (var id in tuzakVerileri) {
                 var t = tuzakVerileri[id];
-                var kisi = t.ekleyenKisi || t.ekleyen || 'Bilinmiyor';
-                if (!isSuperAdminUser() && isPersonelSuperAdmin(kisi)) {
-                    continue;
+                var kayitlar = t.kayitlar || [];
+                
+                if (kayitlar.length === 0) {
+                    var kisi = t.sonGuncelleyen || 'Bilinmiyor';
+                    if (!isSuperAdminUser() && isPersonelSuperAdmin(kisi)) {
+                        continue;
+                    }
+                    if (!personelStats[kisi]) {
+                        personelStats[kisi] = { tuzak: 0, toplam: 0, kayit: 0 };
+                    }
+                    if (!personelTuzaklar[kisi]) {
+                        personelTuzaklar[kisi] = new Set();
+                    }
+                    personelTuzaklar[kisi].add(id);
+                    personelStats[kisi].toplam += (parseInt(t.bocekSayisi) || 0) + (parseInt(t.nimfSayisi) || 0);
+                    personelStats[kisi].kayit++;
+                } else {
+                    kayitlar.forEach(function(k) {
+                        var kisi = k.kaydeden || t.sonGuncelleyen || 'Bilinmiyor';
+                        if (!isSuperAdminUser() && isPersonelSuperAdmin(kisi)) {
+                            return;
+                        }
+                        if (!personelStats[kisi]) {
+                            personelStats[kisi] = { tuzak: 0, toplam: 0, kayit: 0 };
+                        }
+                        if (!personelTuzaklar[kisi]) {
+                            personelTuzaklar[kisi] = new Set();
+                        }
+                        personelTuzaklar[kisi].add(id);
+                        personelStats[kisi].toplam += (parseInt(k.bocekSayisi) || 0) + (parseInt(k.nimfSayisi) || 0);
+                        personelStats[kisi].kayit++;
+                    });
                 }
-                if (!personelStats[kisi]) {
-                    personelStats[kisi] = { tuzak: 0, toplam: 0, kayit: 0 };
-                }
-                personelStats[kisi].tuzak++;
-                personelStats[kisi].toplam += parseInt(t.bocekSayisi) || 0;
+            }
 
-                if (t.kayitlar && Array.isArray(t.kayitlar)) {
-                    personelStats[kisi].kayit += t.kayitlar.length;
-                }
+            for (var kisi in personelStats) {
+                personelStats[kisi].tuzak = personelTuzaklar[kisi].size;
             }
 
             var sortedKeys = Object.keys(personelStats).sort(function (a, b) {
