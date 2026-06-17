@@ -4992,7 +4992,9 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 10000);
         }
         function kapatExcelKapsamModal() {
             document.getElementById('excelKapsamModal').classList.remove('active');
@@ -6598,7 +6600,9 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 10000);
         }
 
         function toTurkishUpperCaseWord(str) {
@@ -10678,7 +10682,9 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 10000);
 
                 logEkle('Veritabanı Yedeği', 'Tüm veriler JSON olarak indirildi. Tuzak: ' + yedekVeri.tuzaklar.length + ', Personel: ' + yedekVeri.personeller.length);
                 alert('Yedek başarıyla indirildi!\nTuzak: ' + yedekVeri.tuzaklar.length + '\nPersonel: ' + yedekVeri.personeller.length);
