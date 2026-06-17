@@ -4983,18 +4983,31 @@
                 return s.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(';');
             }).join('\r\n');
 
-            var blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            var tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-            a.href = url;
-            a.download = 'kokarca-rapor-' + filtre + '-' + tarih + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(function() {
-                URL.revokeObjectURL(url);
-            }, 10000);
+            try {
+                var base64Data = btoa(unescape(encodeURIComponent('\uFEFF' + csvIcerik)));
+                var dataUrl = 'data:application/octet-stream;base64,' + base64Data;
+                var a = document.createElement('a');
+                var tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                a.href = dataUrl;
+                a.download = 'kokarca-rapor-' + filtre + '-' + tarih + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e) {
+                console.error("Base64 CSV yazma hatası, Blob fallback uygulanıyor:", e);
+                var blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                var tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                a.href = url;
+                a.download = 'kokarca-rapor-' + filtre + '-' + tarih + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 10000);
+            }
         }
         function kapatExcelKapsamModal() {
             document.getElementById('excelKapsamModal').classList.remove('active');
@@ -5468,7 +5481,7 @@
             XLSX.utils.book_append_sheet(workbook, ws, "Bakanlık Yıl Sonu Özet");
 
             var filename = "Bakanlik_Yil_Sonu_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
 
             logEkle("Bakanlık Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -5567,7 +5580,7 @@
             XLSX.utils.book_append_sheet(workbook, ws, "Samuray Arısı EK-1");
 
             var filename = "Samuray_Arisi_Ek1_Salim_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
 
             logEkle("Samuray EK-1 Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -5772,7 +5785,7 @@
             XLSX.utils.book_append_sheet(workbook, ws, "Ürün Bazlı Mücadele Raporu");
 
             var filename = "Urun_Bazli_Mucadele_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
 
             logEkle("Ürün Bazlı Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -5892,7 +5905,7 @@
             XLSX.utils.book_append_sheet(workbook, ws, "Bahçe Üretim Özeti");
 
             var filename = "Bahce_Uretim_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
             
             logEkle("Bahçe Özet Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -6013,7 +6026,7 @@
             XLSX.utils.book_append_sheet(workbook, ws, "Sera Yetiştiriciliği Özeti");
 
             var filename = "Sera_Yetistiriciligi_Ozet_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
             
             logEkle("Sera Özet Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -6214,7 +6227,7 @@
             XLSX.utils.book_append_sheet(workbook, ws2, "İl Geneli Karşılaştırma");
 
             var filename = "Yillara_Gore_Karsilastirma_Raporu_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
 
             logEkle("Yıllara Göre Karşılaştırma Excel İndirildi", "Kapsam: " + kapsam);
         }
@@ -6565,7 +6578,23 @@
             // İndir
             var safeModulAd = slugify(aktifModul ? aktifModul.ad : "Modul");
             var filename = safeModulAd + "_Rapor_" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + ".xlsx";
-            XLSX.writeFile(workbook, filename);
+            saveAsExcelFile(workbook, filename);
+        }
+
+        function saveAsExcelFile(workbook, filename) {
+            try {
+                var wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+                var dataUrl = 'data:application/octet-stream;base64,' + wbout;
+                var a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e) {
+                console.error("Base64 Excel yazma hatası, XLSX.writeFile fallback uygulanıyor:", e);
+                XLSX.writeFile(workbook, filename);
+            }
         }
 
         // 📝 Word (.doc) Raporlama Entegrasyonu 📝
@@ -6592,17 +6621,30 @@
                          "</head><body>";
             var footer = "<p class='footer-line'>Tuzak Takip ve Saha İzleme Sistemi - Word Raporlama Modülü</p></body></html>";
             var fullHtml = header + htmlContent + footer;
-            var blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(function() {
-                URL.revokeObjectURL(url);
-            }, 10000);
+
+            try {
+                var base64Data = btoa(unescape(encodeURIComponent('\ufeff' + fullHtml)));
+                var dataUrl = 'data:application/octet-stream;base64,' + base64Data;
+                var a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e) {
+                console.error("Base64 Word yazma hatası, Blob fallback uygulanıyor:", e);
+                var blob = new Blob(['\ufeff' + fullHtml], { type: 'application/octet-stream' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 10000);
+            }
         }
 
         function toTurkishUpperCaseWord(str) {
@@ -10673,18 +10715,31 @@
 
                 // JSON dosyası oluştur ve indir
                 var json = JSON.stringify(yedekVeri, null, 2);
-                var blob = new Blob([json], { type: 'application/json' });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                var tarihStr = new Date().toISOString().slice(0, 10);
-                a.href = url;
-                a.download = 'kokarca_yedek_' + tarihStr + '.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(function() {
-                    URL.revokeObjectURL(url);
-                }, 10000);
+                try {
+                    var base64Data = btoa(unescape(encodeURIComponent(json)));
+                    var dataUrl = 'data:application/octet-stream;base64,' + base64Data;
+                    var a = document.createElement('a');
+                    var tarihStr = new Date().toISOString().slice(0, 10);
+                    a.href = dataUrl;
+                    a.download = 'kokarca_yedek_' + tarihStr + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } catch (e) {
+                    console.error("Base64 JSON yedek yazma hatası, Blob fallback uygulanıyor:", e);
+                    var blob = new Blob([json], { type: 'application/json' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    var tarihStr = new Date().toISOString().slice(0, 10);
+                    a.href = url;
+                    a.download = 'kokarca_yedek_' + tarihStr + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(function() {
+                        URL.revokeObjectURL(url);
+                    }, 10000);
+                }
 
                 logEkle('Veritabanı Yedeği', 'Tüm veriler JSON olarak indirildi. Tuzak: ' + yedekVeri.tuzaklar.length + ', Personel: ' + yedekVeri.personeller.length);
                 alert('Yedek başarıyla indirildi!\nTuzak: ' + yedekVeri.tuzaklar.length + '\nPersonel: ' + yedekVeri.personeller.length);
