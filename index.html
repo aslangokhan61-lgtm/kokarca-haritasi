@@ -1788,15 +1788,15 @@
                     <div>
                         <h4
                             style="color: var(--primary); font-size: 16px; font-weight: 800; margin-top: 0; margin-bottom: 8px;">
-                            3. Tuzak Ekleme ve Taşıma</h4>
+                            3. Tuzak Ekleme ve Konum Güncelleme</h4>
                         <ul style="margin-top: 0; margin-bottom: 0; padding-left: 20px;">
                             <li style="margin-bottom: 6px;"><b>Tuzak Ekleme:</b> Haritada tuzağı astığınız konuma
                                 tıklayın. Açılan formda köy alanı, tıkladığınız yerin köy sınırları taranarak
                                 <b>otomatik seçilir</b>. Bilgileri girip kaydedin.
                             </li>
-                            <li style="margin-bottom: 6px;"><b>Tuzağı Taşıma (Konum Güncelleme):</b> Tuzağın detayından
-                                "Düzenle" butonuna tıklayıp, haritadaki iğneyi basılı tutarak sürükleyip yeni yerine
-                                bırakabilirsiniz.</li>
+                            <li style="margin-bottom: 6px;"><b>Konum Güncelleme:</b> Tuzağın detayından
+                                "Düzenle" butonuna tıklayıp, <b>📍 Konumumu Al</b> butonuna basarak tuzağın konumunu güncelleyebilirsiniz. 
+                                <b>Yöneticiler</b> ayrıca haritadaki iğneyi sürükleyerek de yeni konumunu belirleyebilirler.</li>
                             <li style="margin-bottom: 0;"><b>Fotoğraf Ekleme:</b> Tuzak ekleme veya düzenleme ekranında
                                 <b>📷 Fotoğraf Seç / Çek</b> butonuna tıklayarak tuzağın arazideki görselini sisteme
                                 yükleyebilirsiniz (fotoğraflar depolama alanı tasarrufu için otomatik olarak
@@ -7955,7 +7955,11 @@
                         return;
                     }
 
-                    document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum güncelleyebilirsiniz)";
+                    if (isAdmin()) {
+                        document.getElementById('modalBaslik').innerText = "Kaydı Düzenle (İğneyi sürükleyerek konum güncelleyebilirsiniz)";
+                    } else {
+                        document.getElementById('modalBaslik').innerText = "Kaydı Düzenle";
+                    }
                     document.getElementById('duzenlenenDocId').value = docId;
                     document.getElementById('tuzakTipi').value = data.tuzakTipi || "Huni";
 
@@ -8045,12 +8049,14 @@
                     document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
                     kayitTuruDegisti();
 
-                    marker.dragging.enable();
-                    marker.on('dragend', function (e) {
-                        secilenKonum = e.target.getLatLng();
-                        document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
-                        document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
-                    });
+                    if (isAdmin()) {
+                        marker.dragging.enable();
+                        marker.on('dragend', function (e) {
+                            secilenKonum = e.target.getLatLng();
+                            document.getElementById('koordDecimal').innerText = parseFloat(secilenKonum.lat).toFixed(6) + ", " + parseFloat(secilenKonum.lng).toFixed(6);
+                            document.getElementById('koordDMS').innerText = toDMS(secilenKonum.lat, secilenKonum.lng);
+                        });
+                    }
 
                     document.getElementById('tuzakModal').classList.add('active');
                     marker.closePopup();
@@ -8226,7 +8232,7 @@
             if (docId && markerListesi[docId]) {
                 markerListesi[docId].dragging.disable();
                 markerListesi[docId].off('dragend');
-                // Revert position if dragging was cancelled
+                // Revert position if editing was cancelled
                 var originalData = tuzakVerileri[docId];
                 if (originalData && originalData.lat !== undefined && originalData.lng !== undefined) {
                     markerListesi[docId].setLatLng([originalData.lat, originalData.lng]);
