@@ -3769,8 +3769,15 @@
             var ilceUyumlu = (aktifFiltreler.ilce === "Tümü" || data.ilce === aktifFiltreler.ilce);
             var koyUyumlu = (aktifFiltreler.koy === "Tümü" || data.koy === aktifFiltreler.koy);
 
+            // Yıl eşleştirme: önce tuzakİlkAsiliTarih, sonra tarih, sonra kayıtlar içinden en erken tarih
             var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-            var yilUyumlu = (aktifFiltreler.yil === "Tümü" || checkYearMatch(recordDate, aktifFiltreler.yil));
+            if (!recordDate && data.kayitlar && Array.isArray(data.kayitlar) && data.kayitlar.length > 0) {
+                // kayıtlar içinde tarih olan ilk kaydı bul
+                var ilkKayit = data.kayitlar.find(function(k) { return k && k.tarih; });
+                if (ilkKayit) recordDate = ilkKayit.tarih;
+            }
+            // Tarih hâlâ yoksa: tuzağı her yıl filtresinde göster (gizleme)
+            var yilUyumlu = (aktifFiltreler.yil === "Tümü" || !recordDate || checkYearMatch(recordDate, aktifFiltreler.yil));
 
             if (ilUyumlu && ilceUyumlu && koyUyumlu && yilUyumlu) {
                 if (!markerKatmani.hasLayer(marker)) {
