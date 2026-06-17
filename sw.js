@@ -47,6 +47,14 @@ self.addEventListener('fetch', (event) => {
   // Only handle HTTP/HTTPS requests (avoid chrome-extension or other schemes)
   if (!event.request.url.startsWith('http')) return;
 
+  // Workaround for Safari WebKitBlobResource error 1:
+  // WebKit tarayıcıları önbelleğe alınmış kaynakları alırken hata veriyor.
+  // WebKit üzerinde Servis Çalışanı önbelleğini devre dışı bırakıyoruz.
+  const isSafari = typeof navigator !== 'undefined' && navigator.userAgent && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (isSafari) {
+    return; // Tarayıcının varsayılan ağ davranışına geri dön
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
