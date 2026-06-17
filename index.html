@@ -2779,21 +2779,37 @@
 
         // Register Service Worker and reload on update
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('./sw.js').then(function (reg) {
-                    console.log('ServiceWorker başarıyla kaydedildi, kapsam: ', reg.scope);
-                }).catch(function (err) {
-                    console.error('ServiceWorker kaydı başarısız: ', err);
-                });
-            });
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', function () {
-                if (!refreshing) {
-                    refreshing = true;
-                    window.location.reload();
-                }
-            });
+            if (isSafari) {
+                // Safari WebKitBlobResource hatası 1 çözümü: servis çalışanını kaldır
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    for (let registration of registrations) {
+                        registration.unregister().then(function (success) {
+                            if (success) {
+                                console.log('Safari için ServiceWorker başarıyla kaldırıldı.');
+                                window.location.reload();
+                            }
+                        });
+                    }
+                });
+            } else {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+                        console.log('ServiceWorker başarıyla kaydedildi, kapsam: ', reg.scope);
+                    }).catch(function (err) {
+                        console.error('ServiceWorker kaydı başarısız: ', err);
+                    });
+                });
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', function () {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            }
         }
 
         // Internet Connection Status Check
