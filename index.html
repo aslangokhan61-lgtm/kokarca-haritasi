@@ -3777,7 +3777,7 @@
                 if (ilkKayit) recordDate = ilkKayit.tarih;
             }
             // Tarih hâlâ yoksa: tuzağı her yıl filtresinde göster (gizleme)
-            var yilUyumlu = (aktifFiltreler.yil === "Tümü" || !recordDate || checkYearMatch(recordDate, aktifFiltreler.yil));
+            var yilUyumlu = (aktifFiltreler.yil === "Tümü" || !recordDate || checkYearMatch(data, aktifFiltreler.yil));
 
             if (ilUyumlu && ilceUyumlu && koyUyumlu && yilUyumlu) {
                 if (!markerKatmani.hasLayer(marker)) {
@@ -4423,9 +4423,42 @@
         // Tarih string'ini (Güneysu format: "d.m.yyyy") Date objesine çevirir
         function parseTurkishDate(dateStr) {
             if (!dateStr) return null;
+            if (typeof dateStr.toDate === 'function') {
+                return dateStr.toDate();
+            }
+            if (dateStr instanceof Date) {
+                return dateStr;
+            }
+            if (typeof dateStr === 'object' && dateStr.seconds !== undefined) {
+                return new Date(dateStr.seconds * 1000);
+            }
+            dateStr = String(dateStr);
             var p = dateStr.split('.');
             if (p.length < 3) return null;
             return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+        }
+
+        // YYYY-MM-DD -> DD.MM.YYYY
+        function formatIsoToTurkishDate(isoDateStr) {
+            if (!isoDateStr) return "";
+            if (/^\d{4}-\d{2}-\d{2}$/.test(isoDateStr)) {
+                var parts = isoDateStr.split('-');
+                return parts[2] + '.' + parts[1] + '.' + parts[0];
+            }
+            return isoDateStr;
+        }
+
+        // DD.MM.YYYY -> YYYY-MM-DD
+        function formatTurkishToIsoDate(trDateStr) {
+            if (!trDateStr) return "";
+            if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(trDateStr)) {
+                var parts = trDateStr.split('.');
+                var d = parts[0].padStart(2, '0');
+                var m = parts[1].padStart(2, '0');
+                var y = parts[2];
+                return y + '-' + m + '-' + d;
+            }
+            return trDateStr;
         }
 
         // Show Reports
@@ -5412,7 +5445,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var ilce = data.ilce || "Bilinmiyor";
                 if (ilce === "-" || ilce === "") continue;
@@ -5544,7 +5577,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var ilce = data.ilce || "-";
                 var koy = data.koy || data.ad || "-";
@@ -5685,7 +5718,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, String(yil))) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, String(yil))) continue;
 
                 if (tip === "Huni") {
                     huniCount++;
@@ -5856,7 +5889,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var alan = parseFloat(data.bahceAlani) || 0;
                 var agac = parseInt(data.agacSayisi) || 0;
@@ -5975,7 +6008,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var alan = parseFloat(data.seraAlani) || 0;
                 var urun = (data.yetiştirilenUrun || "").trim();
@@ -6267,18 +6300,52 @@
             return d + '.' + m + '.' + y;
         }
 
-        function checkYearMatch(dateStr, targetYear) {
+        function checkYearMatch(dateStrOrObject, targetYear) {
             if (!targetYear || targetYear === "Tümü") return true;
-            if (!dateStr || dateStr === "-" || dateStr === "" || dateStr === "Tarihsiz") return false;
+            if (!dateStrOrObject) return false;
+
+            // If it's a trap/record data object
+            if (typeof dateStrOrObject === 'object' && !dateStrOrObject.split && !(dateStrOrObject instanceof Date) && dateStrOrObject.seconds === undefined) {
+                var data = dateStrOrObject;
+                if (data.tuzakİlkAsiliTarih && checkYearMatch(data.tuzakİlkAsiliTarih, targetYear)) return true;
+                if (data.tarih && checkYearMatch(data.tarih, targetYear)) return true;
+                if (data.kayitlar && Array.isArray(data.kayitlar)) {
+                    for (var i = 0; i < data.kayitlar.length; i++) {
+                        var k = data.kayitlar[i];
+                        if (k && k.tarih && checkYearMatch(k.tarih, targetYear)) return true;
+                    }
+                }
+                var hasAnyDate = data.tuzakİlkAsiliTarih || data.tarih || (data.kayitlar && data.kayitlar.some(function(k) { return k && k.tarih; }));
+                return !hasAnyDate; // Show dateless traps
+            }
+
+            var dateStr = dateStrOrObject;
+            if (typeof dateStr.toDate === 'function') dateStr = dateStr.toDate();
+            if (dateStr instanceof Date) {
+                return String(dateStr.getFullYear()) === targetYear;
+            }
+            if (typeof dateStr === 'object' && dateStr.seconds !== undefined) {
+                var d = new Date(dateStr.seconds * 1000);
+                return String(d.getFullYear()) === targetYear;
+            }
+
+            dateStr = String(dateStr);
+            if (dateStr === "-" || dateStr === "" || dateStr === "Tarihsiz") return false;
+
             var parts = dateStr.split('.');
             if (parts.length === 3) {
                 var y = parts[2].trim();
+                if (y.includes(' ')) y = y.split(' ')[0];
                 return y === targetYear;
             }
             var parts2 = dateStr.split('-');
             if (parts2.length === 3) {
                 if (parts2[0].length === 4) return parts2[0] === targetYear;
-                if (parts2[2].length === 4) return parts2[2] === targetYear;
+                if (parts2[2].length === 4) {
+                    var y2 = parts2[2].trim();
+                    if (y2.includes(' ')) y2 = y2.split(' ')[0];
+                    return y2 === targetYear;
+                }
             }
             return false;
         }
@@ -6321,7 +6388,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var kayitlar = data.kayitlar || [];
                 var tarihBazliSayim = {};
@@ -6468,7 +6535,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
@@ -6968,7 +7035,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var kayitlar = data.kayitlar || [];
                 var tarihBazliSayim = {};
@@ -7118,7 +7185,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var kayitlar = data.kayitlar || [];
                 kayitlar.forEach(function (k) {
@@ -7231,7 +7298,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var ilce = data.ilce || "Bilinmiyor";
                 if (ilce === "-" || ilce === "") continue;
@@ -7360,7 +7427,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 rows.push({
                     il: data.il || "Rize",
@@ -7476,7 +7543,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, String(yil))) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, String(yil))) continue;
 
                 if (tip === "Huni") {
                     huniCount++;
@@ -7625,7 +7692,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var alan = parseFloat(data.bahceAlani) || 0;
                 var agac = parseInt(data.agacSayisi) || 0;
@@ -7727,7 +7794,7 @@
 
                 // Yıl bazlı kısıtlama
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
-                if (seciliYil !== "Tümü" && !checkYearMatch(recordDate, seciliYil)) continue;
+                if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
                 var alan = parseFloat(data.seraAlani) || 0;
                 var urun = (data.yetiştirilenUrun || "").trim();
@@ -7936,7 +8003,7 @@
                             document.getElementById('tuzakEtkiAlani').value = data.tuzakEtkiAlani !== undefined ? data.tuzakEtkiAlani : "";
                         }
                         if (document.getElementById('tuzakİlkAsiliTarih')) {
-                            document.getElementById('tuzakİlkAsiliTarih').value = data.tuzakİlkAsiliTarih || "";
+                            document.getElementById('tuzakİlkAsiliTarih').value = formatTurkishToIsoDate(data.tuzakİlkAsiliTarih || "");
                         }
                         if (document.getElementById('ariYumurtaPaketSayisi')) {
                             document.getElementById('ariYumurtaPaketSayisi').value = data.ariYumurtaPaketSayisi !== undefined ? data.ariYumurtaPaketSayisi : "";
@@ -8787,7 +8854,8 @@
                     saveData.tuzakBitkiTuru = document.getElementById('tuzakBitkiTuru') ? document.getElementById('tuzakBitkiTuru').value : "Fındık";
                     var etkiAlaniStr = document.getElementById('tuzakEtkiAlani') ? document.getElementById('tuzakEtkiAlani').value.trim() : "";
                     saveData.tuzakEtkiAlani = etkiAlaniStr ? parseFloat(etkiAlaniStr) : 0;
-                    saveData.tuzakİlkAsiliTarih = document.getElementById('tuzakİlkAsiliTarih') ? document.getElementById('tuzakİlkAsiliTarih').value : "";
+                    var rawDate = document.getElementById('tuzakİlkAsiliTarih') ? document.getElementById('tuzakİlkAsiliTarih').value : "";
+                    saveData.tuzakİlkAsiliTarih = formatIsoToTurkishDate(rawDate);
                 }
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
                 logTuru = "Bahçe";
@@ -10787,7 +10855,7 @@
                 var koyUyumlu = (aktifFiltreler.koy === "Tümü" || t.koy === aktifFiltreler.koy);
 
                 var recordDate = t.tuzakİlkAsiliTarih || t.tarih || "";
-                var yilUyumlu = (aktifFiltreler.yil === "Tümü" || checkYearMatch(recordDate, aktifFiltreler.yil));
+                var yilUyumlu = (aktifFiltreler.yil === "Tümü" || checkYearMatch(t, aktifFiltreler.yil));
 
                 if (ilUyumlu && ilceUyumlu && koyUyumlu && yilUyumlu) {
                     toplamTuzak++;
