@@ -2621,10 +2621,10 @@
             </div>
             <p
                 style="color: var(--text-muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 20px; text-align: left;">
-                Yerel güvenlik (CORS) kısıtlamaları veya dosyanın bulunamaması nedeniyle <b>Ek-14-Halys Tablosu
+                Yerel güvenlik (CORS) kısıtlamaları veya dosyanın bulunamaması nedeniyle <b>belgeler/Ek-14-Halys Tablosu
                     2025.docx</b> şablonuna otomatik erişilemedi.
                 <br><br>
-                Lütfen projenizin ana dizinindeki <b>Ek-14-Halys Tablosu 2025.docx</b> dosyasını seçerek devam edin:
+                Lütfen projenizin <b>belgeler</b> klasöründeki <b>Ek-14-Halys Tablosu 2025.docx</b> dosyasını seçerek devam edin:
             </p>
             <input type="file" id="modalDocxInput" accept=".docx" style="display: none;">
             <button class="btn"
@@ -3948,7 +3948,7 @@
                     recheckMissingDistricts();
                 } else {
                     // 3. Firestore empty: seed from lokasyonlar.json
-                    fetch('./lokasyonlar.json')
+                    fetch('./veri/lokasyonlar.json')
                         .then(function (res) { return res.json(); })
                         .then(function (jsonData) {
                             docRef.set(jsonData).then(function () {
@@ -3967,7 +3967,7 @@
                 console.warn("Lokasyonlar Firestore'dan çekilemedi, önbellekten kullanılıyor:", error);
                 if (!lokasyonDB) {
                     // Last resort: try JSON file
-                    fetch('./lokasyonlar.json')
+                    fetch('./veri/lokasyonlar.json')
                         .then(function (res) { return res.json(); })
                         .then(function (jsonData) {
                             lokasyonDB = jsonData;
@@ -7878,7 +7878,7 @@
             }
 
             // Auto-fetch the template docx from local directory
-            fetch('./Ek-14-Halys Tablosu 2025.docx')
+            fetch('./belgeler/Ek-14-Halys Tablosu 2025.docx')
                 .then(function (response) {
                     if (!response.ok) throw new Error("Şablon dosyasına otomatik erişilemedi");
                     return response.arrayBuffer();
@@ -10169,7 +10169,7 @@
                 yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme', null, function () {
                     acTopluYuklemeModal();
                 }));
-                yonetimGrubu.appendChild(menuOgesi('🟢', 'Toplu 2026 Sörvey Yükleme', null, function () {
+                yonetimGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
                     toggleMenu();
                     window.open('toplu_survey_yukle.html', '_blank');
                 }));
