@@ -352,7 +352,7 @@
         }
 
         .menu-group-body.open {
-            max-height: 600px;
+            max-height: 2000px;
             overflow: visible;
         }
 
@@ -10071,12 +10071,12 @@
                 "Örtüaltı Yetiştiriciliği": { emoji: "🍓", renk: "#f59e0b" }
             };
 
-            varsayilanKategoriler.forEach(function (kat) {
+            varsayilanKategoriler.forEach(function (kat, katIdx) {
                 var c = katTasarim[kat] || { emoji: "🌳", renk: "#10b981" };
 
                 var katModulleri = tumModuller.filter(m => m.kategori === kat);
-                // Eğer modül yoksa bile kategoriyi ekleyelim ki boş durmasın, dinamik eklenebilsin
-                var katGrubu = menuGrubuOlustur(kat, c.emoji, c.renk, katModulleri.length > 0);
+                // İlk kategori her zaman açık
+                var katGrubu = menuGrubuOlustur(kat, c.emoji, c.renk, katIdx === 0 || katModulleri.length > 0);
 
                 if (katModulleri.length === 0) {
                     var elBos = document.createElement('div');
@@ -10314,7 +10314,7 @@
             sideMenu.appendChild(uygulamaTalimatiMenu);
 
             // ── Rapor Menüsü (reportConfig'den otomatik oluştur) ──
-            var raporGrubuDiv = menuGrubuOlustur('📋 Raporlar', '📋', '#7c3aed', false);
+            var raporGrubuDiv = menuGrubuOlustur('📋 Raporlar', '📋', '#7c3aed', true);
             for (var grpName in reportConfig) {
                 var grpCfg = reportConfig[grpName];
                 var grpHeader = document.createElement('div');
