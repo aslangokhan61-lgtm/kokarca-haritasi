@@ -10890,6 +10890,33 @@
             document.getElementById("topluYuklemeModal").classList.remove("active");
         }
 
+        function parseDmsCoordinate(val) {
+            if (!val) return 0;
+            var s = String(val).trim();
+            // Eğer zaten ondalıklı ise (41.2159 gibi) doğrudan float dön
+            var asFloat = parseFloat(s.replace(',', '.'));
+            if (!isNaN(asFloat) && asFloat >= 35 && asFloat <= 45) {
+                return asFloat;
+            }
+            // Derece Dakika Saniye formatı (41°13'33.8" veya 41 13 33.8 gibi)
+            var clean = s.replace(/[KkDdNNsSeE]/g, '').trim();
+            var matches = clean.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d\.,]+)\s*"?/);
+            if (matches) {
+                var deg = parseFloat(matches[1]);
+                var min = parseFloat(matches[2]);
+                var sec = parseFloat(matches[3].replace(',', '.'));
+                return deg + (min / 60) + (sec / 3600);
+            }
+            // Boşlukla ayırarak bul
+            var numbers = clean.replace(/[^0-9\.,]+/g, ' ').trim().split(/\s+/).map(function(num) {
+                return parseFloat(num.replace(',', '.'));
+            });
+            if (numbers.length >= 3) {
+                return numbers[0] + (numbers[1] / 60) + (numbers[2] / 3600);
+            }
+            return asFloat || 0;
+        }
+
         async function aktarTopluVeriler() {
             if (!isAdmin()) {
                 alert("Bu işlem için yetkiniz yoktur!");
@@ -10908,25 +10935,47 @@
                 let parcalar = satir.split(',');
                 if (parcalar.length < 3) continue;
 
-                let adStr = parcalar[1];
-                let lat = parseFloat(parcalar[2]);
-                let lng = parseFloat(parcalar[3]);
+                let ilceVal = "";
+                let koyVal = "";
+                let latVal = 0;
+                let lngVal = 0;
 
-                if (!isNaN(lat) && !isNaN(lng)) {
+                if (parcalar.length >= 5) {
+                    // Format: Sıra No, İlçe, Köy/Mahalle, Enlem (DMS), Boylam (DMS)
+                    // Örn: 1, Pazar, Yeniyol Köyü, 41°13'33.8", 41°05'13.7"
+                    ilceVal = parcalar[1].trim();
+                    koyVal = parcalar[2].trim();
+                    latVal = parseDmsCoordinate(parcalar[3]);
+                    lngVal = parseDmsCoordinate(parcalar[4]);
+                } else if (parcalar.length === 4) {
+                    // Format: Sıra No, Köy/Mahalle, Enlem, Boylam
+                    ilceVal = aktifKullanici ? aktifKullanici.ilce : "";
+                    koyVal = parcalar[1].trim();
+                    latVal = parseDmsCoordinate(parcalar[2]);
+                    lngVal = parseDmsCoordinate(parcalar[3]);
+                } else if (parcalar.length === 3) {
+                    // Format: Köy/Mahalle, Enlem, Boylam
+                    ilceVal = aktifKullanici ? aktifKullanici.ilce : "";
+                    koyVal = parcalar[0].trim();
+                    latVal = parseDmsCoordinate(parcalar[1]);
+                    lngVal = parseDmsCoordinate(parcalar[2]);
+                }
+
+                if (!isNaN(latVal) && !isNaN(lngVal) && latVal > 0 && lngVal > 0) {
                     try {
                         await db.collection("tuzaklar").add({
                             adSoyad: aktifKullanici.adSoyad,
                             unvan: aktifKullanici.unvan,
                             telefon: aktifKullanici.telefon,
                             il: "Rize",
-                            ilce: aktifKullanici.ilce,
-                            koy: adStr,
-                            ad: adStr,
+                            ilce: ilceVal,
+                            koy: koyVal,
+                            ad: koyVal,
                             tuzakNo: "Toplu",
                             bocekSayisi: 0,
                             tuzakTipi: "Huni",
-                            lat: lat,
-                            lng: lng,
+                            lat: latVal,
+                            lng: lngVal,
                             tarih: new Date().toLocaleDateString('tr-TR')
                         });
                         basarili++;
