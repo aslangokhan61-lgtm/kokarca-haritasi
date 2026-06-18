@@ -1511,12 +1511,7 @@
     </div>
 
     <!-- Side Menu -->
-    <div id="sideMenu" class="side-menu">
-        <div class="menu-header">
-            <span>Raporlar</span>
-            <span class="close-btn" onclick="toggleMenu()">✖</span>
-        </div>
-        <ul id="reportMenuList" class="report-list"></ul>
+    <div id="sideMenu" class="side-menu"></div>
         <template id="reportItemTemplate">
             <li class="report-item">
                 <div class="report-title">{{title}}</div>
@@ -10218,25 +10213,7 @@
             if (isAdmin()) {
 
                 // ── 2. RAPORLAR grubu (açık başlar) ──
-                var raporGrubu = menuGrubuOlustur('Raporlar', '📊', '#0369a1', true);
-
-                raporGrubu.appendChild(menuOgesi('🗺️', 'Rize Tüm İlçeler', '#7c3aed', function () {
-                    acBolgeRaporu('Rize', 'Tümü', null);
-                }));
-                (function (kul) {
-                    raporGrubu.appendChild(menuOgesi('📍', 'Kendi İlçem (' + kul.ilce + ')', '#0369a1', function () {
-                        acBolgeRaporu('Rize', kul.ilce, null);
-                    }));
-                })(aktifKullanici);
-                raporGrubu.appendChild(menuOgesi('📈', 'Genel Raporlar', null, function () {
-                    acBolgeRaporu('Tümü', 'Tümü', null);
-                }));
-                raporGrubu.appendChild(menuOgesi('🌡️', 'Isı Haritası', '#f43f5e', function () {
-                    toggleMenu(); toggleHeatmap();
-                }));
-                raporGrubu.appendChild(menuOgesi('📅', 'Haftalık Rapor Arşivi', '#10b981', function () {
-                    acHaftalikRaporlarModal();
-                }));
+                // Dinamik rapor menüsü (admin ve super‑admin)\n                loadReportMenu();
 
                 // ── 3. YÖNETİM grubu (kapalı başlar) ──
                 var yonetimGrubu = menuGrubuOlustur('Yönetim', '⚙️', '#d97706', false);
@@ -12517,15 +12494,14 @@
 
     // ----- Populate Side Menu -----
     function loadReportMenu() {
-        const container = document.getElementById('reportMenuList');
+        const container = document.getElementById('sideMenu');
         if (!container) return;
         container.innerHTML = '';
         const user = firebase.auth().currentUser;
         const userDistrict = user ? user.district : null;
         const role = user ? user.role : null;
         for (const groupName in reportConfig) {
-            // role based filtering (example: only show groups user has access to)
-            if (role === 'sahapersoneli' && !userDistrict) continue; // simple example
+            if (role === 'sahapersoneli' && !userDistrict) continue;
             const group = reportConfig[groupName];
             const groupItem = document.createElement('li');
             groupItem.className = 'report-item';
@@ -12533,7 +12509,6 @@
             titleDiv.className = 'report-title';
             titleDiv.textContent = groupName;
             groupItem.appendChild(titleDiv);
-            // sub‑types
             const subList = document.createElement('ul');
             subList.className = 'sub-report-list';
             group.types.forEach(typeObj => {
@@ -12551,7 +12526,6 @@
                         childLi.style.opacity = canDownload(userDistrict) ? '1' : '0.5';
                         childLi.addEventListener('click', () => {
                             if (!canDownload(userDistrict)) { alert('Bu raporu indirme yetkiniz yok.'); return; }
-                            // Placeholder: load report data and open export modal
                             currentReportData = { title: child, district: userDistrict };
                             openExportModal();
                         });
@@ -12561,10 +12535,9 @@
                 }
             });
             groupItem.appendChild(subList);
-            // Export buttons for the group (shown after selection)
+            // Export buttons for group
             const btnContainer = document.createElement('div');
             btnContainer.className = 'export-buttons';
-            // create buttons dynamically based on exportFormats
             group.exportFormats.forEach(fmt => {
                 const btn = document.createElement('button');
                 btn.className = 'export-btn ' + fmt;
@@ -12572,7 +12545,6 @@
                 btn.title = fmt.toUpperCase() + ' olarak indir';
                 btn.addEventListener('click', () => {
                     if (!canDownload(userDistrict)) { alert('Bu raporu indirme yetkiniz yok.'); return; }
-                    // Dummy data example
                     const data = [{ example: 'data' }];
                     const fileName = groupName.replace(/\s+/g, '_') + '_' + fmt + '.' + (fmt === 'excel' ? 'xlsx' : fmt);
                     if (fmt === 'csv') exportCSV(data, fileName);
@@ -12581,7 +12553,6 @@
                 });
                 btnContainer.appendChild(btn);
             });
-            // cancel button
             const cancelBtn = document.createElement('button');
             cancelBtn.className = 'cancel-btn';
             cancelBtn.textContent = 'Vazgeç';
@@ -12590,7 +12561,6 @@
             groupItem.appendChild(btnContainer);
             container.appendChild(groupItem);
         }
-        // Super admin can add new group button
         if (isSuperAdmin()) {
             const addBtn = document.createElement('button');
             addBtn.className = 'btn btn-save';
@@ -12625,7 +12595,6 @@
         XLSX.writeFile(wb, fileName);
     }
     function exportWord(data, fileName) {
-        // Simple placeholder: generate plain text .docx using Blob
         const text = JSON.stringify(data, null, 2);
         const blob = new Blob([text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         const url = URL.createObjectURL(blob);
@@ -12635,7 +12604,6 @@
         a.click();
         URL.revokeObjectURL(url);
     }
-    // Modal handling (simple implementation)
     function openExportModal() {
         let modal = document.getElementById('exportModal');
         if (!modal) {
@@ -12650,7 +12618,6 @@
                 </div>`;
             document.body.appendChild(modal);
         }
-        // Populate buttons based on currentReportData.exportFormats (if defined)
         const container = document.getElementById('exportButtonsContainer');
         container.innerHTML = '';
         const formats = currentReportData && currentReportData.exportFormats ? currentReportData.exportFormats : ['csv','excel','word'];
@@ -12671,8 +12638,6 @@
         const modal = document.getElementById('exportModal');
         if (modal) modal.classList.remove('active');
     }
-
-    // Initialize menu when app starts or when user logs in
     document.addEventListener('DOMContentLoaded', loadReportMenu);
 </script>
 
