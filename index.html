@@ -10933,28 +10933,34 @@
         function parseDmsCoordinate(val) {
             if (!val) return 0;
             var s = String(val).trim();
-            // Eğer zaten ondalıklı ise (41.2159 gibi) doğrudan float dön
-            var asFloat = parseFloat(s.replace(',', '.'));
-            if (!isNaN(asFloat) && asFloat >= 35 && asFloat <= 45) {
-                return asFloat;
+            // Yön harflerini temizle
+            s = s.replace(/[KkDdNNsSeE]/g, '').trim();
+
+            // Derece işareti, tırnak veya boşluk içermiyorsa saf ondalıklıdır (örn: 41.226056 veya 41,226056)
+            if (!s.includes('°') && !s.includes("'") && !s.includes('"') && !s.includes(' ') && !s.includes('\t')) {
+                var asFloat = parseFloat(s.replace(',', '.'));
+                if (!isNaN(asFloat)) {
+                    return asFloat;
+                }
             }
+
             // Derece Dakika Saniye formatı (41°13'33.8" veya 41 13 33.8 gibi)
-            var clean = s.replace(/[KkDdNNsSeE]/g, '').trim();
-            var matches = clean.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d\.,]+)\s*"?/);
+            var matches = s.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d\.,]+)\s*"?/);
             if (matches) {
                 var deg = parseFloat(matches[1]);
                 var min = parseFloat(matches[2]);
                 var sec = parseFloat(matches[3].replace(',', '.'));
                 return deg + (min / 60) + (sec / 3600);
             }
-            // Boşlukla ayırarak bul
-            var numbers = clean.replace(/[^0-9\.,]+/g, ' ').trim().split(/\s+/).map(function (num) {
+            // Boşlukla ayırarak bul (örn: 41 13 33.8)
+            var numbers = s.replace(/[^0-9\.,]+/g, ' ').trim().split(/\s+/).map(function (num) {
                 return parseFloat(num.replace(',', '.'));
             });
             if (numbers.length >= 3) {
                 return numbers[0] + (numbers[1] / 60) + (numbers[2] / 3600);
             }
-            return asFloat || 0;
+            var fallback = parseFloat(s.replace(',', '.'));
+            return isNaN(fallback) ? 0 : fallback;
         }
 
         async function aktarTopluVeriler() {
@@ -10972,7 +10978,14 @@
                 let satir = satirlar[i].trim();
                 if (satir === "") continue;
 
-                let parcalar = satir.split(',');
+                let parcalar = [];
+                if (satir.includes(';')) {
+                    parcalar = satir.split(';');
+                } else if (satir.includes('\t')) {
+                    parcalar = satir.split('\t');
+                } else {
+                    parcalar = satir.split(',');
+                }
                 if (parcalar.length < 3) continue;
 
                 let ilceVal = "";
