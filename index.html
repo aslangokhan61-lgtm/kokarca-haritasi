@@ -144,15 +144,6 @@
             animation: pulse-red 2s infinite !important;
             border-radius: 50% !important;
         }
-        .menu-btn {
-            top: 15px !important;
-            left: 15px !important;
-            width: 44px !important;
-            height: 44px !important;
-            padding: 0 !important;
-            border-radius: 50% !important;
-            justify-content: center !important;
-            z-index: 20001; /* ensure button stays above map on mobile */ }
 
         /* İlçe Sınırları Loading Badge */
         .ilce-loading-badge {
@@ -196,7 +187,7 @@
             height: 100%;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
-            z-index: 20000; // elevated for mobile visibility
+            z-index: 10000;
             box-shadow: 10px 0 40px rgba(0, 0, 0, 0.15);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
@@ -352,7 +343,7 @@
         }
 
         .menu-group-body.open {
-            max-height: 2000px;
+            max-height: 600px;
             overflow: visible;
         }
 
@@ -1337,59 +1328,7 @@
             border-color: var(--primary) !important;
             background-color: rgba(34, 197, 94, 0.05) !important;
         }
-        /* ----- Dynamic Report Menu Styles ----- */
-    .report-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-    .report-item {
-        padding: 14px 20px;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        transition: background 0.2s ease;
-    }
-    .report-item:hover {
-        background: var(--bg-glass);
-    }
-    .report-title {
-        font-weight: 600;
-        color: var(--text-dark);
-        font-size: 15px;
-    }
-    .export-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .export-btn, .cancel-btn {
-        background: var(--bg-glass);
-        border: 1px solid var(--border-glass);
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .export-btn:hover, .cancel-btn:hover {
-        background: var(--primary-light);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: var(--shadow);
-    }
-    .cancel-btn {
-        background: #f44336;
-        color: white;
-    }
-    .cancel-btn:hover {
-        background: #d32f2f;
-    }
-</style>
+    </style>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- JSZip for native Word docx template processing -->
@@ -1519,8 +1458,10 @@
         <span class="menu-text">Menü</span>
     </div>
 
-    <!-- Side Menu (JS tarafından doldurulur) -->
-    <div id="sideMenu" class="side-menu"></div>
+    <!-- Side Menu -->
+    <div id="sideMenu" class="side-menu">
+        <!-- Filled Dynamically depending on role -->
+    </div>
 
     <!-- New Module Modal -->
     <div id="yeniModulModal" class="modal-overlay" style="z-index: 100006;">
@@ -10071,12 +10012,12 @@
                 "Örtüaltı Yetiştiriciliği": { emoji: "🍓", renk: "#f59e0b" }
             };
 
-            varsayilanKategoriler.forEach(function (kat, katIdx) {
+            varsayilanKategoriler.forEach(function (kat) {
                 var c = katTasarim[kat] || { emoji: "🌳", renk: "#10b981" };
 
                 var katModulleri = tumModuller.filter(m => m.kategori === kat);
-                // İlk kategori her zaman açık
-                var katGrubu = menuGrubuOlustur(kat, c.emoji, c.renk, katIdx === 0 || katModulleri.length > 0);
+                // Eğer modül yoksa bile kategoriyi ekleyelim ki boş durmasın, dinamik eklenebilsin
+                var katGrubu = menuGrubuOlustur(kat, c.emoji, c.renk, katModulleri.length > 0);
 
                 if (katModulleri.length === 0) {
                     var elBos = document.createElement('div');
@@ -10119,7 +10060,6 @@
                 searchBx.style.left = "0";
                 searchBx.style.width = "90%";
                 searchBx.style.margin = "10px auto";
-                // Dinamik rapor menüsü (admin ve super‑admin) // loadReportMenu(); // Removed direct call to avoid running before sideMenu exists
                 searchBx.style.boxShadow = "none";
                 searchBx.style.border = "1px solid #e2e8f0";
                 mapTools.appendChild(searchBx);
@@ -10211,7 +10151,25 @@
             if (isAdmin()) {
 
                 // ── 2. RAPORLAR grubu (açık başlar) ──
-                // Dinamik rapor menüsü (admin ve super‑admin)\n                loadReportMenu();
+                var raporGrubu = menuGrubuOlustur('Raporlar', '📊', '#0369a1', true);
+
+                raporGrubu.appendChild(menuOgesi('🗺️', 'Rize Tüm İlçeler', '#7c3aed', function () {
+                    acBolgeRaporu('Rize', 'Tümü', null);
+                }));
+                (function (kul) {
+                    raporGrubu.appendChild(menuOgesi('📍', 'Kendi İlçem (' + kul.ilce + ')', '#0369a1', function () {
+                        acBolgeRaporu('Rize', kul.ilce, null);
+                    }));
+                })(aktifKullanici);
+                raporGrubu.appendChild(menuOgesi('📈', 'Genel Raporlar', null, function () {
+                    acBolgeRaporu('Tümü', 'Tümü', null);
+                }));
+                raporGrubu.appendChild(menuOgesi('🌡️', 'Isı Haritası', '#f43f5e', function () {
+                    toggleMenu(); toggleHeatmap();
+                }));
+                raporGrubu.appendChild(menuOgesi('📅', 'Haftalık Rapor Arşivi', '#10b981', function () {
+                    acHaftalikRaporlarModal();
+                }));
 
                 // ── 3. YÖNETİM grubu (kapalı başlar) ──
                 var yonetimGrubu = menuGrubuOlustur('Yönetim', '⚙️', '#d97706', false);
@@ -10312,78 +10270,6 @@
                 window.open('uygulama_talimati.html', '_blank');
             };
             sideMenu.appendChild(uygulamaTalimatiMenu);
-
-            // ── Rapor Menüsü (reportConfig'den otomatik oluştur) ──
-            var raporGrubuDiv = menuGrubuOlustur('📋 Raporlar', '📋', '#7c3aed', true);
-            for (var grpName in reportConfig) {
-                var grpCfg = reportConfig[grpName];
-                var grpHeader = document.createElement('div');
-                grpHeader.className = 'menu-item';
-                grpHeader.style.fontWeight = '700';
-                grpHeader.style.color = '#7c3aed';
-                grpHeader.innerHTML = '<span>📂</span> ' + grpName;
-                raporGrubuDiv.appendChild(grpHeader);
-
-                (function(gName, gCfg) {
-                    gCfg.types.forEach(function(typeObj) {
-                        var typeItem = document.createElement('div');
-                        typeItem.className = 'menu-item';
-                        typeItem.style.paddingLeft = '28px';
-                        typeItem.style.fontSize = '13px';
-                        typeItem.style.fontWeight = '600';
-                        typeItem.innerHTML = '<span>📌</span> ' + typeObj.name;
-                        raporGrubuDiv.appendChild(typeItem);
-
-                        if (typeObj.children && typeObj.children.length) {
-                            typeObj.children.forEach(function(childName) {
-                                var childItem = document.createElement('div');
-                                childItem.className = 'menu-item';
-                                childItem.style.paddingLeft = '44px';
-                                childItem.style.fontSize = '12px';
-                                childItem.style.color = '#4b5563';
-                                childItem.innerHTML = '<span>📄</span> ' + childName;
-                                childItem.onclick = (function(cn, formats) {
-                                    return function() {
-                                        currentReportData = { title: cn };
-                                        // Küçük export panel aç
-                                        var old = document.getElementById('inlineExportPanel');
-                                        if (old) old.remove();
-                                        var panel = document.createElement('div');
-                                        panel.id = 'inlineExportPanel';
-                                        panel.style.cssText = 'background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin:6px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;animation:fadeIn .3s ease;';
-                                        panel.innerHTML = '<span style="font-size:12px;font-weight:700;color:#166534;flex:1 1 100%;margin-bottom:4px;">📥 ' + cn + '</span>';
-                                        formats.forEach(function(fmt) {
-                                            var icons = {csv:'📄',excel:'📊',word:'📝'};
-                                            var colors = {csv:'#059669',excel:'#2563eb',word:'#7c3aed'};
-                                            var btn = document.createElement('button');
-                                            btn.style.cssText = 'flex:1;padding:8px 0;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;color:white;background:' + colors[fmt] + ';transition:transform .15s,opacity .15s;';
-                                            btn.innerHTML = icons[fmt] + ' ' + fmt.toUpperCase();
-                                            btn.onmouseenter = function(){ this.style.transform='translateY(-2px)'; this.style.opacity='0.9'; };
-                                            btn.onmouseleave = function(){ this.style.transform=''; this.style.opacity='1'; };
-                                            btn.onclick = function() {
-                                                var data = [{ Rapor: cn, Tarih: new Date().toLocaleDateString('tr-TR') }];
-                                                var fileName = cn.replace(/\s+/g,'_') + '.' + (fmt==='excel'?'xlsx':fmt);
-                                                if (fmt==='csv') exportCSV(data, fileName);
-                                                else if (fmt==='excel') exportExcel(data, fileName);
-                                                else if (fmt==='word') exportWord(data, fileName);
-                                            };
-                                            panel.appendChild(btn);
-                                        });
-                                        var vazgecBtn = document.createElement('button');
-                                        vazgecBtn.style.cssText = 'flex:1;padding:8px 0;border:1px solid #d1d5db;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;color:#6b7280;background:#fff;';
-                                        vazgecBtn.innerHTML = '✖ Vazgeç';
-                                        vazgecBtn.onclick = function() { panel.remove(); };
-                                        panel.appendChild(vazgecBtn);
-                                        childItem.parentNode.insertBefore(panel, childItem.nextSibling);
-                                    };
-                                })(childName, gCfg.exportFormats);
-                                raporGrubuDiv.appendChild(childItem);
-                            });
-                        }
-                    });
-                })(grpName, grpCfg);
-            }
-            sideMenu.appendChild(raporGrubuDiv);
 
             // Yerleşimi ekran genişliğine göre yap (Masaüstü/Mobil)
             yerlestirPanelleri();
@@ -12531,192 +12417,7 @@
             }
         });
 
-        // ----- Dynamic Report Configuration -----
-    const reportConfig = {
-        "Halymorph a": {
-            default: "Tarımsal Hastalık ve Zararlılar",
-            types: [
-                { name: "Tarımsal Hastalık ve Zararlılar", children: ["Kahverengi Kokarca", "Turunçgil Uzun Antenli Böceği"] },
-                { name: "Meyve ve Sebze Bahçeleri", children: ["Elma Bahçeleri"] },
-                { name: "Örtüaltı", children: ["Seralar", "Alçak Tüneller"] },
-                { name: "Hayvancılık İşletmeleri", children: ["Büyükbaş", "Küçükbaş"] },
-                { name: "Arıcılık İşletmeleri", children: [] },
-                { name: "Su Ürünleri Tesisleri", children: [] }
-            ],
-            exportFormats: ["csv", "excel", "word"]
-        },
-        // Yeni grup eklemek için Süper Admin bu yapı üzerine ekleyebilir
-    };
-
-    // ----- Helper: role checks -----
-    function isSuperAdmin() {
-        const user = firebase.auth().currentUser;
-        return user && user.role === 'superadmin';
-    }
-    function isAdmin() {
-        const user = firebase.auth().currentUser;
-        return user && (user.role === 'admin' || user.role === 'superadmin');
-    }
-    function canDownload(reportDistrict) {
-        const user = firebase.auth().currentUser;
-        return user && (user.role === 'superadmin' || user.role === 'admin' || user.district === reportDistrict);
-    }
-
-    // ----- Populate Side Menu -----
-    function loadReportMenu() {
-        const container = document.getElementById('sideMenu');
-        if (!container) return;
-        container.innerHTML = '';
-        const user = firebase.auth().currentUser;
-        const userDistrict = user ? user.district : null;
-        const role = user ? user.role : null;
-        for (const groupName in reportConfig) {
-            if (role === 'sahapersoneli' && !userDistrict) continue;
-            const group = reportConfig[groupName];
-            const groupItem = document.createElement('li');
-            groupItem.className = 'report-item';
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'report-title';
-            titleDiv.textContent = groupName;
-            groupItem.appendChild(titleDiv);
-            const subList = document.createElement('ul');
-            subList.className = 'sub-report-list';
-            group.types.forEach(typeObj => {
-                const typeLi = document.createElement('li');
-                typeLi.textContent = typeObj.name;
-                typeLi.style.fontWeight = '500';
-                subList.appendChild(typeLi);
-                if (typeObj.children && typeObj.children.length) {
-                    const childUl = document.createElement('ul');
-                    childUl.className = 'child-report-list';
-                    typeObj.children.forEach(child => {
-                        const childLi = document.createElement('li');
-                        childLi.textContent = child;
-                        childLi.style.cursor = canDownload(userDistrict) ? 'pointer' : 'not-allowed';
-                        childLi.style.opacity = canDownload(userDistrict) ? '1' : '0.5';
-                        childLi.addEventListener('click', () => {
-                            if (!canDownload(userDistrict)) { alert('Bu raporu indirme yetkiniz yok.'); return; }
-                            currentReportData = { title: child, district: userDistrict };
-                            openExportModal();
-                        });
-                        childUl.appendChild(childLi);
-                    });
-                    subList.appendChild(childUl);
-                }
-            });
-            groupItem.appendChild(subList);
-            // Export buttons for group
-            const btnContainer = document.createElement('div');
-            btnContainer.className = 'export-buttons';
-            group.exportFormats.forEach(fmt => {
-                const btn = document.createElement('button');
-                btn.className = 'export-btn ' + fmt;
-                btn.textContent = fmt.toUpperCase();
-                btn.title = fmt.toUpperCase() + ' olarak indir';
-                btn.addEventListener('click', () => {
-                    if (!canDownload(userDistrict)) { alert('Bu raporu indirme yetkiniz yok.'); return; }
-                    const data = [{ example: 'data' }];
-                    const fileName = groupName.replace(/\s+/g, '_') + '_' + fmt + '.' + (fmt === 'excel' ? 'xlsx' : fmt);
-                    if (fmt === 'csv') exportCSV(data, fileName);
-                    else if (fmt === 'excel') exportExcel(data, fileName);
-                    else if (fmt === 'word') exportWord(data, fileName);
-                });
-                btnContainer.appendChild(btn);
-            });
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'cancel-btn';
-            cancelBtn.textContent = 'Vazgeç';
-            cancelBtn.addEventListener('click', closeExportModal);
-            btnContainer.appendChild(cancelBtn);
-            groupItem.appendChild(btnContainer);
-            container.appendChild(groupItem);
-            // Auto‑open side menu on mobile devices (debug)
-            if (window.innerWidth < 768) container.classList.add('open');
-            const addBtn = document.createElement('button');
-            addBtn.className = 'btn btn-save';
-            addBtn.style.margin = '12px';
-            addBtn.textContent = '➕ Yeni Grup Ekle';
-            addBtn.onclick = openNewGroupModal;
-        }
-        if (isSuperAdmin()) {
-            const addBtn = document.createElement('button');
-            addBtn.className = 'btn btn-save';
-            addBtn.style.margin = '12px';
-            addBtn.textContent = '➕ Yeni Grup Ekle';
-            addBtn.onclick = openNewGroupModal;
-            container.appendChild(addBtn);
-        }
-    }
-
-    // ----- Export Functions -----
-    function exportCSV(data, fileName) {
-        const csvRows = [];
-        const headers = Object.keys(data[0] || {});
-        csvRows.push(headers.join(','));
-        data.forEach(row => {
-            csvRows.push(headers.map(h => JSON.stringify(row[h] ?? '')).join(','));
-        });
-        const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-    function exportExcel(data, fileName) {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Rapor');
-        XLSX.writeFile(wb, fileName);
-    }
-    function exportWord(data, fileName) {
-        const text = JSON.stringify(data, null, 2);
-        const blob = new Blob([text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-    function openExportModal() {
-        let modal = document.getElementById('exportModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'exportModal';
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width:300px; text-align:center;">
-                    <h3>Raporu İndir</h3>
-                    <div id="exportButtonsContainer"></div>
-                    <button class="cancel-btn" style="margin-top:12px;" onclick="closeExportModal()">Vazgeç</button>
-                </div>`;
-            document.body.appendChild(modal);
-        }
-        const container = document.getElementById('exportButtonsContainer');
-        container.innerHTML = '';
-        const formats = currentReportData && currentReportData.exportFormats ? currentReportData.exportFormats : ['csv','excel','word'];
-        formats.forEach(fmt => {
-            const btn = document.createElement('button');
-            btn.className = 'export-btn ' + fmt;
-            btn.textContent = fmt.toUpperCase();
-            btn.addEventListener('click', () => {
-                if (fmt === 'csv') exportCSV([currentReportData], 'rapor.csv');
-                else if (fmt === 'excel') exportExcel([currentReportData], 'rapor.xlsx');
-                else if (fmt === 'word') exportWord([currentReportData], 'rapor.docx');
-            });
-            container.appendChild(btn);
-        });
-        modal.classList.add('active');
-    }
-    function closeExportModal() {
-        const modal = document.getElementById('exportModal');
-        if (modal) modal.classList.remove('active');
-    }
-    document.addEventListener('DOMContentLoaded', loadReportMenu);
-</script>
+    </script>
 
 </body>
 
