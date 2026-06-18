@@ -1512,7 +1512,7 @@
     </div>
 
     <!-- Hamburger Menu Button -->
-    <div class="menu-btn" onclick="loadReportMenu(); toggleMenu()">
+    <div class="menu-btn" onclick="toggleMenu()">
         <svg viewBox="0 0 24 24">
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
         </svg>
@@ -10324,6 +10324,78 @@
                 window.open('uygulama_talimati.html', '_blank');
             };
             sideMenu.appendChild(uygulamaTalimatiMenu);
+
+            // ── Rapor Menüsü (reportConfig'den otomatik oluştur) ──
+            var raporGrubuDiv = menuGrubuOlustur('📋 Raporlar', '📋', '#7c3aed', false);
+            for (var grpName in reportConfig) {
+                var grpCfg = reportConfig[grpName];
+                var grpHeader = document.createElement('div');
+                grpHeader.className = 'menu-item';
+                grpHeader.style.fontWeight = '700';
+                grpHeader.style.color = '#7c3aed';
+                grpHeader.innerHTML = '<span>📂</span> ' + grpName;
+                raporGrubuDiv.appendChild(grpHeader);
+
+                (function(gName, gCfg) {
+                    gCfg.types.forEach(function(typeObj) {
+                        var typeItem = document.createElement('div');
+                        typeItem.className = 'menu-item';
+                        typeItem.style.paddingLeft = '28px';
+                        typeItem.style.fontSize = '13px';
+                        typeItem.style.fontWeight = '600';
+                        typeItem.innerHTML = '<span>📌</span> ' + typeObj.name;
+                        raporGrubuDiv.appendChild(typeItem);
+
+                        if (typeObj.children && typeObj.children.length) {
+                            typeObj.children.forEach(function(childName) {
+                                var childItem = document.createElement('div');
+                                childItem.className = 'menu-item';
+                                childItem.style.paddingLeft = '44px';
+                                childItem.style.fontSize = '12px';
+                                childItem.style.color = '#4b5563';
+                                childItem.innerHTML = '<span>📄</span> ' + childName;
+                                childItem.onclick = (function(cn, formats) {
+                                    return function() {
+                                        currentReportData = { title: cn };
+                                        // Küçük export panel aç
+                                        var old = document.getElementById('inlineExportPanel');
+                                        if (old) old.remove();
+                                        var panel = document.createElement('div');
+                                        panel.id = 'inlineExportPanel';
+                                        panel.style.cssText = 'background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin:6px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;animation:fadeIn .3s ease;';
+                                        panel.innerHTML = '<span style="font-size:12px;font-weight:700;color:#166534;flex:1 1 100%;margin-bottom:4px;">📥 ' + cn + '</span>';
+                                        formats.forEach(function(fmt) {
+                                            var icons = {csv:'📄',excel:'📊',word:'📝'};
+                                            var colors = {csv:'#059669',excel:'#2563eb',word:'#7c3aed'};
+                                            var btn = document.createElement('button');
+                                            btn.style.cssText = 'flex:1;padding:8px 0;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;color:white;background:' + colors[fmt] + ';transition:transform .15s,opacity .15s;';
+                                            btn.innerHTML = icons[fmt] + ' ' + fmt.toUpperCase();
+                                            btn.onmouseenter = function(){ this.style.transform='translateY(-2px)'; this.style.opacity='0.9'; };
+                                            btn.onmouseleave = function(){ this.style.transform=''; this.style.opacity='1'; };
+                                            btn.onclick = function() {
+                                                var data = [{ Rapor: cn, Tarih: new Date().toLocaleDateString('tr-TR') }];
+                                                var fileName = cn.replace(/\s+/g,'_') + '.' + (fmt==='excel'?'xlsx':fmt);
+                                                if (fmt==='csv') exportCSV(data, fileName);
+                                                else if (fmt==='excel') exportExcel(data, fileName);
+                                                else if (fmt==='word') exportWord(data, fileName);
+                                            };
+                                            panel.appendChild(btn);
+                                        });
+                                        var vazgecBtn = document.createElement('button');
+                                        vazgecBtn.style.cssText = 'flex:1;padding:8px 0;border:1px solid #d1d5db;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;color:#6b7280;background:#fff;';
+                                        vazgecBtn.innerHTML = '✖ Vazgeç';
+                                        vazgecBtn.onclick = function() { panel.remove(); };
+                                        panel.appendChild(vazgecBtn);
+                                        childItem.parentNode.insertBefore(panel, childItem.nextSibling);
+                                    };
+                                })(childName, gCfg.exportFormats);
+                                raporGrubuDiv.appendChild(childItem);
+                            });
+                        }
+                    });
+                })(grpName, grpCfg);
+            }
+            sideMenu.appendChild(raporGrubuDiv);
 
             // Yerleşimi ekran genişliğine göre yap (Masaüstü/Mobil)
             yerlestirPanelleri();
