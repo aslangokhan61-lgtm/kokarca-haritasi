@@ -1519,20 +1519,8 @@
         <span class="menu-text">Menü</span>
     </div>
 
-    <!-- Side Menu -->
+    <!-- Side Menu (JS tarafından doldurulur) -->
     <div id="sideMenu" class="side-menu"></div>
-        <template id="reportItemTemplate">
-            <li class="report-item">
-                <div class="report-title">{{title}}</div>
-                <div class="export-buttons">
-                    <button class="export-btn csv" title="CSV olarak indir" onclick="exportCSV(currentReportData,'rapor.csv')">📄 CSV</button>
-                    <button class="export-btn excel" title="Excel olarak indir" onclick="exportExcel(currentReportData,'rapor.xlsx')">📊 Excel</button>
-                    <button class="export-btn word" title="Word olarak indir" onclick="exportWord(currentReportData,'rapor.docx')">📝 Word</button>
-                    <button class="cancel-btn" title="Vazgeç" onclick="closeExportModal()">✖ Vazgeç</button>
-                </div>
-            </li>
-        </template>
-    </div>
 
     <!-- New Module Modal -->
     <div id="yeniModulModal" class="modal-overlay" style="z-index: 100006;">
