@@ -7,7 +7,7 @@
   "theme_color": "#28a745",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "resimler/icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
