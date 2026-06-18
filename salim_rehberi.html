@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samuray Arısı Salım Rehberi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #15803d;
+            --primary-light: #22c55e;
+            --primary-dark: #14532d;
+            --text-dark: #0f172a;
+            --text-muted: #475569;
+            --bg-light: #f8fafc;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 30px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 10px 0 5px 0;
+        }
+
+        .header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+            padding-left: 12px;
+            margin-top: 35px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 15px;
+            margin-bottom: 20px;
+            color: #334155;
+            text-align: justify;
+        }
+
+        ul, ol {
+            font-size: 15px;
+            margin-bottom: 20px;
+            padding-left: 20px;
+            color: #334155;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            font-size: 14.5px;
+            color: #166534;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 13.5px;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f1f5f9;
+            color: #475569;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <a href="index.html" class="btn-back" style="margin-bottom: 0;">⬅️ Haritaya Geri Dön</a>
+            <div style="display: flex; gap: 8px;">
+                <a href="Salım%20Rehberi.docx" download="Samuray_Arisi_Salim_Rehberi.docx" class="btn-back" style="margin-bottom: 0; background: var(--primary); color: white; border: 1px solid var(--primary-dark);">
+                    📝 Word İndir (.docx)
+                </a>
+                <a href="Salım%20Rehberi.pdf" download="Samuray_Arisi_Salim_Rehberi.pdf" class="btn-back" style="margin-bottom: 0; background: #0ea5e9; color: white; border: 1px solid #0284c7;">
+                    📕 PDF İndir (.pdf)
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="header">
+                <h2>T.C. Tarım ve Orman Bakanlığı</h2>
+                <h2>Tarımsal Araştırmalar ve Politikalar Genel Müdürlüğü</h2>
+                <h1>Trissolcus japonicus (Samuray Arıcığı) Salım Rehberi</h1>
+                <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin: 5px 0 0 0;">
+                    Karadeniz Tarımsal Araştırma Enstitüsü Müdürlüğü koordinasyonunda hazırlanmıştır.
+                </p>
+            </div>
+
+            <div class="section-title">Amaç</div>
+            <p>
+                "Kahverengi Kokarca'nın Ülkesel Entegre Mücadele Yönetimi Projesi" kapsamında faydalı böcek <em>Trissolcus japonicus</em>'un salım alanlarının belirlenmesi ve salım zamanı Karadeniz Tarımsal Araştırma Enstitüsü Müdürlüğü koordinatörlüğünde, diğer enstitü müdürlükleri ve il/ilçe Tarım Orman Müdürlükleri iş birliği ile yürütülmektedir. Bu rehber, tarımsal üretimde zararlı olan Kahverengi kokarca mücadelesinde kullanılan Samuray arıcığının salımları için rehber olması amacıyla hazırlanmıştır.
+            </p>
+
+            <div class="section-title">Samuray Arıcığı Genel Bilgi</div>
+            <p>
+                <em>Trissolcus japonicus</em> (Samuray arıcığı), yaklaşık 1-2 mm uzunluğunda siyah renkli bir yumurta parazitoitidir. Kahverengi kokarca (Halyomorpha halys) yumurtalarını parazitleyerek gelişimini sürdüren bu tür, zararlının popülasyonunu baskılayan en önemli doğal düşmanlardan biri olarak bilinmektedir.
+            </p>
+            <p>
+                Dişi parazitoitler, Kahverengi kokarcanın yumurta paketlerine yumurtalarını bırakarak zararlının yumurtaları içerisinde gelişir ve böylece zararlının yeni bireyler oluşturmasını engeller. Doğal yayılış alanı Doğu Asya olan bu faydalı arı, biyolojik mücadelede yüksek parazitleme kapasitesi ve zararlıya özgü olması nedeniyle entegre mücadele programlarında kritik bir biyolojik mücadele etmeni olarak değerlendirilmektedir.
+            </p>
+
+            <div class="section-title">Parazitoit Üretimi ve Hazırlık</div>
+            <p>
+                Samuray arıcığı ovaryumlarında en yüksek yumurta sayısına (45-55 adet) çıkış yaptıktan 7 gün sonra ulaşmaktadır. Kahverengi kokarca yumurtalarının parazitlenmesinde 1-3 haftalık dişi bireyler en verimli dönemdedir.
+            </p>
+            <div class="highlight-box">
+                💡 Parazitoitlerin yumurtadan çıkışından sonra (ilk yumurta paketi verilmeden önce) <strong>7 gün beklenmesi</strong> parazitleme başarısı açısından kritiktir. Ayrıca parazitleme süresince dişi parazitoitlerin beslenmesi için düzenli olarak <strong>bal solüsyonu</strong> verilmelidir.
+            </div>
+
+            <div class="section-title">Salım Zamanının Belirlenmesi</div>
+            <p>
+                Ortalama sıcaklıkların 12°C'yi aşmasıyla Kahverengi kokarca erginleri kışlakları terk etmekte ve günlük sıcaklıklar 17°C'ye ulaştığında yumurtalama başlamaktadır. Ergin çıkışından yaklaşık 30-40 gün sonra yumurta görülür. Optimal salım zamanı aşağıdaki fenoloji tablosuna göre planlanır:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Agroekolojik Zon ve İller</th>
+                        <th>Gelişme Eşiği</th>
+                        <th>İlk Yumurta Bırakma</th>
+                        <th>Optimal Salım Zamanı</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Nemli Kuzey Kuşağı Zonu</strong><br>(Samsun, Ordu, Giresun, Trabzon, Rize, Artvin vb.)</td>
+                        <td>12.0 - 14.0 °C</td>
+                        <td>Mayıs başı - Mayıs sonu</td>
+                        <td><strong>Haziran ortası - Temmuz ortası</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kuzeybatı Serin Zon</strong><br>(Edirne, Tekirdağ, Kırklareli)</td>
+                        <td>11.5 - 14.0 °C</td>
+                        <td>Mayıs ortası - Haziran başı</td>
+                        <td><strong>Haziran sonu - Temmuz ortası</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Serin Geçiş Zonu</strong><br>(Tokat, Amasya, Bolu, Karabük, Gümüşhane)</td>
+                        <td>11.0 - 13.5 °C</td>
+                        <td>Mayıs ortası - Haziran başı</td>
+                        <td><strong>Haziran sonu - Ağustos başı</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Batı ve Ege Sıcak-Geçiş Zonu</strong><br>(İzmir, Manisa, Denizli, Bursa, Çanakkale)</td>
+                        <td>12.5 - 15.0 °C</td>
+                        <td>Nisan başı - Mayıs başı</td>
+                        <td><strong>Mayıs ortası - Haziran sonu</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">Salım Lokasyonlarının Belirlenmesi</div>
+            <p>
+                Özellikle kimyasal mücadele (pestisit) yapılmayan veya pestisit riski bulunmayan ormanlık alanlar, mezarlık alanları, sahipsiz bahçeler tercih edilmelidir. Bölgedeki salım noktalarının dağılımı homojen olmalıdır.
+            </p>
+            <p>
+                Ağaç türü olarak; <strong>akçaağaç</strong> (<em>Acer spp.</em>), <strong>kokar ağaç</strong> (<em>Ailanthus altissima</em>), <strong>dut</strong>, <strong>erik</strong>, <strong>ıhlamur</strong> ve <strong>fındık</strong> bahçelerinin orman sınırları salım için en uygun yerlerdir.
+            </p>
+
+            <div class="section-title">Salım Yoğunluğu ve Dağılımı</div>
+            <ul>
+                <li>Zararlının yoğun olduğu her bir lokasyonda en az 15, en fazla 25 tüp salım yapılmalıdır.</li>
+                <li>Her bir tüpte ortalama 56 adet parazitoit bulunmalıdır.</li>
+                <li>Etkinliği artırmak amacıyla 3-4 hafta arayla en az bir tekrar salım gerçekleştirilmelidir.</li>
+                <li>Nakil esnasında araç kliması mutlaka çalıştırılmalı ve sıcaklık <strong>22-24°C</strong> arasında sabit tutulmalıdır. Parazitoitler doğrudan güneş ışığına maruz bırakılmamalıdır.</li>
+            </ul>
+
+            <div class="section-title">Parazitoit Salım Tekniği</div>
+            <ol>
+                <li><strong>Mesafe ve Yükseklik:</strong> Salım yüksekliği 1,5 - 1,8 m, salım noktaları arası mesafe ise 5-15 m olmalıdır.</li>
+                <li><strong>Tüpten Çıkış:</strong> Tüpler ilk aşamada dik konumda tutulmalı ve arıların kendiliğinden uçması beklenmelidir.</li>
+                <li><strong>Müdahale:</strong> Çıkış yapmayan bireyler için tüp ters çevrilerek yaprak yüzeyine yaklaştırılmalı, tüpün arkasına hafifçe vurulmalıdır. Sert darbelerden kaçınılmalıdır.</li>
+                <li><strong>Dağılım:</strong> Tüpler alan içindeki farklı yönlerde yer alan farklı bitki ve ağaçlar üzerine dağıtılmalıdır.</li>
+                <li><strong>Yağışlı Hava:</strong> Hava yağışlı ise salım yağışın durduğu en yakın tarihe ertelenir. Arılar oda sıcaklığında en fazla 1 gün muhafaza edilmelidir.</li>
+            </ol>
+
+            <div class="section-title">Veri Kaydı ve Raporlama</div>
+            <p>
+                Salım yapılan tarih ve lokasyonlara ait veriler eksiksiz kayıt altına alınmalı ve bağlı bulunulan Enstitüye gönderilmelidir. Koordinat bildirimlerinin harita ve sistem entegrasyonu için <strong>mutlaka ondalık derece (Decimal Degrees)</strong> formatında (Örn: <code>41.051345</code>) olması zorunludur.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
