@@ -2624,7 +2624,8 @@
                 Yerel güvenlik (CORS) kısıtlamaları veya dosyanın bulunamaması nedeniyle <b>belgeler/Ek-14-Halys Tablosu
                     2025.docx</b> şablonuna otomatik erişilemedi.
                 <br><br>
-                Lütfen projenizin <b>belgeler</b> klasöründeki <b>Ek-14-Halys Tablosu 2025.docx</b> dosyasını seçerek devam edin:
+                Lütfen projenizin <b>belgeler</b> klasöründeki <b>Ek-14-Halys Tablosu 2025.docx</b> dosyasını seçerek
+                devam edin:
             </p>
             <input type="file" id="modalDocxInput" accept=".docx" style="display: none;">
             <button class="btn"
@@ -3585,6 +3586,14 @@
             return (r.indexOf("admin") !== -1 || r.indexOf("netici") !== -1 || r.indexOf("yonetici") !== -1);
         }
 
+        function isKullaniciMuaf() {
+            if (!aktifKullanici) return false;
+            if (isAdmin()) return true;
+            var konumMuafKullanicilar = ["gokhan.aslan", "beyza.feyiz", "dursunali.azakli"];
+            var mevcutKullaniciAdi = aktifKullanici.kullaniciAdi ? aktifKullanici.kullaniciAdi.trim().toLowerCase() : "";
+            return konumMuafKullanicilar.indexOf(mevcutKullaniciAdi) !== -1;
+        }
+
         function isPersonelSuperAdmin(nameOrPhoneOrUser) {
             if (!nameOrPhoneOrUser) return false;
             if (typeof nameOrPhoneOrUser !== 'string') return false;
@@ -3672,7 +3681,7 @@
         function resetRegionFilters() {
             aktifFiltreler = {
                 il: "Tümü",
-                ilce: (!isAdmin() && aktifKullanici) ? aktifKullanici.ilce : "Tümü",
+                ilce: (!isKullaniciMuaf() && aktifKullanici) ? aktifKullanici.ilce : "Tümü",
                 koy: "Tümü",
                 yil: String(new Date().getFullYear())
             };
@@ -4266,7 +4275,7 @@
                     }
 
                     // ROLE-BASED DISTRICT ISOLATION
-                    if (aktifKullanici && !isAdmin() && ilceStr !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isKullaniciMuaf() && ilceStr !== aktifKullanici.ilce) {
                         continue;
                     }
 
@@ -4363,8 +4372,8 @@
                     for (var gKey in tuzakVerileri) {
                         var gData = tuzakVerileri[gKey];
                         if (gData.polygonKoordinatlar && gData.polygonKoordinatlar.length >= 3) {
-                            (function(key, data) {
-                                var latlngs = data.polygonKoordinatlar.map(function(c) { return [c[0], c[1]]; });
+                            (function (key, data) {
+                                var latlngs = data.polygonKoordinatlar.map(function (c) { return [c[0], c[1]]; });
                                 var bocekRenk = '#e65c00';
                                 var popupH = '<div style="font-family:var(--font); font-size:13px; line-height:1.6;">' +
                                     '<h4 style="margin:0 0 8px 0; color:#e65c00; font-weight:800; font-size:14px;">🐞 Turunçgil Uzun Antenli Böcek Alanı</h4>' +
@@ -4375,7 +4384,7 @@
                                     '<b>Kayıt Tarihi:</b> ' + (data.sonGuncellemeTarihi || '-') + '<br>' +
                                     '<b>Kaydeden:</b> ' + (data.sonGuncelleyen || '-') + '<br>' +
                                     '<div class="popup-actions">' +
-                                    '<button class="popup-btn btn-delete" onclick="turuncgilAlanSil(\''+key+'\')" style="background:linear-gradient(135deg,#ef4444,#dc2626);">Sil</button>' +
+                                    '<button class="popup-btn btn-delete" onclick="turuncgilAlanSil(\'' + key + '\')" style="background:linear-gradient(135deg,#ef4444,#dc2626);">Sil</button>' +
                                     '</div></div>';
                                 var poly = L.polygon(latlngs, {
                                     color: '#e65c00',
@@ -8451,7 +8460,7 @@
                     }
                     if (!resolvedIlce) resolvedIlce = "-";
 
-                    if (aktifKullanici && !isAdmin() && resolvedIlce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isKullaniciMuaf() && resolvedIlce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı silme yetkiniz yok!");
                         return;
                     }
@@ -8496,7 +8505,7 @@
                     }
                     if (!resolvedIlce) resolvedIlce = "-";
 
-                    if (aktifKullanici && !isAdmin() && resolvedIlce !== aktifKullanici.ilce) {
+                    if (aktifKullanici && !isKullaniciMuaf() && resolvedIlce !== aktifKullanici.ilce) {
                         alert("Bu tuzağı düzenleme yetkiniz yok!");
                         return;
                     }
@@ -8519,7 +8528,7 @@
                     ilceSecildi();
 
                     // Lock District select for standard personnel
-                    if (aktifKullanici && !isAdmin()) {
+                    if (aktifKullanici && !isKullaniciMuaf()) {
                         ilceSelect.disabled = true;
                     } else {
                         ilceSelect.disabled = false;
@@ -8649,7 +8658,7 @@
             ilceSelect.value = aktifKullanici.ilce;
             ilceSecildi();
 
-            if (!isAdmin()) {
+            if (!isKullaniciMuaf()) {
                 ilceSelect.disabled = true;
             } else {
                 ilceSelect.disabled = false;
@@ -9019,6 +9028,7 @@
         function guncelleTuzakKayitlariTablosu(data) {
             var tbody = document.getElementById("tuzakKayitlariTabloGovde");
             tbody.innerHTML = "";
+            var kat = (aktifModul && aktifModul.kategori) ? aktifModul.kategori : "Tarımsal Hastalık ve Zararlılar";
 
             var kayitlar = data.kayitlar || [];
             if (kayitlar.length === 0 && data.bocekSayisi !== undefined) {
@@ -9063,7 +9073,7 @@
                 }
 
                 var isAuthorized = true;
-                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                if (aktifKullanici && !isKullaniciMuaf() && data.ilce !== aktifKullanici.ilce) {
                     isAuthorized = false;
                 }
 
@@ -9143,7 +9153,7 @@
                 if (!doc.exists) return;
                 var data = doc.data();
 
-                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                if (aktifKullanici && !isKullaniciMuaf() && data.ilce !== aktifKullanici.ilce) {
                     alert("Bu tuzağa kayıt ekleme yetkiniz yoktur!");
                     return;
                 }
@@ -9243,13 +9253,19 @@
 
                 // Konum Doğrulama Kilidi
                 // Onaylı kullanıcılar: konum uzak/alınamaz olsa bile onay kutusuyla geçebilir
-                var konumMuafKullanicilar = ["gokhan.aslan", "beyza.feyiz", "dursunali.azakli"];
-                var mevcutKullaniciAdi = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.trim().toLowerCase() : "";
-                var isKonumMuaf = isAdmin() || konumMuafKullanicilar.indexOf(mevcutKullaniciAdi) !== -1;
+                var isKonumMuaf = isKullaniciMuaf();
+                console.log("Muaf mı:", isKonumMuaf);
 
                 if (duzenlenenTarih) {
                     proceedSave();
                 } else {
+                    if (isKonumMuaf) {
+                        if (confirm("Konum doğrulaması atlanarak kayıt eklenmesini onaylıyor musunuz?")) {
+                            proceedSave();
+                            return;
+                        }
+                    }
+
                     if (button) {
                         button.disabled = true;
                         button.innerText = "Konum Doğrulanıyor...";
@@ -9261,8 +9277,35 @@
                         return;
                     }
 
+                    var hasSaved = false;
+                    var localTimeout = setTimeout(function () {
+                        if (!hasSaved) {
+                            hasSaved = true;
+                            if (isKonumMuaf) {
+                                if (confirm("Konum doğrulama işlemi yanıt vermedi. Doğrulamayı atlayıp kaydetmek istiyor musunuz?")) {
+                                    proceedSave();
+                                } else {
+                                    if (button) {
+                                        button.disabled = false;
+                                        button.innerText = originalText;
+                                    }
+                                }
+                            } else {
+                                alert("Konum doğrulama işlemi zaman aşımına uğradı. Lütfen GPS bağlantınızı kontrol edin.");
+                                if (button) {
+                                    button.disabled = false;
+                                    button.innerText = originalText;
+                                }
+                            }
+                        }
+                    }, 8000);
+
                     navigator.geolocation.getCurrentPosition(
                         function (position) {
+                            if (hasSaved) return;
+                            hasSaved = true;
+                            clearTimeout(localTimeout);
+
                             var userLat = position.coords.latitude;
                             var userLng = position.coords.longitude;
                             var distance = hesaplaMesafe(userLat, userLng, parseFloat(data.lat), parseFloat(data.lng));
@@ -9290,6 +9333,10 @@
                             }
                         },
                         function (err) {
+                            if (hasSaved) return;
+                            hasSaved = true;
+                            clearTimeout(localTimeout);
+
                             console.error("GPS hatası:", err);
                             if (isKonumMuaf) {
                                 if (confirm("GPS konumunuz alınamadı. Doğrulamayı atlayıp kaydetmek istiyor musunuz?")) {
@@ -9322,7 +9369,7 @@
                 if (!doc.exists) return;
                 var data = doc.data();
 
-                if (aktifKullanici && !isAdmin() && data.ilce !== aktifKullanici.ilce) {
+                if (aktifKullanici && !isKullaniciMuaf() && data.ilce !== aktifKullanici.ilce) {
                     alert("Bu kaydı silme yetkiniz yoktur!");
                     return;
                 }
@@ -9488,7 +9535,7 @@
             }
 
             // Standart kullanıcıların kendi ilçesi dışına kayıt yapması engellenir
-            if (aktifKullanici && !isAdmin()) {
+            if (aktifKullanici && !isKullaniciMuaf()) {
                 saveData.il = "Rize";
                 saveData.ilce = aktifKullanici.ilce;
             }
@@ -10344,7 +10391,7 @@
                 });
             }
 
-            if (!isAdmin() && aktifKullanici) {
+            if (!isKullaniciMuaf() && aktifKullanici) {
                 ilSelect.value = "Rize";
                 ilSelect.disabled = true;
             }
@@ -10362,7 +10409,7 @@
             aktifFiltreler.il = secilenIl;
 
             if (!keepSelections) {
-                aktifFiltreler.ilce = (!isAdmin() && aktifKullanici) ? aktifKullanici.ilce : "Tümü";
+                aktifFiltreler.ilce = (!isKullaniciMuaf() && aktifKullanici) ? aktifKullanici.ilce : "Tümü";
                 aktifFiltreler.koy = "Tümü";
             }
 
@@ -10377,7 +10424,7 @@
                 });
             }
 
-            if (!isAdmin() && aktifKullanici) {
+            if (!isKullaniciMuaf() && aktifKullanici) {
                 ilceSelect.value = aktifKullanici.ilce;
                 aktifFiltreler.ilce = aktifKullanici.ilce;
                 ilceSelect.disabled = true;
@@ -12463,7 +12510,7 @@
 
         // Modül değiştiğinde polygon katmanını temizle
         var _orijinalModulDegistir = modulDegistir;
-        modulDegistir = function(modulId) {
+        modulDegistir = function (modulId) {
             turuncgilAlanCiziminiIptal();
             turuncgilPolygonKatmani.clearLayers();
             _orijinalModulDegistir(modulId);
@@ -12567,7 +12614,7 @@
         function turuncgilAlanCiziminiIptal() {
             turuncgilCizimModu = false;
             turuncgilCizimNoktalar = [];
-            turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+            turuncgilCizimMarkerlar.forEach(function (m) { map.removeLayer(m); });
             turuncgilCizimMarkerlar = [];
             if (turuncgilCizimPolyline) { map.removeLayer(turuncgilCizimPolyline); turuncgilCizimPolyline = null; }
             if (turuncgilCizimBadge) { turuncgilCizimBadge.remove(); turuncgilCizimBadge = null; }
@@ -12576,7 +12623,7 @@
         }
 
         // Çift tıklama ile alanı tamamla
-        map.on('dblclick', function(e) {
+        map.on('dblclick', function (e) {
             if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi' && turuncgilCizimModu) {
                 turuncgilAlanBitir();
             }
@@ -12595,7 +12642,7 @@
             // İlçe listesi oluştur
             var ilceOptions = '<option value="" disabled selected>Seçiniz</option>';
             if (lokasyonDB && lokasyonDB['Rize']) {
-                Object.keys(lokasyonDB['Rize']).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(ilce) {
+                Object.keys(lokasyonDB['Rize']).sort(function (a, b) { return a.localeCompare(b, 'tr'); }).forEach(function (ilce) {
                     var sel = (aktifKullanici && aktifKullanici.ilce === ilce) ? ' selected' : '';
                     ilceOptions += '<option value="' + ilce + '"' + sel + '>' + ilce + '</option>';
                 });
@@ -12640,7 +12687,7 @@
             `;
 
             // Önce varsayılan ilçeyi seç ve köyleri doldur
-            setTimeout(function() {
+            setTimeout(function () {
                 var ilceEl = document.getElementById('taIlce');
                 if (aktifKullanici && aktifKullanici.ilce && ilceEl) {
                     ilceEl.value = aktifKullanici.ilce;
@@ -12658,7 +12705,7 @@
             if (!koyEl) return;
             koyEl.innerHTML = '<option value="" disabled selected>Seçiniz</option>';
             if (lokasyonDB && lokasyonDB['Rize'] && lokasyonDB['Rize'][ilce] && Array.isArray(lokasyonDB['Rize'][ilce])) {
-                lokasyonDB['Rize'][ilce].forEach(function(k) {
+                lokasyonDB['Rize'][ilce].forEach(function (k) {
                     koyEl.innerHTML += '<option value="' + k + '">' + k + '</option>';
                 });
                 // İlk köyü otomatik seç
@@ -12674,7 +12721,7 @@
             }
             if (iptal) {
                 // Geçici marker'ları temizle
-                turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+                turuncgilCizimMarkerlar.forEach(function (m) { map.removeLayer(m); });
                 turuncgilCizimMarkerlar = [];
                 turuncgilCizimNoktalar = [];
             }
@@ -12703,7 +12750,7 @@
                 ad: koy,
                 alanAdi: alanAdi || koy,
                 alanBuyuklugu: alanBuyuklugu ? parseFloat(alanBuyuklugu) : 0,
-                polygonKoordinatlar: turuncgilCizimNoktalar.map(function(n) { return [n[0], n[1]]; }),
+                polygonKoordinatlar: turuncgilCizimNoktalar.map(function (n) { return [n[0], n[1]]; }),
                 lat: turuncgilCizimNoktalar[0][0],
                 lng: turuncgilCizimNoktalar[0][1],
                 sonGozlemNotu: gozlemNotu,
@@ -12719,18 +12766,18 @@
             };
 
             // Geçici marker'ları ve modalı hemen kapat (optimistic UI)
-            turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+            turuncgilCizimMarkerlar.forEach(function (m) { map.removeLayer(m); });
             turuncgilCizimMarkerlar = [];
             turuncgilCizimNoktalar = [];
             kapatTuruncgilAlanModal(false);
 
             // db.collection('tuzaklar') → routing override → tuzaklar_turuncgil_antenli
-            db.collection('tuzaklar').add(kayit).then(function() {
+            db.collection('tuzaklar').add(kayit).then(function () {
                 logEkle('Turunçgil Alan Eklendi', 'İlçe: ' + ilce + ', Köy: ' + koy + ', Alan: ' + (alanAdi || koy));
                 if (aktifKullanici) kullaniciAktifliginiGuncelle();
                 // onSnapshot listener otomatik olarak yeni alanı çizecek
                 alert('Alan başarıyla kaydedildi. ✅');
-            }).catch(function(err) {
+            }).catch(function (err) {
                 alert('Kayıt başarısız: ' + err.message);
             });
         }
@@ -12738,12 +12785,12 @@
 
         function turuncgilAlanSil(docId) {
             if (!confirm('Bu alanı silmek istediğinizden emin misiniz?')) return;
-            db.collection('tuzaklar').doc(docId).delete().then(function() {
+            db.collection('tuzaklar').doc(docId).delete().then(function () {
                 logEkle('Turunçgil Alan Silindi', 'DocId: ' + docId);
                 turuncgilPolygonKatmani.clearLayers();
                 tuzaklariDinle();
                 alert('Alan silindi.');
-            }).catch(function(err) {
+            }).catch(function (err) {
                 alert('Silme hatası: ' + err.message);
             });
         }
