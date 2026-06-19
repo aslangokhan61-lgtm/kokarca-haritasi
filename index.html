@@ -12644,6 +12644,8 @@
                 lokasyonDB['Rize'][ilce].forEach(function(k) {
                     koyEl.innerHTML += '<option value="' + k + '">' + k + '</option>';
                 });
+                // İlk köyü otomatik seç
+                if (koyEl.options.length > 1) koyEl.selectedIndex = 1;
             }
         }
 
@@ -12662,15 +12664,24 @@
         }
 
         function kaydetTuruncgilAlani() {
-            var alanAdi = document.getElementById('taAlanAdi').value.trim();
-            var ilce = document.getElementById('taIlce').value;
-            var koy = document.getElementById('taKoy').value;
-            var alanBuyuklugu = document.getElementById('taAlanBuyuklugu').value.trim();
-            var gozlemNotu = document.getElementById('taGozlemNotu').value.trim();
+            var alanAdi = document.getElementById('taAlanAdi') ? document.getElementById('taAlanAdi').value.trim() : '';
+            var ilceEl = document.getElementById('taIlce');
+            var koyEl = document.getElementById('taKoy');
+            var ilce = ilceEl ? ilceEl.value : '';
+            var koy = koyEl ? koyEl.value : '';
+            var alanBuyuklugu = document.getElementById('taAlanBuyuklugu') ? document.getElementById('taAlanBuyuklugu').value.trim() : '';
+            var gozlemNotu = document.getElementById('taGozlemNotu') ? document.getElementById('taGozlemNotu').value.trim() : '';
 
             if (!ilce) { alert('Lütfen ilçe seçiniz.'); return; }
             if (!koy) { alert('Lütfen köy/mahalle seçiniz.'); return; }
-            if (turuncgilCizimNoktalar.length < 3) { alert('Geçersiz alan verisi.'); return; }
+            if (!turuncgilCizimNoktalar || turuncgilCizimNoktalar.length < 3) {
+                alert('Alan verisi eksik. Lütfen tekrar çizin.');
+                return;
+            }
+
+            // Kaydet butonunu devre dışı bırak
+            var saveBtn = document.querySelector('#turuncgilAlanModal .btn-save');
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = 'Kaydediliyor...'; }
 
             var kayit = {
                 il: 'Rize',
@@ -12687,23 +12698,25 @@
                 bocekSayisi: 0,
                 tuzakTipi: 'Alan',
                 tuzakNo: alanAdi || koy,
-                sonGuncelleyen: aktifKullanici.adSoyad,
-                sonGuncelleyenTel: aktifKullanici.telefon,
-                sonGuncelleyenUnvan: aktifKullanici.unvan,
+                sonGuncelleyen: aktifKullanici ? aktifKullanici.adSoyad : 'Sistem',
+                sonGuncelleyenTel: aktifKullanici ? aktifKullanici.telefon : '',
+                sonGuncelleyenUnvan: aktifKullanici ? aktifKullanici.unvan : '',
                 sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR'),
                 tarih: new Date().toLocaleDateString('tr-TR')
             };
 
-            db.collection('tuzaklar').add(kayit).then(function() {
+            db.rawCollection('tuzaklar_turuncgil_antenli').add(kayit).then(function() {
                 logEkle('Turunçgil Alan Eklendi', 'İlçe: ' + ilce + ', Köy: ' + koy + ', Alan: ' + (alanAdi || koy));
-                kullaniciAktifliginiGuncelle();
-                // Geçici marker'ları temizle
+                if (aktifKullanici) kullaniciAktifliginiGuncelle();
                 turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
                 turuncgilCizimMarkerlar = [];
                 turuncgilCizimNoktalar = [];
                 kapatTuruncgilAlanModal(false);
+                turuncgilPolygonKatmani.clearLayers();
+                tuzaklariDinle();
                 alert('Alan başarıyla kaydedildi.');
             }).catch(function(err) {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '💾 Kaydet'; }
                 alert('Kayıt başarısız: ' + err.message);
             });
         }
