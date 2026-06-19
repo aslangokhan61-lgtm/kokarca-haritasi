@@ -1328,6 +1328,69 @@
             border-color: var(--primary) !important;
             background-color: rgba(34, 197, 94, 0.05) !important;
         }
+
+        /* Modern Switch Toggle Style */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            margin-left: auto;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        body.dark-mode .slider {
+            background-color: #475569;
+        }
+        
+        body.dark-mode input:checked + .slider {
+            background-color: var(--primary);
+        }
     </style>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2951,6 +3014,9 @@
             "🏨️ Köy Sınırları": koySinirKatmani
         };
 
+        var turuncgilPolygonKatmani = L.layerGroup().addTo(map);
+        var polygonListesi = {};
+
         // Katman kontrolü menüye taşındığı için buradan kaldırıldı:
         // L.control.layers(haritaTipleri, overlays, { position: 'topright' }).addTo(map);
 
@@ -3884,15 +3950,61 @@
             }
         }
 
+        function polygonGosterGizle(docId) {
+            var data = tuzakVerileri[docId];
+            var poly = polygonListesi[docId];
+            if (!data || !poly) return;
+
+            var ilUyumlu = (aktifFiltreler.il === "Tümü" || data.il === aktifFiltreler.il);
+            var ilceUyumlu = (aktifFiltreler.ilce === "Tümü" || data.ilce === aktifFiltreler.ilce);
+            var koyUyumlu = (aktifFiltreler.koy === "Tümü" || data.koy === aktifFiltreler.koy);
+
+            var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
+            if (!recordDate && data.kayitlar && Array.isArray(data.kayitlar) && data.kayitlar.length > 0) {
+                var ilkKayit = data.kayitlar.find(function (k) { return k && k.tarih; });
+                if (ilkKayit) recordDate = ilkKayit.tarih;
+            }
+            var yilUyumlu = (aktifFiltreler.yil === "Tümü" || !recordDate || checkYearMatch(data, aktifFiltreler.yil));
+
+            if (ilUyumlu && ilceUyumlu && koyUyumlu && yilUyumlu) {
+                if (!turuncgilPolygonKatmani.hasLayer(poly)) {
+                    turuncgilPolygonKatmani.addLayer(poly);
+                }
+            } else {
+                if (turuncgilPolygonKatmani.hasLayer(poly)) {
+                    turuncgilPolygonKatmani.removeLayer(poly);
+                }
+            }
+        }
+
         function filtreleriUygula() {
             var visibleLatLngs = [];
-            for (var docId in markerListesi) {
-                markerGosterGizle(docId);
-                var marker = markerListesi[docId];
-                if (marker && markerKatmani.hasLayer(marker)) {
-                    var latlng = marker.getLatLng();
-                    if (latlng && !isNaN(latlng.lat) && !isNaN(latlng.lng) && latlng.lat !== 0 && latlng.lng !== 0) {
-                        visibleLatLngs.push(latlng);
+            if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi') {
+                for (var docId in polygonListesi) {
+                    polygonGosterGizle(docId);
+                    var poly = polygonListesi[docId];
+                    if (poly && turuncgilPolygonKatmani.hasLayer(poly)) {
+                        var latlngs = poly.getLatLngs();
+                        var flat = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;
+                        if (Array.isArray(flat[0])) {
+                            flat = flat[0];
+                        }
+                        flat.forEach(function (ll) {
+                            if (ll && !isNaN(ll.lat) && !isNaN(ll.lng)) {
+                                visibleLatLngs.push(ll);
+                            }
+                        });
+                    }
+                }
+            } else {
+                for (var docId in markerListesi) {
+                    markerGosterGizle(docId);
+                    var marker = markerListesi[docId];
+                    if (marker && markerKatmani.hasLayer(marker)) {
+                        var latlng = marker.getLatLng();
+                        if (latlng && !isNaN(latlng.lat) && !isNaN(latlng.lng) && latlng.lat !== 0 && latlng.lng !== 0) {
+                            visibleLatLngs.push(latlng);
+                        }
                     }
                 }
             }
@@ -4371,7 +4483,14 @@
 
                 // Turunçgil Uzun Antenli Böceği: polygon olarak çiz
                 if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi') {
+                    for (var id in polygonListesi) {
+                        if (turuncgilPolygonKatmani.hasLayer(polygonListesi[id])) {
+                            turuncgilPolygonKatmani.removeLayer(polygonListesi[id]);
+                        }
+                    }
                     turuncgilPolygonKatmani.clearLayers();
+                    polygonListesi = {};
+
                     for (var gKey in tuzakVerileri) {
                         var gData = tuzakVerileri[gKey];
                         if (gData.polygonKoordinatlar && gData.polygonKoordinatlar.length >= 3) {
@@ -4405,7 +4524,9 @@
                                     fillColor: '#ff6b00',
                                     fillOpacity: 0.25
                                 }).bindPopup(popupH);
-                                turuncgilPolygonKatmani.addLayer(poly);
+                                
+                                polygonListesi[key] = poly;
+                                polygonGosterGizle(key);
                             })(gKey, gData);
                         }
                     }
@@ -10112,6 +10233,47 @@
                 return el;
             }
 
+            function menuOgesiToggle(emoji, etiket, renk, baslangicDegeri, tikla) {
+                var el = document.createElement('div');
+                el.className = 'menu-item';
+                el.style.display = 'flex';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'space-between';
+                if (renk) el.style.borderLeft = '3px solid ' + renk;
+                
+                var label = document.createElement('span');
+                label.innerHTML = '<span>' + emoji + '</span> ' + etiket;
+                el.appendChild(label);
+                
+                var switchLabel = document.createElement('label');
+                switchLabel.className = 'switch';
+                switchLabel.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = baslangicDegeri;
+                
+                var slider = document.createElement('span');
+                slider.className = 'slider';
+                
+                switchLabel.appendChild(checkbox);
+                switchLabel.appendChild(slider);
+                el.appendChild(switchLabel);
+                
+                checkbox.addEventListener('change', function () {
+                    tikla(checkbox.checked);
+                });
+                
+                el.addEventListener('click', function () {
+                    checkbox.checked = !checkbox.checked;
+                    tikla(checkbox.checked);
+                });
+                
+                return el;
+            }
+
             // ── 0. KATEGORİLENDİRİLMİŞ DİNAMİK MODÜLLER ──
             var katTasarim = {
                 "Tarımsal Hastalık ve Zararlılar": { emoji: "🦠", renk: "#ef4444" },
@@ -10188,16 +10350,37 @@
                 map.addLayer(sokakHaritasi);
                 toggleMenu();
             }));
-            mapTools.appendChild(menuOgesi('📍', 'İlçe Sınırları Aç/Kapat', '#059669', function () {
-                if (map.hasLayer(ilceSinirKatmani)) map.removeLayer(ilceSinirKatmani);
-                else map.addLayer(ilceSinirKatmani);
+            mapTools.appendChild(menuOgesiToggle('📍', 'İlçe Sınırları', '#059669', map.hasLayer(ilceSinirKatmani), function (checked) {
+                if (checked) {
+                    map.addLayer(ilceSinirKatmani);
+                    yukleIlceSinirlari();
+                } else {
+                    map.removeLayer(ilceSinirKatmani);
+                }
             }));
-            mapTools.appendChild(menuOgesi('🏘️', 'Köy Sınırları Aç/Kapat', '#059669', function () {
-                if (map.hasLayer(koySinirKatmani)) map.removeLayer(koySinirKatmani);
-                else map.addLayer(koySinirKatmani);
+            mapTools.appendChild(menuOgesiToggle('🏘️', 'Köy Sınırları', '#059669', map.hasLayer(koySinirKatmani), function (checked) {
+                if (checked) {
+                    map.addLayer(koySinirKatmani);
+                    koySinirLayerAktif = true;
+                    yukleKoySinirlari();
+                } else {
+                    map.removeLayer(koySinirKatmani);
+                    koySinirLayerAktif = false;
+                }
             }));
-            mapTools.appendChild(menuOgesi('🚜', 'Mücadele Katmanı Aç/Kapat', '#059669', function () {
-                toggleMucadeleKatmani();
+            mapTools.appendChild(menuOgesiToggle('🚜', 'Mücadele Katmanı', '#059669', map.hasLayer(mucadeleKatmanGrubu), function (checked) {
+                if (checked) {
+                    if (!map.hasLayer(mucadeleKatmanGrubu)) {
+                        map.addLayer(mucadeleKatmanGrubu);
+                        mucadeleKatmaniAktif = true;
+                        dinleMucadeleler();
+                    }
+                } else {
+                    if (map.hasLayer(mucadeleKatmanGrubu)) {
+                        map.removeLayer(mucadeleKatmanGrubu);
+                        mucadeleKatmaniAktif = false;
+                    }
+                }
             }));
             if (aktifKullanici) {
                 mapTools.appendChild(menuOgesi('➕', 'Mücadele/İlaçlama Ekle', '#d97706', function () {
@@ -12518,7 +12701,6 @@
         var turuncgilCizimMarkerlar = []; // geçici nokta marker'ları
         var turuncgilCizimPolyline = null; // çizim sırasında görünen çizgi
         var turuncgilCizimBadge = null;
-        var turuncgilPolygonKatmani = L.layerGroup().addTo(map);
 
         // Modül değiştiğinde polygon katmanını temizle
         var _orijinalModulDegistir = modulDegistir;
@@ -12762,7 +12944,7 @@
                 ad: koy,
                 alanAdi: alanAdi || koy,
                 alanBuyuklugu: alanBuyuklugu ? parseFloat(alanBuyuklugu) : 0,
-                polygonKoordinatlar: turuncgilCizimNoktalar.map(function (n) { return [n[0], n[1]]; }),
+                polygonKoordinatlar: turuncgilCizimNoktalar.map(function (n) { return { lat: n[0], lng: n[1] }; }),
                 lat: turuncgilCizimNoktalar[0][0],
                 lng: turuncgilCizimNoktalar[0][1],
                 sonGozlemNotu: gozlemNotu,
