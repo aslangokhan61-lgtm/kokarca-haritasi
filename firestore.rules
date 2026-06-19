@@ -16,7 +16,7 @@ service cloud.firestore {
       return data.il is string
         && data.ilce is string
         && data.koy is string
-        && data.tuzakTipi in ['Huni', 'Yapışkan', 'Samuray Arısı Salımı']
+        && data.tuzakTipi in ['Huni', 'Yapışkan', 'Samuray Arısı Salımı', 'Kışlak Mücadelesi']
         && (data.bocekSayisi is int || data.bocekSayisi == null)
         && (data.lat is number)
         && (data.lng is number);
@@ -49,6 +49,12 @@ service cloud.firestore {
     match /tuzaklar_{meyve}/{trapId} {
       allow read: if true;
       allow create, update: if isValidLocationItem(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /tuzaklar_turuncgil_antenli/{docId} {
+      allow read: if true;
+      allow create, update: if true;
       allow delete: if true;
     }
 
