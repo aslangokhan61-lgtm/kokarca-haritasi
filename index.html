@@ -4376,7 +4376,16 @@
                         var gData = tuzakVerileri[gKey];
                         if (gData.polygonKoordinatlar && gData.polygonKoordinatlar.length >= 3) {
                             (function (key, data) {
-                                var latlngs = data.polygonKoordinatlar.map(function (c) { return [c[0], c[1]]; });
+                                var latlngs = data.polygonKoordinatlar.map(function (c) {
+                                    if (Array.isArray(c)) {
+                                        return [c[0], c[1]];
+                                    } else if (c && typeof c === 'object') {
+                                        var lat = c.lat !== undefined ? c.lat : (c.latitude !== undefined ? c.latitude : 0);
+                                        var lng = c.lng !== undefined ? c.lng : (c.longitude !== undefined ? c.longitude : 0);
+                                        return [lat, lng];
+                                    }
+                                    return c;
+                                });
                                 var bocekRenk = '#e65c00';
                                 var popupH = '<div style="font-family:var(--font); font-size:13px; line-height:1.6;">' +
                                     '<h4 style="margin:0 0 8px 0; color:#e65c00; font-weight:800; font-size:14px;">🐞 Turunçgil Uzun Antenli Böcek Alanı</h4>' +
