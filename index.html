@@ -2913,7 +2913,7 @@
         guncelleBaglantiDurumu();
 
         // Initialize Map (Güneysu/Rize Focus)
-        var map = L.map('harita', { zoomControl: false, maxZoom: 20 }).setView([40.9400, 40.6300], 13);
+        var map = L.map('harita', { zoomControl: false, maxZoom: 20, tap: false }).setView([40.9400, 40.6300], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         var markerKatmani = L.featureGroup();
