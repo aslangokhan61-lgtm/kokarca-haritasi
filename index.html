@@ -4357,6 +4357,43 @@
                 markerKatmani.clearLayers();
                 markerListesi = {};
 
+                // Turunçgil Uzun Antenli Böceği: polygon olarak çiz
+                if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi') {
+                    turuncgilPolygonKatmani.clearLayers();
+                    for (var gKey in tuzakVerileri) {
+                        var gData = tuzakVerileri[gKey];
+                        if (gData.polygonKoordinatlar && gData.polygonKoordinatlar.length >= 3) {
+                            (function(key, data) {
+                                var latlngs = data.polygonKoordinatlar.map(function(c) { return [c[0], c[1]]; });
+                                var bocekRenk = '#e65c00';
+                                var popupH = '<div style="font-family:var(--font); font-size:13px; line-height:1.6;">' +
+                                    '<h4 style="margin:0 0 8px 0; color:#e65c00; font-weight:800; font-size:14px;">🐞 Turunçgil Uzun Antenli Böcek Alanı</h4>' +
+                                    '<b>Alan Adı:</b> ' + (data.alanAdi || data.koy || '-') + '<br>' +
+                                    '<b>İlçe:</b> ' + (data.ilce || '-') + '<br>' +
+                                    '<b>Köy/Mahalle:</b> ' + (data.koy || '-') + '<br>' +
+                                    '<b>Alan (da):</b> ' + (data.alanBuyuklugu || '-') + '<br>' +
+                                    '<b>Kayıt Tarihi:</b> ' + (data.sonGuncellemeTarihi || '-') + '<br>' +
+                                    '<b>Kaydeden:</b> ' + (data.sonGuncelleyen || '-') + '<br>' +
+                                    '<div class="popup-actions">' +
+                                    '<button class="popup-btn btn-delete" onclick="turuncgilAlanSil(\''+key+'\')" style="background:linear-gradient(135deg,#ef4444,#dc2626);">Sil</button>' +
+                                    '</div></div>';
+                                var poly = L.polygon(latlngs, {
+                                    color: '#e65c00',
+                                    weight: 2.5,
+                                    opacity: 0.9,
+                                    fillColor: '#ff6b00',
+                                    fillOpacity: 0.25
+                                }).bindPopup(popupH);
+                                turuncgilPolygonKatmani.addLayer(poly);
+                            })(gKey, gData);
+                        }
+                    }
+                    guncelleDashboard();
+                    guncelleHeatmap();
+                    dinleMucadeleler();
+                    return;
+                }
+
                 // Build markers from grouped data
                 for (var gKey in tuzakVerileri) {
                     var gData = tuzakVerileri[gKey];
@@ -8580,6 +8617,12 @@
         map.on('click', function (e) {
             if (!aktifKullanici) return;
 
+            // Turunçgil Uzun Antenli Böceği: Alan çizme modu
+            if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi') {
+                turuncgilAlanNoktasiEkle(e.latlng);
+                return;
+            }
+
             document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
             document.getElementById('duzenlenenDocId').value = "";
 
@@ -10177,8 +10220,16 @@
                 yonetimGrubu.appendChild(menuOgesi('👥', 'Personel Yönetimi', null, function () {
                     acPersonelModal();
                 }));
-                yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme', null, function () {
+                yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme (Metin)', null, function () {
                     acTopluYuklemeModal();
+                }));
+                yonetimGrubu.appendChild(menuOgesi('📊', 'Toplu Tuzak Yükleme (Excel)', null, function () {
+                    toggleMenu();
+                    window.open('toplu_tuzak_yukle.html', '_blank');
+                }));
+                yonetimGrubu.appendChild(menuOgesi('🔴', 'Toplu Salım Yükleme (Excel)', null, function () {
+                    toggleMenu();
+                    window.open('toplu_salim_yukle.html', '_blank');
                 }));
                 yonetimGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
                     toggleMenu();
@@ -10218,7 +10269,7 @@
                 // Saha personeli için sadece kendi bölge raporu
                 var item1 = document.createElement("div");
                 item1.className = "menu-item";
-                item1.onclick = function () { setRaporFiltre('Yapışkan'); };
+                item1.onclick = function () { toggleMenu(); setRaporFiltre('Yapışkan'); };
                 item1.innerHTML = '<span>📊</span> Bölge Raporları';
                 sideMenu.appendChild(item1);
 
@@ -10386,6 +10437,9 @@
 
         // Hızlı bölge raporu açıcı (modül butonları için)
         function acBolgeRaporu(il, ilce, etiket) {
+            var menuOpen = document.getElementById('sideMenu').classList.contains('open');
+            if (menuOpen) toggleMenu();
+
             // 1. Filtreleri ayarla
             aktifFiltreler.il = il || "Tümü";
             aktifFiltreler.ilce = ilce || "Tümü";
@@ -12392,6 +12446,280 @@
             });
         }
 
+        // ─────────────────────────────────────────────────────────────────────────
+        // TURUNÇGIL UZUN ANTENLİ BÖCEK: ALAN ÇİZME SİSTEMİ
+        // ─────────────────────────────────────────────────────────────────────────
+        var turuncgilCizimModu = false;
+        var turuncgilCizimNoktalar = []; // [{lat, lng}, ...]
+        var turuncgilCizimMarkerlar = []; // geçici nokta marker'ları
+        var turuncgilCizimPolyline = null; // çizim sırasında görünen çizgi
+        var turuncgilCizimBadge = null;
+        var turuncgilPolygonKatmani = L.layerGroup().addTo(map);
+
+        // Modül değiştiğinde polygon katmanını temizle
+        var _orijinalModulDegistir = modulDegistir;
+        modulDegistir = function(modulId) {
+            turuncgilAlanCiziminiIptal();
+            turuncgilPolygonKatmani.clearLayers();
+            _orijinalModulDegistir(modulId);
+        };
+
+        function turuncgilAlanCiziminiBaslat() {
+            if (turuncgilCizimModu) return;
+            turuncgilCizimModu = true;
+            turuncgilCizimNoktalar = [];
+            turuncgilCizimMarkerlar = [];
+
+            // Badge göster
+            turuncgilCizimBadge = document.createElement('div');
+            turuncgilCizimBadge.id = 'turuncgilCizimBadge';
+            turuncgilCizimBadge.style.cssText = 'position:absolute; top:80px; left:50%; transform:translateX(-50%); z-index:10000; background:linear-gradient(135deg,#e65c00,#f9a825); color:white; padding:12px 24px; border-radius:24px; font-weight:700; box-shadow:0 4px 20px rgba(230,92,0,0.4); font-size:13px; display:flex; align-items:center; gap:10px; font-family:var(--font); white-space:nowrap;';
+            turuncgilCizimBadge.innerHTML = '<span>🐞</span> <span>Haritada alan köşe noktalarına tıklayın &nbsp;|&nbsp; Son noktada <b>çift tıklayın</b> veya</span>' +
+                '<button onclick="turuncgilAlanBitir()" style="background:white; color:#e65c00; border:none; border-radius:12px; padding:5px 14px; font-weight:800; cursor:pointer; font-size:12px;">✅ Alanı Tamamla</button>' +
+                '<button onclick="turuncgilAlanCiziminiIptal()" style="background:transparent; border:1px solid rgba(255,255,255,0.5); color:white; border-radius:12px; padding:5px 10px; cursor:pointer; font-size:12px; margin-left:4px;">✕ İptal</button>';
+            document.body.appendChild(turuncgilCizimBadge);
+
+            map.doubleClickZoom.disable();
+            map.getContainer().style.cursor = 'crosshair';
+        }
+
+        function turuncgilAlanNoktasiEkle(latlng) {
+            if (!turuncgilCizimModu) {
+                // Çizim modu aktif değilse başlat
+                turuncgilAlanCiziminiBaslat();
+            }
+
+            turuncgilCizimNoktalar.push([latlng.lat, latlng.lng]);
+
+            // Nokta marker ekle
+            var noktaIcon = L.divIcon({
+                html: '<div style="width:12px;height:12px;background:#e65c00;border:2px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6],
+                className: ''
+            });
+            var m = L.marker([latlng.lat, latlng.lng], { icon: noktaIcon });
+            m.addTo(map);
+            turuncgilCizimMarkerlar.push(m);
+
+            // Polyline güncelle
+            if (turuncgilCizimPolyline) map.removeLayer(turuncgilCizimPolyline);
+            if (turuncgilCizimNoktalar.length >= 2) {
+                turuncgilCizimPolyline = L.polyline(turuncgilCizimNoktalar, {
+                    color: '#e65c00', weight: 2.5, dashArray: '6 4', opacity: 0.85
+                }).addTo(map);
+            }
+
+            // Bilgi notu güncelle
+            var badge = document.getElementById('turuncgilCizimBadge');
+            if (badge) {
+                var noktaSayisi = turuncgilCizimNoktalar.length;
+                var span = badge.querySelector('span:nth-child(2)');
+                if (span) {
+                    if (noktaSayisi < 3) {
+                        span.innerHTML = 'Nokta ' + noktaSayisi + '/3 (en az 3 nokta gerekli) &nbsp;|&nbsp; Devam etmek için tıklayın';
+                    } else {
+                        span.innerHTML = '<b>' + noktaSayisi + ' nokta</b> eklendi &nbsp;|&nbsp; <b>Çift tıklayın</b> veya';
+                    }
+                }
+            }
+        }
+
+        function turuncgilAlanBitir() {
+            if (turuncgilCizimNoktalar.length < 3) {
+                alert('Alan çizimi için en az 3 nokta gereklidir.');
+                return;
+            }
+            // Çizim modunu kapat ama badge/marker'ları tut (modal kapanana kadar)
+            turuncgilCizimModu = false;
+            map.getContainer().style.cursor = '';
+            map.doubleClickZoom.enable();
+
+            if (turuncgilCizimBadge) { turuncgilCizimBadge.remove(); turuncgilCizimBadge = null; }
+
+            // Preview polygon göster
+            if (turuncgilCizimPolyline) { map.removeLayer(turuncgilCizimPolyline); turuncgilCizimPolyline = null; }
+            var prevPoly = L.polygon(turuncgilCizimNoktalar, {
+                color: '#e65c00', weight: 2.5, fillColor: '#ff6b00', fillOpacity: 0.25, dashArray: '5 3'
+            }).addTo(map);
+
+            // Alan kayıt modalını aç
+            acTuruncgilAlanModal(prevPoly);
+        }
+
+        function turuncgilAlanCiziminiIptal() {
+            turuncgilCizimModu = false;
+            turuncgilCizimNoktalar = [];
+            turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+            turuncgilCizimMarkerlar = [];
+            if (turuncgilCizimPolyline) { map.removeLayer(turuncgilCizimPolyline); turuncgilCizimPolyline = null; }
+            if (turuncgilCizimBadge) { turuncgilCizimBadge.remove(); turuncgilCizimBadge = null; }
+            map.getContainer().style.cursor = '';
+            map.doubleClickZoom.enable();
+        }
+
+        // Çift tıklama ile alanı tamamla
+        map.on('dblclick', function(e) {
+            if (aktifModul && aktifModul.id === 'turuncgil_uzun_antenli_bocegi' && turuncgilCizimModu) {
+                turuncgilAlanBitir();
+            }
+        });
+
+        function acTuruncgilAlanModal(previewPoly) {
+            var modal = document.getElementById('turuncgilAlanModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'turuncgilAlanModal';
+                modal.className = 'modal-overlay';
+                modal.style.zIndex = '100010';
+                document.body.appendChild(modal);
+            }
+
+            // İlçe listesi oluştur
+            var ilceOptions = '<option value="" disabled selected>Seçiniz</option>';
+            if (lokasyonDB && lokasyonDB['Rize']) {
+                Object.keys(lokasyonDB['Rize']).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(ilce) {
+                    var sel = (aktifKullanici && aktifKullanici.ilce === ilce) ? ' selected' : '';
+                    ilceOptions += '<option value="' + ilce + '"' + sel + '>' + ilce + '</option>';
+                });
+            }
+
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:480px; text-align:left; border-top:5px solid #e65c00; font-family:var(--font);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3 style="margin:0; font-size:18px; font-weight:800; color:var(--text-dark); display:flex; align-items:center; gap:8px;">🐞 Yeni Alan Kaydı</h3>
+                        <span style="color:#64748b; cursor:pointer; font-size:24px; line-height:1;" onclick="kapatTuruncgilAlanModal(true)">×</span>
+                    </div>
+                    <div style="background:linear-gradient(135deg,rgba(230,92,0,0.08),rgba(249,168,37,0.08)); border:1px solid rgba(230,92,0,0.2); border-radius:10px; padding:12px; margin-bottom:18px; font-size:12px; color:#92400e;">
+                        📐 <strong>${turuncgilCizimNoktalar.length} nokta</strong> ile alan çizildi. Bilgileri doldurup kaydedin.
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:13px;">Alan Adı / Tanım</label>
+                        <input type="text" id="taAlanAdi" class="form-control" placeholder="Örn: Fındıklı Merkez Bahçesi">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:13px;">İlçe</label>
+                        <select id="taIlce" class="form-control" onchange="taTurunuDoldur()">${ilceOptions}</select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:13px;">Köy / Mahalle</label>
+                        <select id="taKoy" class="form-control">
+                            <option value="" disabled selected>Önce İlçe Seçiniz</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:13px;">Tahmini Alan Büyüklüğü (da)</label>
+                        <input type="number" id="taAlanBuyuklugu" class="form-control" placeholder="Örn: 5" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700; font-size:13px;">Gözlem Notu</label>
+                        <textarea id="taGozlemNotu" class="form-control" style="height:70px; font-family:var(--font);" placeholder="Örn: Yoğun infestasyon tespit edildi"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-cancel" onclick="kapatTuruncgilAlanModal(true)">İptal</button>
+                        <button class="btn btn-save" style="background:linear-gradient(135deg,#e65c00,#f9a825); color:white;" onclick="kaydetTuruncgilAlani()">💾 Kaydet</button>
+                    </div>
+                </div>
+            `;
+
+            // Önce varsayılan ilçeyi seç ve köyleri doldur
+            setTimeout(function() {
+                var ilceEl = document.getElementById('taIlce');
+                if (aktifKullanici && aktifKullanici.ilce && ilceEl) {
+                    ilceEl.value = aktifKullanici.ilce;
+                    taTurunuDoldur();
+                }
+            }, 50);
+
+            modal._previewPoly = previewPoly;
+            modal.classList.add('active');
+        }
+
+        function taTurunuDoldur() {
+            var ilce = document.getElementById('taIlce') ? document.getElementById('taIlce').value : '';
+            var koyEl = document.getElementById('taKoy');
+            if (!koyEl) return;
+            koyEl.innerHTML = '<option value="" disabled selected>Seçiniz</option>';
+            if (lokasyonDB && lokasyonDB['Rize'] && lokasyonDB['Rize'][ilce] && Array.isArray(lokasyonDB['Rize'][ilce])) {
+                lokasyonDB['Rize'][ilce].forEach(function(k) {
+                    koyEl.innerHTML += '<option value="' + k + '">' + k + '</option>';
+                });
+            }
+        }
+
+        function kapatTuruncgilAlanModal(iptal) {
+            var modal = document.getElementById('turuncgilAlanModal');
+            if (modal) {
+                if (modal._previewPoly) { map.removeLayer(modal._previewPoly); modal._previewPoly = null; }
+                modal.classList.remove('active');
+            }
+            if (iptal) {
+                // Geçici marker'ları temizle
+                turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+                turuncgilCizimMarkerlar = [];
+                turuncgilCizimNoktalar = [];
+            }
+        }
+
+        function kaydetTuruncgilAlani() {
+            var alanAdi = document.getElementById('taAlanAdi').value.trim();
+            var ilce = document.getElementById('taIlce').value;
+            var koy = document.getElementById('taKoy').value;
+            var alanBuyuklugu = document.getElementById('taAlanBuyuklugu').value.trim();
+            var gozlemNotu = document.getElementById('taGozlemNotu').value.trim();
+
+            if (!ilce) { alert('Lütfen ilçe seçiniz.'); return; }
+            if (!koy) { alert('Lütfen köy/mahalle seçiniz.'); return; }
+            if (turuncgilCizimNoktalar.length < 3) { alert('Geçersiz alan verisi.'); return; }
+
+            var kayit = {
+                il: 'Rize',
+                ilce: ilce,
+                koy: koy,
+                ad: koy,
+                alanAdi: alanAdi || koy,
+                alanBuyuklugu: alanBuyuklugu ? parseFloat(alanBuyuklugu) : 0,
+                polygonKoordinatlar: turuncgilCizimNoktalar.map(function(n) { return [n[0], n[1]]; }),
+                lat: turuncgilCizimNoktalar[0][0],
+                lng: turuncgilCizimNoktalar[0][1],
+                sonGozlemNotu: gozlemNotu,
+                kayitlar: [{ tarih: new Date().toLocaleDateString('tr-TR'), gozlemNotu: gozlemNotu }],
+                bocekSayisi: 0,
+                tuzakTipi: 'Alan',
+                tuzakNo: alanAdi || koy,
+                sonGuncelleyen: aktifKullanici.adSoyad,
+                sonGuncelleyenTel: aktifKullanici.telefon,
+                sonGuncelleyenUnvan: aktifKullanici.unvan,
+                sonGuncellemeTarihi: new Date().toLocaleDateString('tr-TR'),
+                tarih: new Date().toLocaleDateString('tr-TR')
+            };
+
+            db.collection('tuzaklar').add(kayit).then(function() {
+                logEkle('Turunçgil Alan Eklendi', 'İlçe: ' + ilce + ', Köy: ' + koy + ', Alan: ' + (alanAdi || koy));
+                kullaniciAktifliginiGuncelle();
+                // Geçici marker'ları temizle
+                turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+                turuncgilCizimMarkerlar = [];
+                turuncgilCizimNoktalar = [];
+                kapatTuruncgilAlanModal(false);
+                alert('Alan başarıyla kaydedildi.');
+            }).catch(function(err) {
+                alert('Kayıt başarısız: ' + err.message);
+            });
+        }
+
+        function turuncgilAlanSil(docId) {
+            if (!confirm('Bu alanı silmek istediğinizden emin misiniz?')) return;
+            db.collection('tuzaklar').doc(docId).delete().then(function() {
+                logEkle('Turunçgil Alan Silindi', 'DocId: ' + docId);
+                turuncgilPolygonKatmani.clearLayers();
+                tuzaklariDinle();
+                alert('Alan silindi.');
+            }).catch(function(err) {
+                alert('Silme hatası: ' + err.message);
+            });
+        }
+
         // Global Escape Key listener to close active modals
         window.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
@@ -12404,6 +12732,9 @@
                 kapatLokasyonModal();
                 kapatTuzakKayitlariModal();
                 kapatOturumGecmisiModal();
+                turuncgilAlanCiziminiIptal();
+                var taModal = document.getElementById('turuncgilAlanModal');
+                if (taModal) { kapatTuruncgilAlanModal(true); }
 
 
                 var hModal = document.getElementById('haftalikRaporlarModal');
