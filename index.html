@@ -2832,6 +2832,36 @@
     </div>
 
 
+    <!-- ⚙️ Sistem Parametreleri Modali (Super Admin only) -->
+    <div id="sistemParametreleriModal" class="modal-overlay" style="z-index: 100009;">
+        <div class="modal-content" style="max-width: 450px; text-align: left; border-top: 5px solid #ea580c; font-family: var(--font);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">👑 Sistem Parametreleri</h3>
+                <span class="close-btn" style="color: #64748b; cursor: pointer; font-size: 24px; line-height: 1;" onclick="kapatSistemParametreleriModal()">&times;</span>
+            </div>
+            <div style="background: linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(249, 115, 22, 0.08)); border: 1px solid rgba(234, 88, 12, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 12px; color: #ea580c;">
+                🛠️ Bu ekrandan sistem genelindeki kritik parametreleri güncelleyebilirsiniz. Yapılan değişiklikler tüm saha personeli için anında geçerli olacaktır.
+            </div>
+            <div class="form-group">
+                <label style="font-weight:700; font-size:13px;">Aktif Sezon Başlangıcı (Gün.Ay)</label>
+                <input type="text" id="spSezonBaslangic" class="form-control" placeholder="Örn: 01.04">
+            </div>
+            <div class="form-group">
+                <label style="font-weight:700; font-size:13px;">Aktif Sezon Bitişi (Gün.Ay)</label>
+                <input type="text" id="spSezonBitis" class="form-control" placeholder="Örn: 31.10">
+            </div>
+            <div class="form-group">
+                <label style="font-weight:700; font-size:13px;">Konum Doğrulama Mesafesi Sınırı (Metre)</label>
+                <input type="number" id="spKonumLimitMetre" class="form-control" placeholder="Örn: 50" min="5" max="1000">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="kapatSistemParametreleriModal()">İptal</button>
+                <button class="btn btn-save" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white;" onclick="kaydetSistemParametreleri()">💾 Değişiklikleri Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Map container -->
     <div id="harita"></div>
 
@@ -3604,6 +3634,11 @@
         }
 
         // Global Variables
+        var sistemParametreleri = {
+            sezonBaslangic: "01.04",
+            sezonBitis: "31.10",
+            konumLimitMetre: 50
+        };
         var markerListesi = {};
         var tuzakVerileri = {};
         var lokasyonDB = null;
@@ -4015,6 +4050,157 @@
             guncelleDashboard();
         }
 
+        // ── ⚙️ Sistem Parametreleri ve Yönetim İşlevleri ────────────────────────────
+        function sistemParametreleriniYukle(callback) {
+            var cached = localStorage.getItem("sistemParametreleri");
+            if (cached) {
+                try {
+                    sistemParametreleri = Object.assign(sistemParametreleri, JSON.parse(cached));
+                } catch (e) {
+                    console.error("Önbellekten sistem parametreleri okuma hatası:", e);
+                }
+            }
+
+            db.collection("ayarlar").doc("sistem_parametreleri").get().then(function (doc) {
+                if (doc.exists) {
+                    var data = doc.data();
+                    if (data) {
+                        sistemParametreleri.sezonBaslangic = data.sezonBaslangic || "01.04";
+                        sistemParametreleri.sezonBitis = data.sezonBitis || "31.10";
+                        sistemParametreleri.konumLimitMetre = parseInt(data.konumLimitMetre) || 50;
+                        localStorage.setItem("sistemParametreleri", JSON.stringify(sistemParametreleri));
+                    }
+                }
+                if (callback) callback();
+            }).catch(function (err) {
+                console.warn("Sistem parametreleri yüklenirken hata oluştu (çevrimdışı olabilir):", err);
+                if (callback) callback();
+            });
+        }
+
+        function acSistemParametreleriModal() {
+            if (!aktifKullanici || !isSuperAdminUser()) {
+                alert("Bu modüle erişim yetkiniz yoktur!");
+                return;
+            }
+            toggleMenu();
+            document.getElementById("spSezonBaslangic").value = sistemParametreleri.sezonBaslangic || "01.04";
+            document.getElementById("spSezonBitis").value = sistemParametreleri.sezonBitis || "31.10";
+            document.getElementById("spKonumLimitMetre").value = sistemParametreleri.konumLimitMetre || 50;
+
+            document.getElementById("sistemParametreleriModal").classList.add("active");
+        }
+
+        function kapatSistemParametreleriModal() {
+            document.getElementById("sistemParametreleriModal").classList.remove("active");
+        }
+
+        function kaydetSistemParametreleri() {
+            if (!aktifKullanici || !isSuperAdminUser()) {
+                alert("Bu işlem için yetkiniz yoktur!");
+                return;
+            }
+
+            var baslangic = document.getElementById("spSezonBaslangic").value.trim();
+            var bitis = document.getElementById("spSezonBitis").value.trim();
+            var limitVal = parseInt(document.getElementById("spKonumLimitMetre").value);
+
+            if (!/^\d{2}\.\d{2}$/.test(baslangic)) {
+                alert("Lütfen sezon başlangıcını GG.AA formatında giriniz (Örn: 01.04).");
+                return;
+            }
+            if (!/^\d{2}\.\d{2}$/.test(bitis)) {
+                alert("Lütfen sezon bitişini GG.AA formatında giriniz (Örn: 31.10).");
+                return;
+            }
+            if (isNaN(limitVal) || limitVal < 5 || limitVal > 1000) {
+                alert("Konum doğrulama mesafesi 5 ile 1000 metre arasında olmalıdır.");
+                return;
+            }
+
+            var guncelParam = {
+                sezonBaslangic: baslangic,
+                sezonBitis: bitis,
+                konumLimitMetre: limitVal,
+                guncellemeTarihi: firebase.firestore.FieldValue.serverTimestamp(),
+                guncelleyen: aktifKullanici.adSoyad
+            };
+
+            db.collection("ayarlar").doc("sistem_parametreleri").set(guncelParam).then(function () {
+                sistemParametreleri.sezonBaslangic = baslangic;
+                sistemParametreleri.sezonBitis = bitis;
+                sistemParametreleri.konumLimitMetre = limitVal;
+                localStorage.setItem("sistemParametreleri", JSON.stringify(sistemParametreleri));
+                
+                alert("Sistem parametreleri başarıyla güncellendi.");
+                logEkle("Sistem Parametreleri Güncellendi", "Başlangıç: " + baslangic + ", Bitiş: " + bitis + ", Konum Limiti: " + limitVal + "m");
+                kapatSistemParametreleriModal();
+            }).catch(function (error) {
+                alert("Parametreler kaydedilirken hata oluştu: " + error.message);
+            });
+        }
+
+        function eskiLoglariTemizle() {
+            if (!aktifKullanici || !isSuperAdminUser()) {
+                alert('Bu işlem için yetkiniz yoktur!');
+                return;
+            }
+
+            if (!confirm("30 günden eski tüm sistem loglarını kalıcı olarak temizlemek istediğinizden emin misiniz?")) {
+                return;
+            }
+
+            var limitTarih = new Date();
+            limitTarih.setDate(limitTarih.getDate() - 30);
+
+            alert("Eski loglar sorgulanıyor... Lütfen bekleyin.");
+
+            db.collection("loglar")
+                .where("tarih", "<", limitTarih)
+                .get()
+                .then(function (snapshot) {
+                    if (snapshot.empty) {
+                        alert("Silinecek 30 günden eski log kaydı bulunamadı.");
+                        return;
+                    }
+
+                    var docs = [];
+                    snapshot.forEach(function (doc) {
+                        docs.push(doc);
+                    });
+
+                    var totalToDelete = docs.length;
+                    var deletedCount = 0;
+
+                    function deleteBatch(index) {
+                        if (index >= docs.length) {
+                            alert(deletedCount + " adet eski log kaydı başarıyla silindi.");
+                            logEkle("Eski Log Temizliği", deletedCount + " adet 30 günden eski log kaydı silindi.");
+                            return;
+                        }
+
+                        var batch = db.batch();
+                        var end = Math.min(index + 400, docs.length);
+                        for (var i = index; i < end; i++) {
+                            batch.delete(docs[i].ref);
+                        }
+
+                        batch.commit().then(function () {
+                            deletedCount += (end - index);
+                            deleteBatch(end);
+                        }).catch(function (err) {
+                            alert("Silme işlemi sırasında hata oluştu: " + err.message);
+                        });
+                    }
+
+                    deleteBatch(0);
+                })
+                .catch(function (error) {
+                    console.error("Log temizleme hatası:", error);
+                    alert("Loglar sorgulanırken hata oluştu: " + error.message);
+                });
+        }
+
         // Real-Time Personnel Listener - Robust default personnel checking and seeding
         function dinleVeTohumlaPersoneller() {
             var varsayilanlar = [
@@ -4203,7 +4389,9 @@
         // Initialize lists and start listening to personnel
         lokasyonlariYukle();
         doldurYilDropdownlari();
-        dinleVeTohumlaPersoneller();
+        sistemParametreleriniYukle(function () {
+            dinleVeTohumlaPersoneller();
+        });
 
         // Custom DivIcon Marker Builder (Offline compliant)
         function createCustomMarkerIcon(tuzakTipi, bocekSayisi, tupSayisi, nimfSayisi) {
@@ -9442,8 +9630,9 @@
                             var userLat = position.coords.latitude;
                             var userLng = position.coords.longitude;
                             var distance = hesaplaMesafe(userLat, userLng, parseFloat(data.lat), parseFloat(data.lng));
+                            var limitMetre = (sistemParametreleri && sistemParametreleri.konumLimitMetre) ? sistemParametreleri.konumLimitMetre : 50;
 
-                            if (distance > 50) {
+                            if (distance > limitMetre) {
                                 var roundedDist = Math.round(distance);
                                 if (isKonumMuaf) {
                                     if (confirm("Tuzak konumuna uzaksınız (" + roundedDist + " metre). Bu kaydı girmeye devam etmek istiyor musunuz?")) {
@@ -9455,7 +9644,7 @@
                                         }
                                     }
                                 } else {
-                                    alert("Sayım kaydı girebilmek için tuzak başında olmalısınız. Şu anki konumunuzun uzaklığı: " + roundedDist + " metre. Sınır: 50 metre.");
+                                    alert("Sayım kaydı girebilmek için tuzak başında olmalısınız. Şu anki konumunuzun uzaklığı: " + roundedDist + " metre. Sınır: " + limitMetre + " metre.");
                                     if (button) {
                                         button.disabled = false;
                                         button.innerText = originalText;
@@ -10499,17 +10688,27 @@
                     adminGrubu.appendChild(menuOgesi('🕐', 'Oturum Geçmişi', '#7c3aed', function () {
                         acOturumGecmisiModal();
                     }));
-                    adminGrubu.appendChild(menuOgesi('💾', 'Veritabanı Yedeği', '#059669', function () {
-                        toggleMenu(); veritabaniYedekIndir();
-                    }));
                     adminGrubu.appendChild(menuOgesi('👤', 'Personel Performansı', '#3b82f6', function () {
                         acPersonelPerformansModal();
                     }));
-                    if (isSuperAdminUser()) {
-                        adminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
-                            toggleMenu(); fotograflariEpostalaVeTemizle();
-                        }));
-                    }
+                }
+
+                // ── 5. SÜPER ADMİN ÖZEL grubu (kapalı başlar, sadece Süper Adminlere) ──
+                if (aktifKullanici && isSuperAdminUser()) {
+                    var superAdminGrubu = menuGrubuOlustur('Süper Admin Özel', '👑', '#ea580c', false);
+
+                    superAdminGrubu.appendChild(menuOgesi('⚙️', 'Sistem Parametreleri', '#ea580c', function () {
+                        acSistemParametreleriModal();
+                    }));
+                    superAdminGrubu.appendChild(menuOgesi('💾', 'Veritabanı Yedeği', '#059669', function () {
+                        toggleMenu(); veritabaniYedekIndir();
+                    }));
+                    superAdminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
+                        toggleMenu(); fotograflariEpostalaVeTemizle();
+                    }));
+                    superAdminGrubu.appendChild(menuOgesi('🗑️', 'Eski Logları Temizle', '#ef4444', function () {
+                        eskiLoglariTemizle();
+                    }));
                 }
 
             } else {
@@ -11680,7 +11879,7 @@
 
         // ───── FAZ 1: OTOMATĬK YEDEKLEME ─────
         function veritabaniYedekIndir() {
-            if (!aktifKullanici || !isAdmin()) {
+            if (!aktifKullanici || !isSuperAdminUser()) {
                 alert('Bu işlem için yetkiniz yoktur!');
                 return;
             }
