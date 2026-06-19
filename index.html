@@ -12679,10 +12679,6 @@
                 return;
             }
 
-            // Kaydet butonunu devre dışı bırak
-            var saveBtn = document.querySelector('#turuncgilAlanModal .btn-save');
-            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = 'Kaydediliyor...'; }
-
             var kayit = {
                 il: 'Rize',
                 ilce: ilce,
@@ -12705,21 +12701,22 @@
                 tarih: new Date().toLocaleDateString('tr-TR')
             };
 
-            db.rawCollection('tuzaklar_turuncgil_antenli').add(kayit).then(function() {
+            // Geçici marker'ları ve modalı hemen kapat (optimistic UI)
+            turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
+            turuncgilCizimMarkerlar = [];
+            turuncgilCizimNoktalar = [];
+            kapatTuruncgilAlanModal(false);
+
+            // db.collection('tuzaklar') → routing override → tuzaklar_turuncgil_antenli
+            db.collection('tuzaklar').add(kayit).then(function() {
                 logEkle('Turunçgil Alan Eklendi', 'İlçe: ' + ilce + ', Köy: ' + koy + ', Alan: ' + (alanAdi || koy));
                 if (aktifKullanici) kullaniciAktifliginiGuncelle();
-                turuncgilCizimMarkerlar.forEach(function(m) { map.removeLayer(m); });
-                turuncgilCizimMarkerlar = [];
-                turuncgilCizimNoktalar = [];
-                kapatTuruncgilAlanModal(false);
-                turuncgilPolygonKatmani.clearLayers();
-                tuzaklariDinle();
-                alert('Alan başarıyla kaydedildi.');
+                // onSnapshot listener otomatik olarak yeni alanı çizecek
             }).catch(function(err) {
-                if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '💾 Kaydet'; }
                 alert('Kayıt başarısız: ' + err.message);
             });
         }
+
 
         function turuncgilAlanSil(docId) {
             if (!confirm('Bu alanı silmek istediğinizden emin misiniz?')) return;
