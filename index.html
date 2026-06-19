@@ -12485,7 +12485,6 @@
 
         function turuncgilAlanNoktasiEkle(latlng) {
             if (!turuncgilCizimModu) {
-                // Çizim modu aktif değilse başlat
                 turuncgilAlanCiziminiBaslat();
             }
 
@@ -12502,15 +12501,27 @@
             m.addTo(map);
             turuncgilCizimMarkerlar.push(m);
 
-            // Polyline güncelle
-            if (turuncgilCizimPolyline) map.removeLayer(turuncgilCizimPolyline);
-            if (turuncgilCizimNoktalar.length >= 2) {
+            // Polyline/Polygon önizlemesini güncelle
+            if (turuncgilCizimPolyline) { map.removeLayer(turuncgilCizimPolyline); turuncgilCizimPolyline = null; }
+
+            if (turuncgilCizimNoktalar.length >= 3) {
+                // 3+ nokta: dolu polygon göster
+                turuncgilCizimPolyline = L.polygon(turuncgilCizimNoktalar, {
+                    color: '#e65c00',
+                    weight: 2.5,
+                    dashArray: '6 4',
+                    opacity: 0.9,
+                    fillColor: '#ff6b00',
+                    fillOpacity: 0.25
+                }).addTo(map);
+            } else if (turuncgilCizimNoktalar.length === 2) {
+                // 2 nokta: sadece çizgi
                 turuncgilCizimPolyline = L.polyline(turuncgilCizimNoktalar, {
                     color: '#e65c00', weight: 2.5, dashArray: '6 4', opacity: 0.85
                 }).addTo(map);
             }
 
-            // Bilgi notu güncelle
+            // Badge bilgisini güncelle
             var badge = document.getElementById('turuncgilCizimBadge');
             if (badge) {
                 var noktaSayisi = turuncgilCizimNoktalar.length;
@@ -12524,6 +12535,7 @@
                 }
             }
         }
+
 
         function turuncgilAlanBitir() {
             if (turuncgilCizimNoktalar.length < 3) {
