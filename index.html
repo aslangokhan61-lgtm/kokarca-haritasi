@@ -9242,6 +9242,11 @@
                 }
 
                 // Konum Doğrulama Kilidi
+                // Onaylı kullanıcılar: konum uzak/alınamaz olsa bile onay kutusuyla geçebilir
+                var konumMuafKullanicilar = ["gokhan.aslan", "beyza.feyiz", "dursunali.azakli"];
+                var mevcutKullaniciAdi = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.trim().toLowerCase() : "";
+                var isKonumMuaf = isAdmin() || konumMuafKullanicilar.indexOf(mevcutKullaniciAdi) !== -1;
+
                 if (duzenlenenTarih) {
                     proceedSave();
                 } else {
@@ -9264,8 +9269,8 @@
 
                             if (distance > 50) {
                                 var roundedDist = Math.round(distance);
-                                if (isAdmin()) {
-                                    if (confirm("Tuzak konumuna uzaksınız (" + roundedDist + " metre). Yönetici olarak bu kaydı girmeye devam etmek istiyor musunuz?")) {
+                                if (isKonumMuaf) {
+                                    if (confirm("Tuzak konumuna uzaksınız (" + roundedDist + " metre). Bu kaydı girmeye devam etmek istiyor musunuz?")) {
                                         proceedSave();
                                     } else {
                                         if (button) {
@@ -9286,8 +9291,8 @@
                         },
                         function (err) {
                             console.error("GPS hatası:", err);
-                            if (isAdmin()) {
-                                if (confirm("GPS konumunuz alınamadı. Yönetici olarak doğrulamayı atlayıp kaydetmek istiyor musunuz?")) {
+                            if (isKonumMuaf) {
+                                if (confirm("GPS konumunuz alınamadı. Doğrulamayı atlayıp kaydetmek istiyor musunuz?")) {
                                     proceedSave();
                                 } else {
                                     if (button) {
@@ -12724,6 +12729,7 @@
                 logEkle('Turunçgil Alan Eklendi', 'İlçe: ' + ilce + ', Köy: ' + koy + ', Alan: ' + (alanAdi || koy));
                 if (aktifKullanici) kullaniciAktifliginiGuncelle();
                 // onSnapshot listener otomatik olarak yeni alanı çizecek
+                alert('Alan başarıyla kaydedildi. ✅');
             }).catch(function(err) {
                 alert('Kayıt başarısız: ' + err.message);
             });
