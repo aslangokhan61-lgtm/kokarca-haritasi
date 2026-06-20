@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sürvey Excel İşlemleri Aracı</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Firebase compatibility SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <!-- SheetJS for Excel Reading/Writing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #008e43;
+            --primary-light: #22c55e;
+            --primary-dark: #004d24;
+            --secondary-blue: #005fa6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.4);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #eff6ff 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            color: var(--text-dark);
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 13.5px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary-blue));
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box {
+            background: rgba(22, 163, 74, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        .info-box strong {
+            color: var(--primary-dark);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14.5px;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-blue {
+            background: var(--secondary-blue);
+            box-shadow: 0 4px 12px rgba(0, 95, 166, 0.15);
+        }
+
+        .btn-blue:hover:not(:disabled) {
+            background: #004d80;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+            height: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary));
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .status-text {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .log-box {
+            background: #0f172a;
+            color: #38bdf8;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none;
+            margin-top: 15px;
+            border: 1px solid #1e293b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef9c3; color: #a16207; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 450px;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            background: white;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            border: 1px solid var(--border-glass);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        .user-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🔄 Sürvey Excel İşlemleri Aracı</h1>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="user-pill">
+                    <span class="user-dot"></span>
+                    <span id="activeUserTxt">Yükleniyor...</span>
+                </div>
+                <a href="index.html" class="back-btn">⬅️ Haritaya Dön</a>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Sol Sütun: İşlemler -->
+            <div>
+                <!-- excel guncelleme kartı -->
+                <div class="card">
+                    <h3 class="card-title">📁 Sürvey Excel Koordinat Düzeltme & Sayım Senkronizasyonu</h3>
+                    <div class="info-box">
+                        <strong>📌 Çalışma Şekli:</strong>
+                        <ul style="margin: 5px 0 0 15px; padding: 0;">
+                            <li>Sayımları doğru olan fakat koordinatları hatalı olan Excel dosyasını seçin.</li>
+                            <li>Sistem Excel satırlarındaki ilçeleri ve köyleri veritabanındaki doğru koordinatlı tuzaklarla eşleştirir.</li>
+                            <li><strong>"Koordinatları Düzelt ve Excel İndir"</strong> ile Excel'deki hatalı GPS verilerini doğrudan düzeltip indirebilirsiniz.</li>
+                            <li><strong>"Sayımları Veritabanına Eşitle"</strong> ile Excel'deki sayım verilerini doğrudan haritadaki ilgili tuzakların ziyaret geçmişine (visits) ekleyebilirsiniz.</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="file-upload-wrapper" id="dropArea">
+                            <span style="font-size: 32px; display: block; margin-bottom: 8px;">📊</span>
+                            <strong>Excel Dosyası Seçin</strong>
+                            <span style="color: var(--text-muted); display: block; font-size: 12px; margin-top: 4px;">2026 SURVEY KAYIT FORMU.xlsx veya benzeri</span>
+                            <input type="file" id="excelFile" accept=".xlsx, .xls">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <button id="correctExcelBtn" class="btn" disabled>
+                            🛠️ Koordinatları Düzelt & Excel İndir
+                        </button>
+                        <button id="syncDbBtn" class="btn btn-blue" disabled>
+                            🚀 Sayımları Veritabanına Eşitle
+                        </button>
+                    </div>
+
+                    <div class="progress-container" id="progressBarContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="status-text" id="statusTxt">Lütfen bir excel dosyası seçerek başlayın.</div>
+
+                    <div class="log-box" id="logBox"></div>
+                </div>
+
+                <!-- Önizleme Kartı -->
+                <div class="card" id="previewCard" style="display: none; max-width: 100%;">
+                    <h3 class="card-title">📋 Eşleştirme Önizleme (<span id="matchCount">0</span> Kayıt)</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sıra</th>
+                                    <th>İlçe</th>
+                                    <th>Köy (Excel)</th>
+                                    <th>Eşleşen Köy (DB)</th>
+                                    <th>Tuzak / Konukçu</th>
+                                    <th>Eski GPS (Excel)</th>
+                                    <th>Yeni GPS (DB)</th>
+                                    <th>Sayım Sayısı</th>
+                                    <th>Eşleşme Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Sütun: Doğrudan Veritabanı İhracı -->
+            <div>
+                <div class="card">
+                    <h3 class="card-title">📥 Veritabanından Doğrudan Excel İndir</h3>
+                    <div class="info-box">
+                        <strong>📌 Çalışma Şekli:</strong>
+                        <ul style="margin: 5px 0 0 15px; padding: 0;">
+                            <li>Herhangi bir dosya yüklemeden, veritabanında (Firestore) yer alan 2026 Sürvey tuzaklarını ve tüm sayım geçmişlerini tek bir tıklama ile Excel dosyası olarak indirmenizi sağlar.</li>
+                            <li>Tarih sütunları otomatik olarak veritabanındaki benzersiz sayım tarihlerine göre oluşturulur.</li>
+                        </ul>
+                    </div>
+
+                    <button id="directExportBtn" class="btn btn-blue" style="height: 50px; font-size: 15px;">
+                        📥 Güncel Excel Dosyasını İndir
+                    </button>
+                    <div id="exportStatusTxt" class="status-text" style="margin-top: 12px; text-align: left;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LOKASYON VERİTABANI (Köy Eşleştirme İçin)
+        const dbLocations = {
+          "Ardeşen": [
+            "Ada Mahallesi", "Akdere Köyü", "Akkaya Köyü", "Arıcılar Köyü", "Armağan Köyü", "Aşağıdurak Köyü",
+            "Bahar Mahallesi", "Barış Mahallesi", "Baş Mahallesi", "Bayırcık Köyü", "Beyazkaya Köyü", "Cami Mahallesi",
+            "Cumhuriyet Mahallesi", "Çıraklar Köyü", "Çiftekavak Mahallesi", "Deniz Mahallesi", "Deremezra Köyü",
+            "Doğanay Köyü", "Duygulu Köyü", "Düz Mahallesi", "Elmalık Mahallesi", "Esentepe Mahallesi", "Eskiarmutluk Köyü",
+            "Fatih Mahallesi", "Fırtına Mahallesi", "Gündoğan Köyü", "Güney Köyü", "Hoşdere Köyü", "Işıklı Mahallesi",
+            "Kaçkar Köyü", "Kahveciler Mahallesi", "Kavaklıdere Mahallesi", "Kirazlık Köyü", "Konak Mahallesi",
+            "Konaktepe Mahallesi", "Köprüköy Köyü", "Kurtuluş Köyü", "Kuzey Mahallesi", "Küçükköy Köyü", "Manganez Köyü",
+            "Merkez Mahallesi", "Müftü Mahallesi", "Orta Mahallesi", "Ortaalan Köyü", "Önder Köyü", "Özgür Köyü",
+            "Pınarlı Köyü", "Pirinçlik Köyü", "Serindere Köyü", "Seslikaya Köyü", "Sinanköy Köyü", "Şehitlik Köyü",
+            "Şendere Köyü", "Şentepe Mahallesi", "Şenyamaç Köyü", "Şenyurt Köyü", "Şenyuva Mahallesi", "Taşbaşı Mahallesi",
+            "Yamaçdere Köyü", "Yavuz Köyü", "Yavuz Selim Mahallesi", "Yayla Mahallesi", "Yeni Mahallesi", "Yeniköy Köyü",
+            "Yeniyol Köyü", "Yeşiltepe Köyü", "Yukarıdurak Köyü", "Yurtsever Köyü", "Zeytinlik Köyü"
+          ],
+          "Çamlıhemşin": [
+            "Aşağıçamlıca Mahallesi", "Aşağışimşirli Mahallesi", "Behice Köyü", "Boğaziçi Köyü", "Çatköy Köyü",
+            "Çayırdüzü Köyü", "Derecik Köyü", "Didi Köyü", "Dikkaya Köyü", "Güllüköy Köyü", "Güroluk Köyü",
+            "Kadıköy Mahallesi", "Kale Köyü", "Kaplıca Mahallesi", "Kavak Mahallesi", "Komilo Köyü", "Konaklar Mahallesi",
+            "Köprübaşı Köyü", "Merkez Mahallesi", "Meydanköy Köyü", "Mollaveyis Köyü", "Ortaklar Köyü", "Ortanköy Köyü",
+            "Ortayayla Köyü", "Sıraköy Köyü", "Sırt Mahallesi", "Şenköy Köyü", "Şenyuva Köyü", "Topluca Köyü",
+            "Yağmurlu Mahallesi", "Yaylaköy Köyü", "Yazlık Köyü", "Yolkıyı Köyü", "Yukarıçamlıca Mahallesi",
+            "Yukarışimşirli Köyü", "Zilkale Köyü"
+          ],
+          "Çayeli": [
+            "Abdullahhoca Köyü", "Adalar Mahallesi", "Aloğlu Mahallesi", "Altıntaş Mahallesi", "Arkadere Mahallesi",
+            "Armutlu Köyü", "Aşıklar Köyü", "Başköy Köyü", "Beşikçiler Köyü", "Beyazsu Köyü", "Buzlupınar Köyü",
+            "Büyükcaferpaşa Mahallesi", "Büyüktaşhane Mahallesi", "Çamlıca Mahallesi", "Çataklıhoca Mahallesi",
+            "Çataldere Köyü", "Çavuşlu Mahallesi", "Çaycılar Mahallesi", "Çeşmeli Köyü", "Çınartepe Köyü",
+            "Çilingir Köyü", "Çukurluhoca Köyü", "Demirciler Mahallesi", "Demirhisar Köyü", "Derecik Köyü",
+            "Düzgeçit Köyü", "Erdemli Köyü", "Erenler Köyü", "Esendağ Köyü", "Eskipazar Mahallesi", "Gemiciler Köyü",
+            "Gümüştaş Mahallesi", "Gürçam Mahallesi", "Gürgenli Köyü", "Gürpınar Köyü", "Güzeltepe Köyü",
+            "Habiboğlu Mahallesi", "Haremtepe Köyü", "Hassadıklar Mahallesi", "İncesırt Mahallesi", "İncesu Köyü",
+            "Kaçkar Köyü", "Kaptanpaşa Köyü", "Karaağaç Köyü", "Kazancılar Mahallesi", "Kemerköy Köyü",
+            "Kesmetaş Mahallesi", "Kestanelik Köyü", "Köprübaşı Köyü", "Küçükcaferpaşa Mahallesi", "Küçüktaşhane Mahallesi",
+            "Latifli Köyü", "Limanköy Mahallesi", "Maden Mahallesi", "Maltepe Köyü", "Merkez Mahallesi",
+            "Musadağı Köyü", "Ormancık Köyü", "Ortaköy Köyü", "Sabuncular Mahallesi", "Sarısu Köyü", "Sefalı Köyü",
+            "Selimiye Köyü", "Seslidere Mahallesi", "Sırtköy Köyü", "Soğuksu Mahallesi", "Şairler Mahallesi",
+            "Şirinköy Köyü", "Taşhane Mahallesi", "Topkaya Mahallesi", "Uzundere Köyü", "Yaka Mahallesi",
+            "Yalı Mahallesi", "Yamaçköy Köyü", "Yanıkdağ Köyü", "Yavuzlar Köyü", "Yazıcılar Mahallesi",
+            "Yeni Mahallesi", "Yenicami Mahallesi", "Yenice Köyü", "Yenihisar Köyü", "Yenipazar Mahallesi",
+            "Yenitepe Köyü", "Yeşilırmak Köyü", "Yeşilköy Köyü", "Yeşiltepe Köyü", "Yıldızeli Köyü", "Zafer Köyü"
+          ],
+          "Derepazarı": [
+            "Bahattinpaşa Köyü", "Bürücek Köyü", "Çakmakçılar Köyü", "Çalışkanlar Mahallesi", "Çeşmeköy Köyü",
+            "Çukurlu Köyü", "Eriklimanı Mahallesi", "Esentepe Köyü", "Fıçıcılar Mahallesi", "Kirazdağı Köyü",
+            "Maltepe Köyü", "Merkez Mahallesi", "Sandıktaş Köyü", "Sarıyer Mahallesi", "Subaşı Mahallesi",
+            "Tersane Mahallesi", "Uzunkaya Köyü", "Yanıktaş Mahallesi"
+          ],
+          "Fındıklı": [
+            "Aksu Mahallesi", "Arılı Köyü", "Aslandere Köyü", "Avcılar Köyü", "Beydere Köyü", "Cennet Köyü",
+            "Çağlayan Köyü", "Çınarlı Köyü", "Derbent Köyü", "Doğanay Köyü", "Düzköy Köyü", "Gürsu Köyü",
+            "Haraköy Köyü", "Hürriyet Mahallesi", "Ihlamurlu Köyü", "Ilıca Mahallesi", "Karaali Köyü",
+            "Kıyıcık Köyü", "Liman Mahallesi", "Merkez Mahallesi", "Meyvalı Köyü", "Saatköy Köyü", "Sahil Mahallesi",
+            "Sulak Köyü", "Sümer Köyü", "Tatlısu Mahallesi", "Tepecik Köyü", "Yaylacılar Köyü", "Yeni Mahallesi",
+            "Yeniköy Köyü", "Yenişehitlik Köyü"
+          ],
+          "Güneysu": [
+            "Adacami Mahallesi", "Asmalıırmak Köyü", "Aşağı Kiremit Mahallesi", "Ballıdere Köyü", "Başaran Mahallesi",
+            "Başköy Köyü", "Birlik Mahallesi", "Bulutlu Köyü", "Çamlıca Köyü", "Dumankaya Köyü", "Eskicami Mahallesi",
+            "Güneli Mahallesi", "Gürgen Köyü", "İslahiye Köyü", "Kıbledağı Köyü", "Kiremit Mahallesi",
+            "Küçükcamii Mahallesi", "Merkez Mahallesi", "Ortaköy Köyü", "Selamet Mahallesi", "Tepebaşı Köyü",
+            "Ulucamii Mahallesi", "Yarımada Köyü", "Yenicami Mahallesi", "Yeniköy Köyü", "Yeşilköy Köyü",
+            "Yeşilyurt Köyü", "Yukarıislahiye Köyü", "Yüksekköy Köyü"
+          ],
+          "Hemşin": [
+            "Akyamaç Köyü", "Bahar Mahallesi", "Bilenköy Köyü", "Çamlıtepe Köyü", "Hilal Köyü", "Kantarlı Köyü",
+            "Leventköy Köyü", "Mutlu Mahallesi", "Nurluca Köyü", "Ortaköy Mahallesi", "Yaltkaya Köyü", "Yeniköy Mahallesi"
+          ],
+          "İkizdere": [
+            "Ayvalık Köyü", "Ballıköy Köyü", "Başköy Köyü", "Bayırköy Köyü", "Cevizlik Köyü", "Çağrankaya Mahallesi",
+            "Çamlıkköy Köyü", "Çarşı Mahallesi", "Çataltepe Köyü", "Çiçekli Köyü", "Çifteköprü Köyü", "Demirkapı Köyü",
+            "Dereköy Köyü", "Diktaş Köyü", "Eskice Köyü", "Gölyayla Köyü", "Gündoğdu Mahallesi", "Güney Mahallesi",
+            "Güneyce Köyü", "Gürdere Köyü", "Güvenköy Köyü", "Ihlamur Köyü", "Ilıcaköy Köyü", "Kama Köyü",
+            "Kirazlı Mahallesi", "Meşeköy Köyü", "Ortaköy Köyü", "Rüzgarlı Köyü", "Sivrikaya Köyü", "Şimşirli Köyü",
+            "Tozköy Köyü", "Tulumpınar Köyü", "Yağcılar Köyü", "Yerelma Köyü", "Yeşilyurt Mahallesi", "Zafer Mahallesi"
+          ],
+          "İyidere": [
+            "Büyükçiftlikköyü Köyü", "Çanakçeşme Mahallesi", "Çiftlikköy Köyü", "Denizgören Köyü", "Fethiye Mahallesi",
+            "Fıçıtaşı Mahallesi", "Hazar Mahallesi", "Kalecik Köyü", "Köşklü Köyü", "Merkez Mahallesi",
+            "Sarayköy Mahallesi", "Taşhane Köyü", "Üstüpiler Mahallesi", "Yalıköy Mahallesi", "Yapraklar Mahallesi",
+            "Yaylacılar Köyü"
+          ],
+          "Kalkandere": [
+            "Adalar Mahallesi", "Aksu Mahallesi", "Aşağı Tatlısu Mahallesi", "Cevizlik Mahallesi", "Çağlayan Köyü",
+            "Çayırlı Köyü", "Dağdibi Mahallesi", "Dülgerli Köyü", "Esendere Köyü", "Esentepe Köyü", "Fındıklı Köyü",
+            "Geçitli Köyü", "Hurmalık Köyü", "Hüseyinhoca Köyü", "İnciköy Köyü", "Kayabaşı Köyü", "Kızıltoprak Mahallesi",
+            "Kuruköy Mahallesi", "Medrese Mahallesi", "Ormanlı Köyü", "Pınarköy Köyü", "Seyrantepe Köyü",
+            "Soğuksu Köyü", "Soğuksu Mahallesi", "Taşçılar Mahallesi", "Ünalan Köyü", "Yeni Mahallesi",
+            "Yenigeçitli Köyü", "Yeniköy Köyü", "Yeşilköy Köyü", "Yokuşlu Köyü", "Yolbaşı Köyü", "Yukarı Tatlısu Mahallesi",
+            "Yumurtatepe Köyü"
+          ],
+          "Merkez": [
+            "Akarsu Köyü", "Akpınar Köyü", "Aktaş Köyü", "Alipaşa Mahallesi", "Ambarlık Köyü", "Asmalık Mahallesi",
+            "Atmeydanı Mahallesi", "Ayane Köyü", "Azaklıhoca Köyü", "Bağdatlı Mahallesi", "Balıkçılar Köyü",
+            "Balsu Mahallesi", "Beştepe Köyü", "Bıldırcınköy Köyü", "Boğaz Köyü", "Boğaz Mahallesi", "Bozkale Mahallesi",
+            "Camidağı Köyü", "Camiönü Mahallesi", "Canpolat Mahallesi", "Çamlıbel Mahallesi", "Çarşı Mahallesi",
+            "Çaybaşı Köyü", "Çaycılar Köyü", "Çiftekavak Mahallesi", "Çimenli Köyü", "Çorapçılar Mahallesi",
+            "Dağınıksu Mahallesi", "Dağsu Mahallesi", "Değirmendere Mahallesi", "Derebaşı Köyü", "Dereüstü Mahallesi",
+            "Dörtyol Köyü", "Düz Mahallesi", "Düzköy Köyü", "Ekmekçiler Mahallesi", "Ekrem Orhon Mahallesi",
+            "Elmalı Köyü", "Eminettin Mahallesi", "Engindere Mahallesi", "Erenköy Köyü", "Fatih Mahallesi",
+            "Fener Mahallesi", "Gölgeli Köyü", "Gülbahar Mahallesi", "Güneşli Mahallesi", "Güneştepe Mahallesi",
+            "Güzelköy Köyü", "Güzelyurt Köyü", "Halaslar Mahallesi", "Halatçılar Mahallesi", "Hamidiye Mahallesi",
+            "Hamzabey Mahallesi", "Hayrat Mahallesi", "İslampaşa Mahallesi", "Kale Mahallesi", "Kanbursırt Mahallesi",
+            "Kaplıca Mahallesi", "Karasu Köyü", "Karayemiş Köyü", "Kasarcılar Mahallesi", "Kavaklı Mahallesi",
+            "Ketenli Köyü", "Kırklartepesi Köyü", "Kireçhane Mahallesi", "Kocatepe Köyü", "Kokulukaya Mahallesi",
+            "Kömürcüler Mahallesi", "Köprübaşı Mahallesi", "Köprülü Köyü", "Kurtuluş Köyü", "Küçükçayır Köyü",
+            "Küçükköy Köyü", "Melek Köyü", "Mermerdelen Mahallesi", "Mesudiye Mahallesi", "Mezra Mahallesi",
+            "Müderrisler Mahallesi", "Müftü Mahallesi", "Orta Mahallesi", "Orta Muradiye Mahallesi", "Ortapazar Köyü",
+            "Örnek Köyü", "Paşakuyu Mahallesi", "Pazarköy Köyü", "Pehlivan Mahallesi", "Pehlivantaşı Mahallesi",
+            "Pekmezli Köyü", "Pınarbaşı Köyü", "Pilavdağı Mahallesi", "Piriçelebi Mahallesi", "Portakallık Mahallesi",
+            "Reşadiye Mahallesi", "Selimiye Köyü", "Sırt Kasarcılar Mahallesi", "Sırt Mahallesi", "Soğukçeşme Köyü",
+            "Soğuksu Mahallesi", "Söğütlü Köyü", "Sütlüce Köyü", "Taşköprü Köyü", "Taşlıdere Mahallesi",
+            "Taşlık Köyü", "Taşpınar Köyü", "Tekke Köyü", "Tophane Mahallesi", "Topkaya Köyü", "Tuğlalı Köyü",
+            "Uzunköy Köyü", "Üçkaya Köyü", "Üzümlü Mahallesi", "Veliköy Köyü", "Yağlıtaş Mahallesi", "Yemişlik Köyü",
+            "Yenidoğan Köyü", "Yenigüzel Köyü", "Yenikale Köyü", "Yenikasarcılar Köyü", "Yeniköy Mahallesi",
+            "Yeniselimiye Köyü", "Yeşildere Köyü", "Yeşildere Mahallesi", "Yeşilılıca Mahallesi", "Yolüstü Köyü",
+            "Yolveren Köyü", "Zincirliköprü Köyü"
+          ],
+          "Pazar": [
+            "Akbucak Köyü", "Akmescit Köyü", "Aktaş Köyü", "Aktepe Köyü", "Alçılı Köyü", "Balıkçı Köyü",
+            "Başköy Köyü", "Beyaztaş Mahallesi", "Boğazlı Köyü", "Bucak Köyü", "Cumhuriyet Mahallesi",
+            "Dağdibi Köyü", "Darılı Köyü", "Derebaşı Köyü", "Derinsu Köyü", "Dernek Köyü", "Elmalık Köyü",
+            "Gazi Mahallesi", "Güneyköy Köyü", "Güzelyalı Mahallesi", "Hamidiye Köyü", "Handağı Köyü",
+            "Hasköy Köyü", "Hisarlı Köyü", "Irmakköy Köyü", "Irmakyeniköy Köyü", "İkiztepe Mahallesi",
+            "Kayağantaş Köyü", "Kesikköprü Köyü", "Kirazlık Mahallesi", "Kocaköprü Mahallesi", "Kuzayca Köyü",
+            "Merdivenli Köyü", "Ocak Mahallesi", "Ortaırmak Köyü", "Ortayol Köyü", "Örnek Köyü", "Papatya Köyü",
+            "Pazar Mahallesi", "Sahilköy Köyü", "Sessizdere Köyü", "Sivrikale Köyü", "Sivritepe Köyü",
+            "Soğuksu Mahallesi", "Subaşı Köyü", "Suçatı Köyü", "Sulak Köyü", "Şehitlik Köyü", "Şendere Köyü",
+            "Şentepe Köyü", "Tektaş Köyü", "Topluca Köyü", "Tütüncüler Köyü", "Uğrak Köyü", "Yavuzköy Köyü",
+            "Yemişli Köyü", "Yeşilköy Köyü", "Yukarı Soğuksu Mahallesi", "Yücehisar Köyü", "Zafer Mahallesi"
+          ]
+        };
+
+        // FIREBASE SETUP
+        const firebaseConfig = {
+            apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
+            authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
+            projectId: "kokarca-tuzak-takip-sist-99696",
+            storageBucket: "kokarca-tuzak-takip-sist-99696.firebasestorage.app",
+            messagingSenderId: "125586984500",
+            appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461",
+            measurementId: "G-WXJQ4DJLJX"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // AUTHENTICATION BARRIER
+        const userStr = localStorage.getItem("aktifPersonel");
+        if (!userStr) {
+            alert("Lütfen önce sisteme giriş yapınız!");
+            window.location.href = "index.html";
+        }
+        const activeUser = JSON.parse(userStr);
+        document.getElementById("activeUserTxt").innerText = activeUser.adSoyad;
+
+        const userName = activeUser.kullaniciAdi ? activeUser.kullaniciAdi.toLowerCase().trim() : "";
+        if (userName !== "gokhan.aslan" && userName !== "beyza.feyiz") {
+            alert("Bu araca erişim yetkiniz bulunmamaktadır!");
+            window.location.href = "index.html";
+        }
+
+        // GLOBALS
+        var workbook = null;
+        var loadedExcelData = [];
+        var dbTraps = [];
+        var dateColumns = [];
+        var matchedResults = [];
+
+        // LOAD DATABASE TRAPS ON PAGE START
+        async function fetchDbTraps() {
+            try {
+                showStatus("Veritabanından sürvey tuzakları yükleniyor...", "blue");
+                var snapshot = await db.collection("tuzaklar").get();
+                dbTraps = [];
+                snapshot.forEach(doc => {
+                    dbTraps.push({ id: doc.id, ...doc.data() });
+                });
+                showLog(`✅ Veritabanından toplam ${dbTraps.length} adet kayıt yüklendi.`);
+                showStatus("Hazır. Lütfen hatalı koordinat içeren sürvey Excel dosyasını seçin.");
+            } catch (err) {
+                showLog(`🚨 HATA (Veritabanı Okunamadı): ${err.message}`);
+                showStatus("Veritabanı yüklenirken hata oluştu!", "danger");
+            }
+        }
+        fetchDbTraps();
+
+        // EXCEL LOADING
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            showStatus("Dosya analiz ediliyor...", "blue");
+            showLog(`📂 Dosya seçildi: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    
+                    var sheetName = workbook.SheetNames.find(n => n.includes("2026")) || workbook.SheetNames[0];
+                    showLog(`📋 Seçilen Excel Sayfası: "${sheetName}"`);
+                    
+                    processExcelSheet(sheetName);
+                } catch(err) {
+                    showLog(`🚨 Excel Okuma Hatası: ${err.message}`);
+                    showStatus("Excel dosyası okunamadı!", "danger");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // STRING NORMALIZATION FOR FUZZY VILLAGE MATCHING
+        function normalizeString(str) {
+            if (!str) return "";
+            return str.toString()
+                .replace(/İ/g, 'i')
+                .replace(/ı/g, 'i')
+                .replace(/I/g, 'i')
+                .toLowerCase()
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/\s+/g, '') // remove spaces
+                .trim();
+        }
+
+        function getBaseName(name) {
+            let n = normalizeString(name);
+            n = n.replace(/(koyu|mahallesi|mah|koy|mh|m)$/g, '');
+            return n;
+        }
+
+        // Fuzzy Village Match
+        function findMatchingKoy(district, excelKoy) {
+            if (!excelKoy) return "";
+            let normDistrict = normalizeString(district);
+            let matchedDistrictKey = Object.keys(dbLocations).find(k => normalizeString(k) === normDistrict);
+            if (!matchedDistrictKey) return "";
+            
+            let villageList = dbLocations[matchedDistrictKey];
+            let normExcelKoy = normalizeString(excelKoy);
+            
+            // Exact Match
+            let match = villageList.find(k => normalizeString(k) === normExcelKoy);
+            if (match) return match;
+            
+            // Suffix strip match
+            let baseExcel = getBaseName(excelKoy);
+            match = villageList.find(k => getBaseName(k) === baseExcel);
+            if (match) return match;
+            
+            // Substring match
+            match = villageList.find(k => {
+                let bk = getBaseName(k);
+                return bk.includes(baseExcel) || baseExcel.includes(bk);
+            });
+            if (match) return match;
+            
+            return "";
+        }
+
+        // Get row cell value dynamically
+        function getRowValue(row, searchKeys) {
+            if (!row) return undefined;
+            if (!Array.isArray(searchKeys)) searchKeys = [searchKeys];
+            for (let i = 0; i < searchKeys.length; i++) {
+                let normSearch = normalizeString(searchKeys[i]);
+                let foundKey = Object.keys(row).find(k => normalizeString(k).includes(normSearch));
+                if (foundKey) return row[foundKey];
+            }
+            return undefined;
+        }
+
+        function formatHostPlant(plantStr) {
+            if (!plantStr) return "Belirtilmedi";
+            let s = plantStr.trim().toLowerCase();
+            if (s.includes("kivi")) return "Kivi";
+            if (s.includes("findik")) return "Fındık";
+            if (s.includes("turuncgil") || s.includes("mandalina") || s.includes("mandarin")) return "Turunçgil";
+            if (s.includes("elma")) return "Elma";
+            if (s.includes("misir")) return "Mısır";
+            if (s.includes("karalahana")) return "Karalahana";
+            if (s.includes("uzum")) return "Üzüm";
+            if (s.includes("incir")) return "İncir";
+            if (s.includes("dut")) return "Dut";
+            if (s.includes("kiraz")) return "Kiraz";
+            if (s.includes("kizilagac") || s.includes("kızılağaç")) return "Kızılağaç";
+            if (s.includes("hurma")) return "Hurma";
+            return plantStr.charAt(0).toUpperCase() + plantStr.slice(1);
+        }
+
+        function excelDateToStr(cellVal) {
+            if (!cellVal) return "";
+            if (!isNaN(cellVal) && parseFloat(cellVal) > 40000 && parseFloat(cellVal) < 50000) {
+                let excelDate = parseFloat(cellVal);
+                let dateObj = new Date((excelDate - 25569) * 86400 * 1000);
+                let day = String(dateObj.getDate()).padStart(2, '0');
+                let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                let year = dateObj.getFullYear();
+                return `${day}.${month}.${year}`;
+            }
+            return String(cellVal).trim();
+        }
+
+        function parseTurkishMonthDate(str) {
+            if (!str) return "";
+            let clean = String(str).trim();
+            let parts = clean.split(/\s+/);
+            if (parts.length === 3) {
+                let day = String(parseInt(parts[0])).padStart(2, '0');
+                let monthStr = parts[1].toLowerCase()
+                    .replace(/ı/g, 'i')
+                    .replace(/ğ/g, 'g')
+                    .replace(/ü/g, 'u')
+                    .replace(/ş/g, 's')
+                    .replace(/ö/g, 'o')
+                    .replace(/ç/g, 'c');
+                
+                let months = {
+                    "ocak": "01", "subat": "02", "mart": "03", "nisan": "04", "mayis": "05", "haziran": "06",
+                    "temmuz": "07", "agustos": "08", "eylul": "09", "ekim": "10", "kasim": "11", "aralik": "12"
+                };
+                let month = months[monthStr];
+                let year = parts[2];
+                if (month && year) return `${day}.${month}.${year}`;
+            }
+            return "";
+        }
+
+        function isDateCell(val) {
+            let s = String(val).trim();
+            return /^\d{2}\.\d{2}\.\d{4}$/.test(s) || 
+                   /^\d{1,2}\s+(Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Ocak|Şubat|Mart|Kasım|Aralık)\s+202\d$/i.test(s);
+        }
+
+        // PROCESS EXCEL FILE
+        function processExcelSheet(sheetName) {
+            var ws = workbook.Sheets[sheetName];
+            var rawArrays = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+            
+            // Find Header Row Index
+            var headerRowIndex = rawArrays.findIndex(row => {
+                let hasIlce = row.some(cell => {
+                    let n = normalizeString(cell);
+                    return n.includes("ilce") || n.includes("ilçe");
+                });
+                let hasLokasyon = row.some(cell => {
+                    let n = normalizeString(cell);
+                    return n.includes("lokasyon") || n.includes("koy") || n.includes("köy") || n.includes("mahalle");
+                });
+                return hasIlce && hasLokasyon;
+            });
+
+            if (headerRowIndex === -1) {
+                showLog("🚨 Başlık satırı bulunamadı! İLÇE ve LOKASYON sütunları tespit edilemedi.");
+                showStatus("Hatalı Excel formatı! Lütfen geçerli bir dosya yükleyin.", "danger");
+                return;
+            }
+
+            showLog(`🔍 Başlık satırı bulundu: Satır ${headerRowIndex + 1}`);
+            var row1 = rawArrays[headerRowIndex];
+            var row1HasDates = row1.some(isDateCell);
+            var headerRowIndex2 = headerRowIndex;
+            var consolidatedHeaders = [];
+
+            if (row1HasDates) {
+                for (var colIdx = 0; colIdx < row1.length; colIdx++) {
+                    var cell = String(row1[colIdx] || "").trim();
+                    if (isDateCell(cell)) {
+                        consolidatedHeaders.push(parseTurkishMonthDate(cell) || cell);
+                    } else if (cell) {
+                        consolidatedHeaders.push(cell);
+                    } else {
+                        consolidatedHeaders.push("Column_" + colIdx);
+                    }
+                }
+            } else {
+                headerRowIndex2 = headerRowIndex + 1;
+                var row2 = rawArrays[headerRowIndex2] || [];
+                var maxCols = Math.max(row1.length, row2.length);
+                
+                for (var colIdx = 0; colIdx < maxCols; colIdx++) {
+                    var cell1 = String(row1[colIdx] || "").trim();
+                    var cell2 = String(row2[colIdx] || "").trim();
+                    var parsedDate = "";
+                    if (cell2) {
+                        if (isDateCell(cell2)) {
+                            parsedDate = parseTurkishMonthDate(cell2) || cell2;
+                        } else if (!isNaN(cell2) && parseFloat(cell2) > 40000 && parseFloat(cell2) < 50000) {
+                            parsedDate = excelDateToStr(cell2);
+                        }
+                    }
+                    
+                    if (parsedDate) {
+                        consolidatedHeaders.push(parsedDate);
+                    } else if (cell1) {
+                        consolidatedHeaders.push(cell1);
+                    } else {
+                        consolidatedHeaders.push("Column_" + colIdx);
+                    }
+                }
+            }
+
+            dateColumns = consolidatedHeaders.filter(k => /^\d{2}\.\d{2}\.\d{4}$/.test(k.trim()));
+            showLog(`📅 Bulunan Tarih Sütunları: ${JSON.stringify(dateColumns)}`);
+
+            var rows = XLSX.utils.sheet_to_json(ws, {
+                header: consolidatedHeaders,
+                range: headerRowIndex2 + 1,
+                defval: ""
+            });
+
+            loadedExcelData = [];
+            matchedResults = [];
+
+            let currentIl = "";
+            let currentIlce = "";
+
+            rows.forEach((row, index) => {
+                let ilVal = getRowValue(row, ["il", "sehir"]);
+                let ilceVal = getRowValue(row, ["ilce", "ilçe"]);
+                let koyExcel = getRowValue(row, ["lokasyon", "koy", "mahalle", "köy", "mahal"]);
+                let gpsRaw = getRowValue(row, ["gps", "koordinat", "enlem", "boylam"]);
+                let hostPlant = getRowValue(row, ["konukcu", "konukçu", "bitki", "konakci"]);
+
+                if (ilVal) currentIl = String(ilVal).trim();
+                if (ilceVal) currentIlce = String(ilceVal).trim();
+
+                let normKoy = koyExcel ? String(koyExcel).trim() : "";
+                let normGps = gpsRaw ? String(gpsRaw).trim() : "";
+
+                if (!normKoy || !normGps) return; // skip rows without village or coordinates
+
+                let matchedKoy = findMatchingKoy(currentIlce, normKoy);
+                let formattedPlant = formatHostPlant(hostPlant);
+
+                // MATCH WITH DATABASE TRAP
+                let matchedTrap = dbTraps.find(t => {
+                    let normDbIlce = normalizeString(t.ilce);
+                    let normExcelIlce = normalizeString(currentIlce);
+                    if (normDbIlce !== normExcelIlce) return false;
+
+                    let normDbKoy = normalizeString(t.koy || t.ad);
+                    let normExcelKoy = normalizeString(matchedKoy || normKoy);
+                    if (normDbKoy !== normExcelKoy) return false;
+
+                    // Also match host plant if multiple traps in same village
+                    if (formattedPlant !== "Belirtilmedi") {
+                        let normDbPlant = normalizeString(t.tuzakBitkiTuru);
+                        let normExcelPlant = normalizeString(formattedPlant);
+                        return normDbPlant === normExcelPlant;
+                    }
+                    return true;
+                });
+
+                // Fallback match: if specific plant match fails, match first trap in that village
+                if (!matchedTrap && matchedKoy) {
+                    matchedTrap = dbTraps.find(t => {
+                        return normalizeString(t.ilce) === normalizeString(currentIlce) &&
+                               normalizeString(t.koy || t.ad) === normalizeString(matchedKoy);
+                    });
+                }
+
+                // Process visits from Excel date columns
+                let visits = [];
+                dateColumns.forEach(dateCol => {
+                    let val = String(row[dateCol] || "").trim();
+                    if (val === "") return;
+                    
+                    let bugCount = 0;
+                    let note = "";
+                    if (!isNaN(val) && val !== "") {
+                        bugCount = parseInt(val) || 0;
+                        note = "Sayı sayımı yapıldı.";
+                    } else if (val.toLowerCase().includes("tuzak") && val.toLowerCase().includes("asildi")) {
+                        bugCount = 0;
+                        note = "Tuzaklar Asıldı";
+                    } else if (val.includes("-")) {
+                        bugCount = 0;
+                        note = "Kontrol yapıldı.";
+                    } else {
+                        bugCount = 0;
+                        note = val;
+                    }
+
+                    visits.push({
+                        tarih: dateCol,
+                        bocekSayisi: bugCount,
+                        nimfSayisi: 0,
+                        gozlemNotu: note,
+                        kaydeden: "Sürvey Excel Eşitleme",
+                        kaydedenTel: "",
+                        kaydedenUnvan: "Yönetici",
+                        kayitTarihiStr: dateCol
+                    });
+                });
+
+                let matchStatus = matchedTrap ? "success" : "warning";
+                let matchedCoords = matchedTrap ? `${matchedTrap.lat}, ${matchedTrap.lng}` : "Bulunamadı";
+
+                matchedResults.push({
+                    rowIndex: headerRowIndex2 + 1 + index + 1, // Excel row is 1-indexed
+                    ilce: currentIlce,
+                    koyExcel: normKoy,
+                    matchedKoy: matchedKoy || normKoy,
+                    plant: formattedPlant,
+                    gpsExcel: normGps,
+                    gpsDb: matchedCoords,
+                    visits: visits,
+                    matchedTrap: matchedTrap,
+                    status: matchStatus
+                });
+            });
+
+            showLog(`📊 Eşleştirme Bitti: Toplam ${matchedResults.length} satır analiz edildi.`);
+            
+            // Render Table
+            renderPreviewTable();
+
+            // Enable Buttons
+            document.getElementById("correctExcelBtn").disabled = false;
+            document.getElementById("syncDbBtn").disabled = false;
+            
+            showStatus(`Excel dosyası başarıyla yüklendi. Toplam ${matchedResults.length} satırdan veritabanı ile eşleşenler listelendi.`, "success");
+        }
+
+        // RENDER PREVIEW TABLE
+        function renderPreviewTable() {
+            var tbody = document.getElementById("previewBody");
+            tbody.innerHTML = "";
+            document.getElementById("matchCount").innerText = matchedResults.length;
+
+            matchedResults.forEach((res, idx) => {
+                var tr = document.createElement("tr");
+                var badgeClass = res.status === "success" ? "badge-success" : "badge-warning";
+                var badgeText = res.status === "success" ? "Eşleşti" : "Tuzak Bulunamadı";
+
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${res.ilce}</td>
+                    <td>${res.koyExcel}</td>
+                    <td>${res.matchedKoy}</td>
+                    <td>${res.plant}</td>
+                    <td style="color:#b91c1c; font-family:monospace;">${res.gpsExcel.substring(0, 22)}...</td>
+                    <td style="color:#15803d; font-family:monospace; font-weight:700;">${res.gpsDb}</td>
+                    <td style="text-align:center; font-weight:700;">${res.visits.length}</td>
+                    <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("previewCard").style.display = "block";
+        }
+
+        // LOGGING HELPERS
+        function showLog(msg) {
+            var log = document.getElementById("logBox");
+            log.style.display = "block";
+            log.innerHTML += msg + "\n";
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showStatus(text, type = "") {
+            var el = document.getElementById("statusTxt");
+            el.innerText = text;
+            el.className = "status-text";
+            if (type === "success") el.style.color = "#16a34a";
+            else if (type === "danger") el.style.color = "#dc2626";
+            else if (type === "blue") el.style.color = "#2563eb";
+            else el.style.color = "";
+        }
+
+        // OPTION 1: CORRECT EXCEL GPS VALUES
+        document.getElementById("correctExcelBtn").addEventListener("click", function() {
+            if (!workbook || matchedResults.length === 0) return;
+
+            showStatus("Koordinatlar Excel dosyasına yazılıyor...", "blue");
+            showLog("⚙️ Excel koordinat düzeltme işlemi başladı...");
+
+            var sheetName = workbook.SheetNames.find(n => n.includes("2026")) || workbook.SheetNames[0];
+            var ws = workbook.Sheets[sheetName];
+
+            // In SheetJS, ws contains cells like A1, B1 etc.
+            // We need to locate the GPS column in the sheet.
+            // Let's scan headers to find the column key/index for GPS
+            var range = XLSX.utils.decode_range(ws['!ref']);
+            var gpsColIndex = -1;
+
+            // We look at the header row to find the key containing "gps" or "koordinat" or "enlem"
+            // Let's scan row cells in ws
+            for (let c = range.s.c; c <= range.e.c; c++) {
+                let cellRef = XLSX.utils.encode_cell({ r: 25, c: c }); // scan common header areas (row 25-27)
+                // Let's scan all rows from row 0 to 30 to find where "GPS" string is located
+                for (let r = 0; r <= 30; r++) {
+                    let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                    if (ws[ref] && normalizeString(ws[ref].v).includes("gps") || normalizeString(ws[ref].v).includes("koordinat")) {
+                        gpsColIndex = c;
+                        break;
+                    }
+                }
+                if (gpsColIndex !== -1) break;
+            }
+
+            if (gpsColIndex === -1) {
+                // If not found by scan, let's look at the consolidated headers mapping
+                showLog("🚨 Uyarı: GPS Sütun indeksi hücre taramasında bulunamadı. Lütfen kontrol ediniz.");
+                showStatus("Excel'de 'GPS' sütunu bulunamadı!", "danger");
+                return;
+            }
+
+            showLog(`📍 Bulunan GPS Sütun İndeksi: Kolon ${XLSX.utils.encode_col(gpsColIndex)}`);
+
+            var correctedCount = 0;
+
+            // Update cells
+            matchedResults.forEach(res => {
+                if (res.status === "success" && res.matchedTrap) {
+                    var cellRef = XLSX.utils.encode_cell({ r: res.rowIndex - 1, c: gpsColIndex });
+                    var correctVal = `${res.matchedTrap.lat}, ${res.matchedTrap.lng}`;
+                    ws[cellRef] = { t: 's', v: correctVal };
+                    correctedCount++;
+                }
+            });
+
+            showLog(`✅ Excel dosyasında toplam ${correctedCount} satırın koordinatları düzeltildi.`);
+            
+            // Download file
+            showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
+            XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_DUZELTILMIS.xlsx");
+            showStatus("🎉 Koordinatları Düzeltilmiş Excel Dosyası İndirildi!", "success");
+            showLog("💾 Düzeltilmiş dosya başarıyla indirildi.");
+        });
+
+        // OPTION 2: SYNC EXCEL VISITS TO FIRESTORE
+        document.getElementById("syncDbBtn").addEventListener("click", async function() {
+            if (matchedResults.length === 0) return;
+
+            var confirmSync = confirm("Excel sayım verilerini veritabanındaki tuzakların ziyaret geçmişine (visits) kaydetmek istediğinize emin misiniz? Bu işlem mevcut verileri güncelleyecektir.");
+            if (!confirmSync) return;
+
+            document.getElementById("syncDbBtn").disabled = true;
+            document.getElementById("correctExcelBtn").disabled = true;
+            document.getElementById("progressBarContainer").style.display = "block";
+            
+            var progressBar = document.getElementById("progressBar");
+            
+            var total = matchedResults.length;
+            var processed = 0;
+            var successCount = 0;
+
+            showLog("🚀 Sayım senkronizasyonu başladı...");
+
+            for (let i = 0; i < total; i++) {
+                var res = matchedResults[i];
+                if (res.status !== "success" || !res.matchedTrap) {
+                    processed++;
+                    continue;
+                }
+
+                try {
+                    var docId = res.matchedTrap.id;
+                    var docRef = db.collection("tuzaklar").doc(docId);
+                    
+                    // Fetch fresh document to avoid race conditions
+                    var docSnap = await docRef.get();
+                    if (docSnap.exists) {
+                        var trapData = docSnap.data();
+                        var currentVisits = trapData.kayitlar || [];
+
+                        // Add Excel visits without duplicates
+                        res.visits.forEach(newVisit => {
+                            // Match by date
+                            var existingIdx = currentVisits.findIndex(v => v.tarih.trim() === newVisit.tarih.trim());
+                            if (existingIdx !== -1) {
+                                // Overwrite count and note if exists
+                                currentVisits[existingIdx].bocekSayisi = newVisit.bocekSayisi;
+                                currentVisits[existingIdx].gozlemNotu = newVisit.gozlemNotu;
+                                currentVisits[existingIdx].sonGuncellemeTarihi = newVisit.tarih;
+                            } else {
+                                // Add as new visit
+                                currentVisits.push(newVisit);
+                            }
+                        });
+
+                        // Sort chronologically
+                        currentVisits.sort((a, b) => {
+                            let pA = a.tarih.split('.');
+                            let pB = b.tarih.split('.');
+                            return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
+                        });
+
+                        let latestVisit = currentVisits[currentVisits.length - 1];
+
+                        // Sanitize currentVisits to avoid Firestore undefined value error
+                        var sanitizedVisits = currentVisits.map(v => {
+                            return {
+                                tarih: v.tarih || "",
+                                bocekSayisi: v.bocekSayisi !== undefined ? v.bocekSayisi : 0,
+                                nimfSayisi: v.nimfSayisi !== undefined ? v.nimfSayisi : 0,
+                                gozlemNotu: v.gozlemNotu || "",
+                                kaydeden: v.kaydeden || "Sürvey Excel Eşitleme",
+                                kaydedenTel: v.kaydedenTel || "",
+                                kaydedenUnvan: v.kaydedenUnvan || "Yönetici",
+                                kayitTarihiStr: v.kayitTarihiStr || v.tarih || ""
+                            };
+                        });
+
+                        // Update Firestore
+                        await docRef.update({
+                            kayitlar: sanitizedVisits,
+                            bocekSayisi: latestVisit.bocekSayisi !== undefined ? latestVisit.bocekSayisi : 0,
+                            tarih: latestVisit.tarih || "",
+                            sonGuncellemeTarihi: latestVisit.tarih || "",
+                            sonGuncelleyen: "Sürvey Excel Eşitleme",
+                            sonGozlemNotu: latestVisit.gozlemNotu || ""
+                        });
+
+                        successCount++;
+                    }
+                } catch (err) {
+                    showLog(`🚨 HATA (Tuzak ${res.matchedTrap.tuzakNo || docId} Güncellenemedi): ${err.message}`);
+                }
+
+                processed++;
+                var pct = Math.round((processed / total) * 100);
+                progressBar.style.width = pct + "%";
+                showStatus(`Eşitleniyor: %${pct} (${processed}/${total} satır işlendi)...`, "blue");
+            }
+
+            showLog(`🎉 Veritabanı senkronizasyonu tamamlandı. ${successCount} adet tuzak veritabanında güncellendi!`);
+            showStatus(`🎉 Başarılı! ${successCount} adet tuzağın sayım verileri veritabanında ziyaret kaydı olarak güncellendi.`, "success");
+            
+            document.getElementById("syncDbBtn").disabled = false;
+            document.getElementById("correctExcelBtn").disabled = false;
+            
+            // Reload DB traps in background
+            fetchDbTraps();
+        });
+
+        // OPTION 3: DIRECT EXPORT FROM DATABASE
+        document.getElementById("directExportBtn").addEventListener("click", async function() {
+            var exportStatus = document.getElementById("exportStatusTxt");
+            exportStatus.innerHTML = '<span style="color:#2563eb;">Veriler sorgulanıyor, Excel şablonu oluşturuluyor...</span>';
+            document.getElementById("directExportBtn").disabled = true;
+
+            try {
+                // Fetch fresh traps
+                var snapshot = await db.collection("tuzaklar").get();
+                var traps = [];
+                snapshot.forEach(doc => {
+                    var data = doc.data();
+                    // Keep 2026 survey traps. Sürvey has Rize geographic region, excludes Merkez and Güneysu
+                    if (data.il === "Rize" && data.ilce !== "Merkez" && data.ilce !== "Güneysu") {
+                        // Sürvey tuzakNos generally have SURVEY or are parsed as survey
+                        if (data.tuzakNo && (data.tuzakNo.includes("SURVEY") || data.tuzakNo.startsWith("2026-"))) {
+                            traps.push(data);
+                        } else if (data.kayitlar && data.kayitlar.some(v => v.tarih.includes("2026"))) {
+                            traps.push(data);
+                        }
+                    }
+                });
+
+                if (traps.length === 0) {
+                    exportStatus.innerHTML = '<span style="color:#dc2626;">HATA: Veritabanında 2026 sürvey kaydı bulunamadı!</span>';
+                    document.getElementById("directExportBtn").disabled = false;
+                    return;
+                }
+
+                // Compile and sort dates
+                var dateSet = new Set();
+                traps.forEach(t => {
+                    if (t.kayitlar) {
+                        t.kayitlar.forEach(v => {
+                            if (v.tarih && /^\d{2}\.\d{2}\.\d{4}$/.test(v.tarih)) {
+                                dateSet.add(v.tarih.trim());
+                            }
+                        });
+                    }
+                });
+
+                var sortedDates = Array.from(dateSet).sort((a, b) => {
+                    let pA = a.split('.');
+                    let pB = b.split('.');
+                    return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
+                });
+
+                // Excel AOA structure
+                var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "KONUKÇU", ...sortedDates];
+                var rows = [headers];
+
+                // Populate trap rows
+                traps.forEach(t => {
+                    var gpsStr = `${t.lat}, ${t.lng}`;
+                    var row = ["Rize", t.ilce, t.koy || t.ad, gpsStr, t.tuzakBitkiTuru || "Fındık"];
+                    
+                    sortedDates.forEach(date => {
+                        var v = t.kayitlar ? t.kayitlar.find(visit => visit.tarih.trim() === date) : null;
+                        if (v) {
+                            // If first visit note is tuzak asıldı, write it, otherwise write bugCount
+                            if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
+                                row.push("Tuzaklar Asıldı");
+                            } else {
+                                row.push(v.bocekSayisi);
+                            }
+                        } else {
+                            row.push(""); // empty
+                        }
+                    });
+                    rows.push(row);
+                });
+
+                var ws = XLSX.utils.aoa_to_sheet(rows);
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "2026 Sürvey Verileri");
+
+                XLSX.writeFile(wb, "2026_SURVEY_VERITABANI_KAYITLARI.xlsx");
+                
+                exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Başarılı! Toplam ${traps.length} adet tuzağın sayımları güncel Excel olarak indirildi.</span>`;
+            } catch (err) {
+                exportStatus.innerHTML = `<span style="color:#dc2626;">İndirme hatası: ${err.message}</span>`;
+            }
+
+            document.getElementById("directExportBtn").disabled = false;
+        });
+    </script>
+</body>
+</html>
