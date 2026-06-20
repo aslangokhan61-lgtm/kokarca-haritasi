@@ -11394,6 +11394,12 @@
                     toggleMenu();
                     window.open('toplu_survey_yukle.html', '_blank');
                 }));
+                if (isSpecialUser) {
+                    yonetimGrubu.appendChild(menuOgesi('🔄', 'Sürvey Excel İşlemleri', '#ea580c', function () {
+                        toggleMenu();
+                        window.open('survey_guncelle_ve_indir.html', '_blank');
+                    }));
+                }
                 yonetimGrubu.appendChild(menuOgesi('📊', 'Toplu Tuzak Yükleme (Excel)', null, function () {
                     toggleMenu();
                     window.open('toplu_tuzak_yukle.html', '_blank');
