@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Toplu 2026 Sörvey Kayıt Yükleme Aracı</title>
+    <title>Toplu 2026 Sürvey Kayıt Yükleme Aracı</title>
     <!-- Firebase compatibility SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -100,13 +100,18 @@
 <body>
 
     <div class="card">
-        <h2>🟢 Toplu 2026 Sörvey Kayıt Yükleme Aracı</h2>
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; flex-wrap: wrap;">
+            <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #f1f5f9; color: #475569; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: all 0.2s; border: 1px solid #cbd5e1;">
+                ⬅️ Geri Dön (Ana Sayfa)
+            </a>
+            <h2 style="margin: 0; color: #15803d; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">🟢 Toplu 2026 Sürvey Kayıt Yükleme Aracı</h2>
+        </div>
         <div class="info-box">
             <strong>📌 İş Akışı ve Kurallar:</strong>
             <ul style="margin: 5px 0 0 20px; padding: 0;">
                 <li>Dosyadaki <strong>DMS Derece-Dakika-Saniye</strong> enlem boylam verileri otomatik olarak Leaflet uyumlu <strong>Ondalık Dereceye (DD)</strong> dönüştürülecektir.</li>
                 <li>İlçe ve Köy/Mahalle adları veritabanı yapısına uydurulacaktır (Örn: <em>SELAMET</em> -> <em>Selamet Mahallesi</em>). Eşleşmeyen köyler/mahalleler kırmızı uyarı ile gösterilecek ve atlanacaktır.</li>
-                <li><strong>Merkez</strong> ve <strong>Güneysu</strong> ilçeleri sörvey kapsamı dışında tutularak sisteme <strong>yüklenmeyecektir</strong>. Diğer tüm ilçelerdeki sörvey noktaları <strong>Yapışkan Tuzak</strong> olarak kaydedilecektir.</li>
+                <li><strong>Merkez</strong> ve <strong>Güneysu</strong> ilçeleri sürvey kapsamı dışında tutularak sisteme <strong>yüklenmeyecektir</strong>. Diğer tüm ilçelerdeki sürvey noktaları <strong>Yapışkan Tuzak</strong> olarak kaydedilecektir.</li>
                 <li>2026 yılı Nisan-Ekim dönemini kapsayan tüm tarih bazlı sayımlar ve gözlemler, tuzakların geçmiş <strong>Ziyaret Kayıtları (Visits)</strong> olarak yüklenecektir.</li>
             </ul>
         </div>
@@ -863,7 +868,7 @@
                 }
             }
             
-            statusDiv.innerHTML = `<span style="color: #16a34a; font-size: 15px;">🎉 Başarılı! ${successCount} adet 2026 yılı sörvey tuzağı ve tarih bazlı ziyaret kayıtları sisteme yüklendi. Kokarca Haritası'nı açıp kontrol edebilirsiniz.</span>`;
+            statusDiv.innerHTML = `<span style="color: #16a34a; font-size: 15px;">🎉 Başarılı! ${successCount} adet 2026 yılı sürvey tuzağı ve tarih bazlı ziyaret kayıtları sisteme yüklendi. Kokarca Haritası'nı açıp kontrol edebilirsiniz.</span>`;
             document.getElementById('uploadBtn').innerText = "Yükleme Tamamlandı";
         }
     </script>

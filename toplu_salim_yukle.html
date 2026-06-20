@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Toplu Parazitoit Salım Yükleme Aracı</title>
+    <!-- Firebase compatibility SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <!-- SheetJS for Excel Reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            padding: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        h2 { margin-top: 0; color: #dc2626; display: flex; align-items: center; gap: 8px; }
+        .btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: #b91c1c; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+        .progress-container {
+            margin-top: 15px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th { background: #f8fafc; font-weight: 700; }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label { font-weight: 600; min-width: 180px; }
+        select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1.5px solid #cbd5e1;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; flex-wrap: wrap;">
+            <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #f1f5f9; color: #475569; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: all 0.2s; border: 1px solid #cbd5e1;">
+                ⬅️ Geri Dön (Ana Sayfa)
+            </a>
+            <h2 style="margin: 0; color: #dc2626; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">🔴 Toplu Parazitoit Salım Yükleme Aracı (Yıl: <span id="baslikYil">2026</span>)</h2>
+        </div>
+        <p>Lütfen düzeltilmiş <strong>RİZE Parazitoit salım lokasyonları.xlsx</strong> dosyasını seçin. Dosya okunduktan sonra kolonlar otomatik olarak eşleştirilecektir. Eşleşme hatası olursa aşağıdan sütunları elle seçebilirsiniz.</p>
+        
+        <div class="form-group" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+            <label style="font-weight: 600; min-width: 120px;">Salım Yılı:</label>
+            <select id="salimYilSelect" onchange="yilDegisti()" style="padding: 6px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: white; font-weight: 600;">
+                <option value="2026" selected>2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+            </select>
+        </div>
+        
+        <input type="file" id="excelFile" accept=".xlsx, .xls" style="font-size: 14px; margin: 15px 0; display: block;">
+        
+        <div id="status" style="font-weight: bold; margin-bottom: 15px; color: #475569;"></div>
+        
+        <!-- Sheet and Column Mapping Controls -->
+        <div id="mappingControls" style="display: none; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; margin-bottom: 20px;">
+            <h4 style="margin-top:0;">⚙️ Sütun ve Sayfa Eşleştirme</h4>
+            <div class="form-group">
+                <label>Aktif Sayfa (Sheet):</label>
+                <select id="sheetSelect" onchange="sheetChanged()"></select>
+            </div>
+            <div class="form-group">
+                <label>İlçe Sütunu:</label>
+                <select id="colIlce" onchange="remapColumns()"></select>
+            </div>
+            <div class="form-group">
+                <label>Köy/Mahalle Sütunu:</label>
+                <select id="colKoy" onchange="remapColumns()"></select>
+            </div>
+            <div class="form-group">
+                <label>Salım Tarihi Sütunu:</label>
+                <select id="colTarih" onchange="remapColumns()"></select>
+            </div>
+            <div class="form-group">
+                <label>Salınan Tüp Adeti Sütunu:</label>
+                <select id="colTup" onchange="remapColumns()"></select>
+            </div>
+            <div class="form-group">
+                <label>Enlem (X / Lat) Sütunu:</label>
+                <select id="colX" onchange="remapColumns()"></select>
+            </div>
+            <div class="form-group">
+                <label>Boylam (Y / Lng) Sütunu:</label>
+                <select id="colY" onchange="remapColumns()"></select>
+            </div>
+        </div>
+
+        <button id="uploadBtn" class="btn" disabled onclick="veritabanaYukle()">
+            🚀 Veritabanına Yükle (0 Kayıt)
+        </button>
+
+        <div class="progress-container" id="progressBox">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="card" id="previewCard" style="display: none;">
+        <h3>📋 Yüklenecek Kayıtlar Önizleme (Toplam: <span id="recCount">0</span>)</h3>
+        <div style="overflow-x: auto; max-height: 450px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>İlçe</th>
+                        <th>Köy/Mahalle</th>
+                        <th>Salım Tarihi (<span id="tabloBaslikYil">2026</span>)</th>
+                        <th>Tüp Adeti</th>
+                        <th>Enlem (X)</th>
+                        <th>Boylam (Y)</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody id="previewBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
+            authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
+            projectId: "kokarca-tuzak-takip-sist-99696",
+            storageBucket: "kokarca-tuzak-takip-sist-99696.firebasestorage.app",
+            messagingSenderId: "125586984500",
+            appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461",
+            measurementId: "G-WXJQ4DJLJX"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        var workbook = null;
+        var activeRows = [];
+        var parsedRecords = [];
+
+        function yilDegisti() {
+            var yil = document.getElementById('salimYilSelect').value;
+            // Başlıkları güncelle
+            var baslikEl = document.getElementById('baslikYil');
+            var tabloEl = document.getElementById('tabloBaslikYil');
+            if (baslikEl) baslikEl.innerText = yil;
+            if (tabloEl) tabloEl.innerText = yil;
+            // Dosya yüklüyse verileri yeniden çözümle
+            if (activeRows.length > 0) {
+                remapColumns();
+            }
+        }
+
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('status').innerText = "Dosya okunuyor...";
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // Fill sheet select
+                    var sheetSelect = document.getElementById('sheetSelect');
+                    sheetSelect.innerHTML = '';
+                    workbook.SheetNames.forEach(function(name) {
+                        var opt = document.createElement('option');
+                        opt.value = name;
+                        opt.innerText = name;
+                        sheetSelect.appendChild(opt);
+                    });
+                    
+                    // Set default sheet
+                    var defaultSheet = workbook.SheetNames.includes("Samuray") ? "Samuray" : workbook.SheetNames[0];
+                    sheetSelect.value = defaultSheet;
+                    
+                    document.getElementById('mappingControls').style.display = 'block';
+                    sheetChanged();
+                    
+                } catch(err) {
+                    document.getElementById('status').innerText = "Excel okuma hatası: " + err.message;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function sheetChanged() {
+            if (!workbook) return;
+            var sheetName = document.getElementById('sheetSelect').value;
+            var worksheet = workbook.Sheets[sheetName];
+            
+            // Read rows
+            activeRows = XLSX.utils.sheet_to_json(worksheet);
+            if (activeRows.length === 0) {
+                document.getElementById('status').innerText = "Hata: Seçilen sayfada kayıt bulunamadı.";
+                return;
+            }
+            
+            // Get columns
+            var colKeys = Object.keys(activeRows[0]);
+            
+            // Fill column selectors
+            var selectors = ['colIlce', 'colKoy', 'colTarih', 'colTup', 'colX', 'colY'];
+            selectors.forEach(function(id) {
+                var select = document.getElementById(id);
+                select.innerHTML = '<option value="">-- Sütun Seçin --</option>';
+                colKeys.forEach(function(key) {
+                    var opt = document.createElement('option');
+                    opt.value = key;
+                    opt.innerText = key;
+                    select.appendChild(opt);
+                });
+            });
+            
+            // Auto match columns
+            autoMatchColumns(colKeys);
+            remapColumns();
+        }
+
+        function normalizeHeader(str) {
+            if (!str) return "";
+            return str.toString()
+                .toLowerCase()
+                .replace(/ı/g, 'i')
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .trim();
+        }
+
+        function autoMatchColumns(colKeys) {
+            colKeys.forEach(function(key) {
+                var norm = normalizeHeader(key);
+                
+                if (norm.includes('ilce')) {
+                    document.getElementById('colIlce').value = key;
+                } else if (norm.includes('koy') || norm.includes('mahalle')) {
+                    document.getElementById('colKoy').value = key;
+                } else if (norm.includes('tarih')) {
+                    document.getElementById('colTarih').value = key;
+                } else if (norm.includes('tup') || norm.includes('adet') || norm.includes('tüp')) {
+                    document.getElementById('colTup').value = key;
+                } else if (norm === 'x' || norm.includes('enlem') || norm.includes('lat')) {
+                    document.getElementById('colX').value = key;
+                } else if (norm === 'y' || norm.includes('boylam') || norm.includes('lng')) {
+                    document.getElementById('colY').value = key;
+                }
+            });
+        }
+
+        function remapColumns() {
+            if (activeRows.length === 0) return;
+            
+            var ilceCol = document.getElementById('colIlce').value;
+            var koyCol = document.getElementById('colKoy').value;
+            var tarihCol = document.getElementById('colTarih').value;
+            var tupCol = document.getElementById('colTup').value;
+            var xCol = document.getElementById('colX').value;
+            var yCol = document.getElementById('colY').value;
+            
+            if (!ilceCol || !koyCol || !xCol || !yCol) {
+                document.getElementById('status').innerHTML = '<span style="color:#ef4444;">Uyarı: Lütfen İlçe, Köy, Enlem (X) ve Boylam (Y) sütunlarını eşleştirin.</span>';
+                document.getElementById('uploadBtn').disabled = true;
+                document.getElementById('previewCard').style.display = 'none';
+                return;
+            }
+            
+            parsedRecords = [];
+            
+            activeRows.forEach(function(row) {
+                var ilceVal = String(row[ilceCol] || "").trim();
+                var koyVal = String(row[koyCol] || "").trim();
+                var rawTarih = row[tarihCol];
+                var rawTup = row[tupCol];
+                var rawX = row[xCol];
+                var rawY = row[yCol];
+                
+                if (!ilceVal || !koyVal) return;
+                
+                var lat = formatCoordinate(rawX);
+                var lng = formatCoordinate(rawY);
+                var tupSayisi = parseInt(rawTup) || 1;
+                
+                var seciliYil = document.getElementById("salimYilSelect").value;
+                var tarihYil = parseDateToSelectedYear(rawTarih, seciliYil);
+                
+                parsedRecords.push({
+                    il: "Rize",
+                    ilce: ilceVal,
+                    koy: koyVal,
+                    ad: koyVal,
+                    lat: lat,
+                    lng: lng,
+                    tupSayisi: tupSayisi,
+                    bocekSayisi: 0,
+                    ariYumurtaPaketSayisi: 0,
+                    ariParazitlenmeDurumu: "Bilinmiyor",
+                    tuzakNo: "",
+                    tuzakTipi: "Samuray Arısı Salımı",
+                    tarih: tarihYil,
+                    sonGuncellemeTarihi: tarihYil,
+                    sonGuncelleyen: "Sistem Entegrasyonu",
+                    sonGuncelleyenUnvan: "Mühendis",
+                    sonGuncelleyenTel: "",
+                    kayitlar: [{
+                        tarih: tarihYil,
+                        bocekSayisi: tupSayisi,
+                        gozlemNotu: "İlk salım lokasyonu yüklendi.",
+                        kaydeden: "Sistem Entegrasyonu",
+                        kaydedenTel: "",
+                        kaydedenUnvan: "Mühendis",
+                        kayitTarihiStr: tarihYil
+                    }]
+                });
+            });
+            
+            document.getElementById('status').innerHTML = '<span style="color:#22c55e;">Başarılı! ' + parsedRecords.length + ' kayıt çözümlendi.</span>';
+            document.getElementById('uploadBtn').innerText = "🚀 Veritabanına Yükle (" + parsedRecords.length + " Kayıt)";
+            document.getElementById('uploadBtn').disabled = false;
+            
+            // Render preview table
+            var tbody = document.getElementById('previewBody');
+            tbody.innerHTML = '';
+            parsedRecords.forEach(function(r, idx) {
+                var tr = document.createElement('tr');
+                // Rize: lat 40.8-41.7, lng 39.8-41.8 arasi
+                var isCoardValid = r.lat > 40.8 && r.lat < 41.7 && r.lng > 39.8 && r.lng < 41.8;
+                var coordBadge = isCoardValid ? 
+                    '<span class="badge badge-success">✅ Geçerli</span>' : 
+                    '<span class="badge badge-danger">❌ Hatalı Konum (' + r.lat + ',' + r.lng + ')</span>';
+
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${r.ilce}</td>
+                    <td>${r.koy}</td>
+                    <td>${r.tarih}</td>
+                    <td>${r.tupSayisi}</td>
+                    <td>${r.lat}</td>
+                    <td>${r.lng}</td>
+                    <td>${coordBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('recCount').innerText = parsedRecords.length;
+            document.getElementById('previewCard').style.display = 'block';
+        }
+
+        function formatCoordinate(val) {
+            if (!val) return 0;
+            let s = String(val).trim();
+            // Zaten ondalıklı mi? (nokta veya virgül içeriyor ve 35-50 arasında float değeri)
+            let asFloat = parseFloat(s.replace(',', '.'));
+            if (!isNaN(asFloat) && asFloat >= 35 && asFloat <= 50) {
+                return asFloat; // Zaten doğru formatta (41.2159 gibi)
+            }
+            // Eski format: basamak sayarak dönüştür (4121592 -> 41.21592)
+            let digits = s.replace(/[^0-9]/g, '');
+            if (digits.length < 2) return 0;
+            let formatted = digits.substring(0, 2) + '.' + digits.substring(2);
+            return parseFloat(formatted);
+        }
+
+        function parseDateToSelectedYear(val, targetYear) {
+            if (!val) return "24.06." + targetYear;
+            let s = String(val).trim();
+            
+            if (!isNaN(s) && parseFloat(s) > 30000) {
+                let excelDate = parseFloat(s);
+                let dateObj = new Date((excelDate - 25569) * 86400 * 1000);
+                let day = String(dateObj.getDate()).padStart(2, '0');
+                let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                return `${day}.${month}.${targetYear}`;
+            }
+
+            let parts = s.split(/[\/\-\.]/);
+            if (parts.length >= 2) {
+                let v0 = parseInt(parts[0].trim());
+                let v1 = parseInt(parts[1].trim());
+                let day = "";
+                let month = "";
+                
+                if (v0 > 12 && v0 <= 31 && v1 <= 12) {
+                    day = String(v0).padStart(2, '0');
+                    month = String(v1).padStart(2, '0');
+                } else if (v0 <= 12 && v1 > 12 && v1 <= 31) {
+                    day = String(v1).padStart(2, '0');
+                    month = String(v0).padStart(2, '0');
+                } else {
+                    day = String(v0).padStart(2, '0');
+                    month = String(v1).padStart(2, '0');
+                }
+                return `${day}.${month}.${targetYear}`;
+            }
+            return "24.06." + targetYear;
+        }
+
+        async function veritabanaYukle() {
+            if (parsedRecords.length === 0) return;
+
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('excelFile').disabled = true;
+            document.getElementById('progressBox').style.display = 'block';
+
+            var progressBar = document.getElementById('progressBar');
+            var statusDiv = document.getElementById('status');
+
+            // ── ADIM 1: Mevcut Samuray salım kayıtlarını çek ──────────────
+            statusDiv.innerHTML = '🔍 Mevcut kayıtlar kontrol ediliyor, lütfen bekleyin...';
+            var mevcutAnahtarlar = new Set();
+            try {
+                var mevcutSnapshot = await db.collection('tuzaklar')
+                    .where('tuzakTipi', '==', 'Samuray Arısı Salımı')
+                    .get();
+                mevcutSnapshot.forEach(function(doc) {
+                    var d = doc.data();
+                    var key = ((d.ilce || '') + '|' + (d.koy || '') + '|' +
+                               (d.lat ? parseFloat(d.lat).toFixed(4) : '') + '|' +
+                               (d.lng ? parseFloat(d.lng).toFixed(4) : '')).toLowerCase().trim();
+                    mevcutAnahtarlar.add(key);
+                });
+            } catch(err) {
+                console.warn('Mevcut kayıt sorgusu başarısız:', err);
+            }
+
+            // ── ADIM 2: Yeni kayıtları filtrele ──────────────────────────
+            var yeniKayitlar = [];
+            var ciftSayisi = 0;
+            parsedRecords.forEach(function(r) {
+                var key = ((r.ilce || '') + '|' + (r.koy || '') + '|' +
+                           (r.lat ? parseFloat(r.lat).toFixed(4) : '') + '|' +
+                           (r.lng ? parseFloat(r.lng).toFixed(4) : '')).toLowerCase().trim();
+                if (mevcutAnahtarlar.has(key)) {
+                    ciftSayisi++;
+                } else {
+                    yeniKayitlar.push(r);
+                }
+            });
+
+            if (yeniKayitlar.length === 0) {
+                statusDiv.innerHTML = '<span style="color:#f59e0b;">⚠️ Tüm ' + ciftSayisi + ' kayıt zaten veritabanında mevcut! Çift kayıt yüklenmedi.</span>';
+                document.getElementById('progressBox').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('excelFile').disabled = false;
+                return;
+            }
+
+            statusDiv.innerHTML = '📤 ' + yeniKayitlar.length + ' yeni kayıt yüklenecek' +
+                                  (ciftSayisi > 0 ? ', <strong>' + ciftSayisi + '</strong> çift atlandı.' : '.');
+            await new Promise(function(res) { setTimeout(res, 700); });
+
+            // ── ADIM 3: Yeni kayıtları yükle ─────────────────────────────
+            var total = yeniKayitlar.length;
+            var successCount = 0;
+            var errorCount = 0;
+
+            for (var i = 0; i < total; i++) {
+                var record = yeniKayitlar[i];
+                try {
+                    await db.collection('tuzaklar').add(record);
+                    successCount++;
+                    var percentage = Math.round(((i + 1) / total) * 100);
+                    progressBar.style.width = percentage + '%';
+                    statusDiv.innerHTML = 'Yükleniyor: ' + successCount + '/' + total + ' kayıt aktarıldı...' +
+                        (ciftSayisi > 0 ? ' <span style="color:#94a3b8">(' + ciftSayisi + ' çift atlandı)</span>' : '');
+                } catch(err) {
+                    errorCount++;
+                    console.error('Yükleme hatası:', err);
+                }
+            }
+
+            var msg = '🎉 Tamamlandı! <strong>' + successCount + '</strong> yeni salım lokasyonu yüklendi.';
+            if (ciftSayisi > 0) msg += ' <span style="color:#94a3b8">' + ciftSayisi + ' çift kayıt atlandı.</span>';
+            if (errorCount > 0) msg += ' <span style="color:#ef4444">' + errorCount + ' hata oluştu.</span>';
+            statusDiv.innerHTML = '<span style="color:#22c55e;">' + msg + '</span>';
+            document.getElementById('uploadBtn').innerText = 'Yükleme Tamamlandı';
+        }
+    </script>
+</body>
+</html>

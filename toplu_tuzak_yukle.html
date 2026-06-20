@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Toplu Tuzak Lokasyonu Yükleme</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; padding: 30px; max-width: 1100px; margin: 0 auto; }
+        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 24px; }
+        h2 { margin-top: 0; color: #0369a1; display: flex; align-items: center; gap: 8px; }
+        .btn { background: #0369a1; color: white; border: none; padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { background: #0284c7; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+        .progress-container { margin-top: 15px; background: #e2e8f0; border-radius: 8px; overflow: hidden; display: none; }
+        .progress-bar { height: 20px; background: #0284c7; width: 0%; transition: width 0.1s; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; }
+        .badge-success { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+        .badge-danger { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+        .form-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        label { font-weight: 600; min-width: 160px; }
+        select, input[type=text] { padding: 8px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: white; font-size: 14px; }
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; }
+        .mapping-box { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; flex-wrap: wrap;">
+        <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: #f1f5f9; color: #475569; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: all 0.2s; border: 1px solid #cbd5e1;">
+            ⬅️ Geri Dön (Ana Sayfa)
+        </a>
+        <h2 style="margin: 0; color: #0369a1; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">🪤 Toplu Tuzak Lokasyonu Yükleme (Yıl: <span id="baslikYil">2025</span>)</h2>
+    </div>
+
+    <div class="info-box">
+        📌 Bu araç, <strong>Huni (Funnel) Tuzak</strong> veya <strong>Yapışkan Tuzak</strong> lokasyonlarını toplu olarak yükler.<br>
+        Tuzak asılma tarihi olarak seçilen yılın <strong>1 Nisan</strong> tarihi kullanılır.<br>
+        Salım verileri için <a href="toplu_salim_yukle.html" style="color:#0369a1;">toplu_salim_yukle.html</a> aracını kullanın.
+    </div>
+
+    <!-- Yıl Seçimi -->
+    <div class="form-row">
+        <label>📅 Tuzak Yılı:</label>
+        <select id="tuzakYilSelect" onchange="yilDegisti()" style="font-weight:700;">
+            <option value="2025" selected>2025</option>
+            <option value="2026">2026</option>
+            <option value="2024">2024</option>
+        </select>
+    </div>
+
+    <!-- Tuzak Tipi -->
+    <div class="form-row">
+        <label>🪤 Tuzak Tipi:</label>
+        <select id="tuzakTipiSelect" style="font-weight:600;">
+            <option value="Huni">🔺 Huni (Funnel) Tuzak</option>
+            <option value="Yapışkan">🟨 Yapışkan Tuzak</option>
+        </select>
+    </div>
+
+    <!-- Dosya Seçimi -->
+    <div class="form-row">
+        <label>📂 Excel Dosyası:</label>
+        <input type="file" id="excelFile" accept=".xlsx,.xls" style="font-size:14px;">
+    </div>
+
+    <div id="status" style="font-weight:bold; margin:10px 0; color:#475569;"></div>
+
+    <!-- Sütun Eşleştirme -->
+    <div class="mapping-box" id="mappingBox">
+        <h4 style="margin-top:0;">⚙️ Sütun Eşleştirme</h4>
+        <div class="form-row">
+            <label>Sayfa (Sheet):</label>
+            <select id="sheetSelect" onchange="sheetChanged()"></select>
+        </div>
+        <div class="form-row">
+            <label>İlçe Sütunu:</label>
+            <select id="colIlce" onchange="remapColumns()"></select>
+        </div>
+        <div class="form-row">
+            <label>Köy/Mahalle Sütunu:</label>
+            <select id="colKoy" onchange="remapColumns()"></select>
+        </div>
+        <div class="form-row">
+            <label>Enlem (X / Lat) Sütunu:</label>
+            <select id="colX" onchange="remapColumns()"></select>
+        </div>
+        <div class="form-row">
+            <label>Boylam (Y / Lng) Sütunu:</label>
+            <select id="colY" onchange="remapColumns()"></select>
+        </div>
+        <div class="form-row">
+            <label>Tuzak No Sütunu (isteğe bağlı):</label>
+            <select id="colNo" onchange="remapColumns()"></select>
+        </div>
+        <div class="form-row">
+            <label>Tarih (İlk Asılma) Sütunu (isteğe bağlı):</label>
+            <select id="colTarih" onchange="remapColumns()"></select>
+        </div>
+    </div>
+
+    <button id="uploadBtn" class="btn" disabled onclick="veritabanaYukle()">
+        🪤 Veritabanına Yükle (0 Tuzak)
+    </button>
+
+    <div class="progress-container" id="progressBox">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+</div>
+
+<!-- Önizleme -->
+<div class="card" id="previewCard" style="display:none;">
+    <h3>📋 Yüklenecek Tuzaklar Önizleme (<span id="recCount">0</span> adet)</h3>
+    <div style="overflow-x:auto; max-height:450px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sıra</th>
+                    <th>İlçe</th>
+                    <th>Köy/Mahalle</th>
+                    <th>Enlem</th>
+                    <th>Boylam</th>
+                    <th>Tuzak No</th>
+                    <th>İlk Asılma</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody id="previewBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBk53aTZ5cB2G_Fq64jRgkErEwmqOGNOBs",
+        authDomain: "kokarca-tuzak-takip-sist-99696.firebaseapp.com",
+        projectId: "kokarca-tuzak-takip-sist-99696",
+        storageBucket: "kokarca-tuzak-takip-sist-99696.firebasestorage.app",
+        messagingSenderId: "125586984500",
+        appId: "1:125586984500:web:dbcc8cb4cad8904a2a8461",
+        measurementId: "G-WXJQ4DJLJX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    var workbook = null;
+    var activeRows = [];
+    var parsedRecords = [];
+
+    function yilDegisti() {
+        var yil = document.getElementById('tuzakYilSelect').value;
+        document.getElementById('baslikYil').innerText = yil;
+        if (activeRows.length > 0) remapColumns();
+    }
+
+    // ── Excel Okuma ──────────────────────────────────────────────────────
+    document.getElementById('excelFile').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('status').innerText = 'Dosya okunuyor...';
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                workbook = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                var sheetSelect = document.getElementById('sheetSelect');
+                sheetSelect.innerHTML = '';
+                workbook.SheetNames.forEach(function(name) {
+                    var opt = document.createElement('option');
+                    opt.value = name; opt.innerText = name;
+                    sheetSelect.appendChild(opt);
+                });
+                document.getElementById('mappingBox').style.display = 'block';
+                sheetChanged();
+            } catch(err) {
+                document.getElementById('status').innerText = 'Excel okuma hatası: ' + err.message;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function sheetChanged() {
+        if (!workbook) return;
+        var sheetName = document.getElementById('sheetSelect').value;
+        activeRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        if (activeRows.length === 0) {
+            document.getElementById('status').innerText = 'Bu sayfada kayıt bulunamadı.';
+            return;
+        }
+        var colKeys = Object.keys(activeRows[0]);
+        var selectors = ['colIlce','colKoy','colX','colY','colNo','colTarih'];
+        selectors.forEach(function(id) {
+            var sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">-- Yok --</option>';
+            colKeys.forEach(function(key) {
+                var opt = document.createElement('option');
+                opt.value = key; opt.innerText = key;
+                sel.appendChild(opt);
+            });
+        });
+        autoMatchColumns(colKeys);
+        remapColumns();
+    }
+
+    function norm(s) {
+        if (!s) return '';
+        return s.toString().toLowerCase()
+            .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
+            .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c').trim();
+    }
+
+    function excelDateToStr(cellVal) {
+        if (!cellVal) return "";
+        let excelDate = parseFloat(cellVal);
+        let dateObj = new Date((excelDate - 25569) * 86400 * 1000);
+        let day = String(dateObj.getDate()).padStart(2, '0');
+        let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        let year = dateObj.getFullYear();
+        return day + '.' + month + '.' + year;
+    }
+
+    function formatExcelDateStr(cellVal, defaultYear) {
+        if (!cellVal) return "";
+        var clean = String(cellVal).trim();
+        var parts = clean.split(/[./-]/);
+        if (parts.length === 3) {
+            var d = parts[0].trim().padStart(2, '0');
+            var m = parts[1].trim().padStart(2, '0');
+            var y = parts[2].trim();
+            if (y.length === 2) y = '20' + y;
+            return d + '.' + m + '.' + y;
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+            var parts = clean.split('-');
+            return parts[2] + '.' + parts[1] + '.' + parts[0];
+        }
+        return clean;
+    }
+
+    function autoMatchColumns(colKeys) {
+        colKeys.forEach(function(key) {
+            var n = norm(key);
+            if (n.includes('ilce') || n.includes('ilçe')) document.getElementById('colIlce').value = key;
+            else if (n.includes('koy') || n.includes('mahalle') || n.includes('köy')) document.getElementById('colKoy').value = key;
+            else if (n === 'x' || n.includes('enlem') || n.includes('lat')) document.getElementById('colX').value = key;
+            else if (n === 'y' || n.includes('boylam') || n.includes('lng')) document.getElementById('colY').value = key;
+            else if (n.includes('no') || n.includes('numara') || n.includes('tuzak')) document.getElementById('colNo').value = key;
+            else if (n.includes('tarih') || n.includes('date') || n.includes('zaman')) document.getElementById('colTarih').value = key;
+        });
+    }
+
+    function parseCoord(val) {
+        if (!val) return 0;
+        var asFloat = parseFloat(String(val).trim().replace(',', '.'));
+        if (!isNaN(asFloat) && asFloat >= 35 && asFloat <= 50) return asFloat;
+        var digits = String(val).replace(/[^0-9]/g, '');
+        if (digits.length < 2) return 0;
+        return parseFloat(digits.substring(0, 2) + '.' + digits.substring(2));
+    }
+
+    function remapColumns() {
+        if (activeRows.length === 0) return;
+        var ilceCol  = document.getElementById('colIlce').value;
+        var koyCol   = document.getElementById('colKoy').value;
+        var xCol     = document.getElementById('colX').value;
+        var yCol     = document.getElementById('colY').value;
+        var noCol    = document.getElementById('colNo').value;
+        var tarihCol = document.getElementById('colTarih').value;
+
+        if (!ilceCol || !koyCol || !xCol || !yCol) {
+            document.getElementById('status').innerHTML = '<span style="color:#ef4444;">⚠️ Lütfen İlçe, Köy, Enlem (X) ve Boylam (Y) sütunlarını eşleştirin.</span>';
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('previewCard').style.display = 'none';
+            return;
+        }
+
+        var yil = document.getElementById('tuzakYilSelect').value;
+        var tuzakTipi = document.getElementById('tuzakTipiSelect').value;
+
+        parsedRecords = [];
+        activeRows.forEach(function(row, idx) {
+            var ilce = String(row[ilceCol] || '').trim();
+            var koy  = String(row[koyCol]  || '').trim();
+            var lat  = parseCoord(row[xCol]);
+            var lng  = parseCoord(row[yCol]);
+            var no   = noCol ? String(row[noCol] || '').trim() : '';
+            if (!ilce || !koy) return;
+            if (!no) no = yil + '-' + tuzakTipi.substring(0,1).toUpperCase() + '-' + (parsedRecords.length + 1);
+
+            var ilkAsiliTarih = '01.04.' + yil; // varsayılan
+            if (tarihCol && row[tarihCol]) {
+                var cellVal = String(row[tarihCol]).trim();
+                if (!isNaN(cellVal) && parseFloat(cellVal) > 40000 && parseFloat(cellVal) < 50000) {
+                    ilkAsiliTarih = excelDateToStr(parseFloat(cellVal));
+                } else if (cellVal) {
+                    ilkAsiliTarih = formatExcelDateStr(cellVal, yil);
+                }
+            }
+
+            parsedRecords.push({
+                il: 'Rize',
+                ilce: ilce,
+                koy: koy,
+                ad: koy,
+                lat: lat,
+                lng: lng,
+                tuzakNo: no,
+                tuzakTipi: tuzakTipi,
+                tuzakİlkAsiliTarih: ilkAsiliTarih,
+                tarih: ilkAsiliTarih,
+                sonGuncellemeTarihi: ilkAsiliTarih,
+                sonGuncelleyen: 'Sistem Entegrasyonu',
+                sonGuncelleyenUnvan: 'Mühendis',
+                sonGuncelleyenTel: '',
+                bocekSayisi: 0,
+                nimfSayisi: 0,
+                tupSayisi: 0,
+                ariYumurtaPaketSayisi: 0,
+                ariParazitlenmeDurumu: 'Bilinmiyor',
+                kayitlar: []
+            });
+        });
+
+        document.getElementById('status').innerHTML = '<span style="color:#22c55e;">✅ ' + parsedRecords.length + ' tuzak lokasyonu çözümlendi.</span>';
+        document.getElementById('uploadBtn').innerText = '🪤 Veritabanına Yükle (' + parsedRecords.length + ' Tuzak)';
+        document.getElementById('uploadBtn').disabled = false;
+
+        // Önizleme tablosu
+        var tbody = document.getElementById('previewBody');
+        tbody.innerHTML = '';
+        parsedRecords.forEach(function(r, idx) {
+            var valid = r.lat > 40.8 && r.lat < 41.7 && r.lng > 39.8 && r.lng < 41.8;
+            var badge = valid
+                ? '<span class="badge-success">✅ Geçerli</span>'
+                : '<span class="badge-danger">❌ Hatalı (' + r.lat + ',' + r.lng + ')</span>';
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (idx+1) + '</td><td>' + r.ilce + '</td><td>' + r.koy +
+                '</td><td>' + r.lat + '</td><td>' + r.lng + '</td><td>' + r.tuzakNo +
+                '</td><td>' + r.tuzakİlkAsiliTarih + '</td><td>' + badge + '</td>';
+            tbody.appendChild(tr);
+        });
+        document.getElementById('recCount').innerText = parsedRecords.length;
+        document.getElementById('previewCard').style.display = 'block';
+    }
+
+    // ── Yükleme (Çift Kontrol Dahil) ─────────────────────────────────────
+    async function veritabanaYukle() {
+        if (parsedRecords.length === 0) return;
+        document.getElementById('uploadBtn').disabled = true;
+        document.getElementById('excelFile').disabled = true;
+        document.getElementById('progressBox').style.display = 'block';
+
+        var progressBar = document.getElementById('progressBar');
+        var statusDiv = document.getElementById('status');
+        var yil = document.getElementById('tuzakYilSelect').value;
+        var tuzakTipi = document.getElementById('tuzakTipiSelect').value;
+
+        // Adım 1: Mevcut tuzakları çek (aynı yıl ve tip)
+        statusDiv.innerHTML = '🔍 Mevcut tuzak kayıtları kontrol ediliyor...';
+        var mevcutAnahtarlar = new Set();
+        try {
+            var snap = await db.collection('tuzaklar')
+                .where('tuzakTipi', '==', tuzakTipi)
+                .get();
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                // Anahtar: ilçe + köy + enlem(4) + boylam(4)
+                var key = ((d.ilce||'') + '|' + (d.koy||'') + '|' +
+                    (d.lat ? parseFloat(d.lat).toFixed(4) : '') + '|' +
+                    (d.lng ? parseFloat(d.lng).toFixed(4) : '')).toLowerCase().trim();
+                mevcutAnahtarlar.add(key);
+            });
+        } catch(err) {
+            console.warn('Çift kontrol sorgusu başarısız:', err);
+        }
+
+        // Adım 2: Filtrele
+        var yeniKayitlar = [];
+        var ciftSayisi = 0;
+        parsedRecords.forEach(function(r) {
+            var key = ((r.ilce||'') + '|' + (r.koy||'') + '|' +
+                (r.lat ? parseFloat(r.lat).toFixed(4) : '') + '|' +
+                (r.lng ? parseFloat(r.lng).toFixed(4) : '')).toLowerCase().trim();
+            if (mevcutAnahtarlar.has(key)) { ciftSayisi++; }
+            else { yeniKayitlar.push(r); }
+        });
+
+        if (yeniKayitlar.length === 0) {
+            statusDiv.innerHTML = '<span style="color:#f59e0b;">⚠️ Tüm ' + ciftSayisi + ' tuzak zaten veritabanında! Hiçbir şey yüklenmedi.</span>';
+            document.getElementById('progressBox').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('excelFile').disabled = false;
+            return;
+        }
+
+        statusDiv.innerHTML = '📤 ' + yeniKayitlar.length + ' yeni tuzak yüklenecek' +
+            (ciftSayisi > 0 ? ', ' + ciftSayisi + ' çift atlandı.' : '.');
+        await new Promise(function(res) { setTimeout(res, 600); });
+
+        // Adım 3: Yükle
+        var total = yeniKayitlar.length;
+        var successCount = 0;
+        var errorCount = 0;
+        for (var i = 0; i < total; i++) {
+            try {
+                await db.collection('tuzaklar').add(yeniKayitlar[i]);
+                successCount++;
+                progressBar.style.width = Math.round(((i+1)/total)*100) + '%';
+                statusDiv.innerHTML = 'Yükleniyor: ' + successCount + '/' + total + ' tuzak aktarıldı...' +
+                    (ciftSayisi > 0 ? ' <span style="color:#94a3b8">(' + ciftSayisi + ' çift atlandı)</span>' : '');
+            } catch(err) {
+                errorCount++;
+                console.error('Hata:', err);
+            }
+        }
+
+        var msg = '🎉 Tamamlandı! <strong>' + successCount + '</strong> tuzak lokasyonu yüklendi.';
+        if (ciftSayisi > 0) msg += ' <span style="color:#94a3b8">' + ciftSayisi + ' çift atlandı.</span>';
+        if (errorCount > 0) msg += ' <span style="color:#ef4444">' + errorCount + ' hata oluştu.</span>';
+        statusDiv.innerHTML = '<span style="color:#22c55e;">' + msg + '</span>';
+        document.getElementById('uploadBtn').innerText = 'Yükleme Tamamlandı';
+    }
+</script>
+</body>
+</html>
