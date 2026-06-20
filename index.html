@@ -12015,16 +12015,35 @@
                             girisStr = oturum.girisZamani.toDate().toLocaleString('tr-TR');
                         }
 
+                        // Check if session is truly online (active in the database AND last active in the last 15 minutes)
+                        var isSessionOnline = false;
+                        var lastActiveMs = 0;
+                        if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
+                            lastActiveMs = oturum.sonAktiflik.toDate().getTime();
+                        } else if (oturum.girisZamani && typeof oturum.girisZamani.toDate === 'function') {
+                            lastActiveMs = oturum.girisZamani.toDate().getTime();
+                        }
+
+                        if (oturum.aktif) {
+                            if (Date.now() - lastActiveMs < 900000) {
+                                isSessionOnline = true;
+                            }
+                        }
+
                         // Çıkış zamanı
                         var cikisStr = "-";
-                        if (oturum.aktif) {
+                        if (isSessionOnline) {
                             cikisStr = "<span style='color:#10b981; font-weight:600;'>Aktif Oturum</span>";
-                        } else if (oturum.cikisZamaniStr) {
-                            cikisStr = oturum.cikisZamaniStr;
-                        } else if (oturum.cikisZamani && typeof oturum.cikisZamani.toDate === 'function') {
-                            cikisStr = oturum.cikisZamani.toDate().toLocaleString('tr-TR');
-                        } else if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
-                            cikisStr = oturum.sonAktiflik.toDate().toLocaleString('tr-TR') + " (Aktiflik)";
+                        } else {
+                            if (oturum.cikisZamani && typeof oturum.cikisZamani.toDate === 'function') {
+                                cikisStr = oturum.cikisZamani.toDate().toLocaleString('tr-TR');
+                            } else if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
+                                cikisStr = oturum.sonAktiflik.toDate().toLocaleString('tr-TR');
+                            } else if (oturum.cikisZamaniStr) {
+                                cikisStr = oturum.cikisZamaniStr;
+                            } else {
+                                cikisStr = girisStr;
+                            }
                         }
 
                         // Süre hesapla
@@ -12036,19 +12055,15 @@
                             girisDate = oturum.girisZamani.toDate();
                         }
 
-                        if (oturum.aktif) {
-                            // Aktif oturum: sonAktiflik veya şimdiki zaman ile hesapla
-                            if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
-                                bitisDate = oturum.sonAktiflik.toDate();
-                            } else {
-                                bitisDate = simdi;
-                            }
+                        if (isSessionOnline) {
+                            bitisDate = simdi;
                         } else {
-                            // Kapatılmış oturum: çıkış zamanı ile hesapla
                             if (oturum.cikisZamani && typeof oturum.cikisZamani.toDate === 'function') {
                                 bitisDate = oturum.cikisZamani.toDate();
                             } else if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
                                 bitisDate = oturum.sonAktiflik.toDate();
+                            } else {
+                                bitisDate = girisDate;
                             }
                         }
 
@@ -12069,7 +12084,7 @@
 
                         // Durum
                         var durumHtml = "";
-                        if (oturum.aktif) {
+                        if (isSessionOnline) {
                             durumHtml = '<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;"></span><span style="font-size:11px; color:#10b981; font-weight:700;">Aktif</span></span>';
                         } else {
                             durumHtml = '<span style="display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#94a3b8;"></span><span style="font-size:11px; color:#64748b;">Çıkış Yaptı</span></span>';
@@ -12077,7 +12092,7 @@
 
                         var tr = document.createElement("tr");
                         tr.style.borderBottom = "1px solid rgba(0,0,0,0.05)";
-                        if (oturum.aktif) {
+                        if (isSessionOnline) {
                             tr.style.background = "rgba(16, 185, 129, 0.05)";
                         }
                         tr.innerHTML =
@@ -12085,7 +12100,7 @@
                             "<td style='padding: 10px; font-size:12px; color:var(--text-muted);'>" + (oturum.ilce || "-") + "</td>" +
                             "<td style='padding: 10px; font-size:12px; color:var(--text-dark); white-space:nowrap;'>" + girisStr + "</td>" +
                             "<td style='padding: 10px; font-size:12px; color:var(--text-dark); white-space:nowrap;'>" + cikisStr + "</td>" +
-                            "<td style='padding: 10px; text-align:center; font-size:13px; font-weight:700; color:" + (oturum.aktif ? "var(--primary)" : "var(--text-dark)") + ";'>" + sureStr + "</td>" +
+                            "<td style='padding: 10px; text-align:center; font-size:13px; font-weight:700; color:" + (isSessionOnline ? "var(--primary)" : "var(--text-dark)") + ";'>" + sureStr + "</td>" +
                             "<td style='padding: 10px; text-align:center;'>" + durumHtml + "</td>";
                         tbody.appendChild(tr);
                     });
