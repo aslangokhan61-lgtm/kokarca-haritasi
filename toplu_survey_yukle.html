@@ -117,7 +117,12 @@
         </div>
         
         <p>Lütfen <strong>2026 SURVEY KAYIT FORMU.xlsx</strong> dosyasını seçin:</p>
-        <input type="file" id="excelFile" accept=".xlsx, .xls" style="font-size: 14px; margin-bottom: 20px; display: block;">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <input type="file" id="excelFile" accept=".xlsx, .xls" style="font-size: 14px;">
+            <button class="btn" style="background: #0284c7; font-size: 13px; padding: 8px 16px; font-weight:600; min-height:36px;" onclick="indirOrnekSablon()">
+                📥 Örnek Excel Şablonu İndir
+            </button>
+        </div>
         
         <div id="status" style="font-weight: bold; margin-bottom: 15px; color: #475569;">Dosya seçilmesi bekleniyor...</div>
         
@@ -870,6 +875,19 @@
             
             statusDiv.innerHTML = `<span style="color: #16a34a; font-size: 15px;">🎉 Başarılı! ${successCount} adet 2026 yılı sürvey tuzağı ve tarih bazlı ziyaret kayıtları sisteme yüklendi. Kokarca Haritası'nı açıp kontrol edebilirsiniz.</span>`;
             document.getElementById('uploadBtn').innerText = "Yükleme Tamamlandı";
+        }
+
+        function indirOrnekSablon() {
+            var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "KONUKÇU", "10.04.2026", "24.04.2026", "08.05.2026"];
+            var sampleData = [
+                { "İL": "Rize", "İLÇE": "Ardeşen", "LOKASYON": "Akdere", "GPS": "41°11'33.0\"N 40°59'42.0\"E", "KONUKÇU": "Kivi", "10.04.2026": "Tuzaklar Asıldı", "24.04.2026": 0, "08.05.2026": 2 },
+                { "İL": "Rize", "İLÇE": "Çayeli", "LOKASYON": "Aşıklar", "GPS": "41.0850, 40.7250", "KONUKÇU": "Fındık", "10.04.2026": "Tuzaklar Asıldı", "24.04.2026": 1, "08.05.2026": 5 },
+                { "İL": "Rize", "İLÇE": "Pazar", "LOKASYON": "Sessizdere", "GPS": "41°09'14.4\"N 40°51'07.2\"E", "KONUKÇU": "Turunçgil", "10.04.2026": "Tuzaklar Asıldı", "24.04.2026": 0, "08.05.2026": 1 }
+            ];
+            var ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Survey Sablonu");
+            XLSX.writeFile(wb, "ornek_survey_yukleme_sablonu.xlsx");
         }
     </script>
 </body>

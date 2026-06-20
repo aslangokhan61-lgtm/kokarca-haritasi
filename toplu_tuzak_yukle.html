@@ -65,7 +65,10 @@
     <!-- Dosya Seçimi -->
     <div class="form-row">
         <label>📂 Excel Dosyası:</label>
-        <input type="file" id="excelFile" accept=".xlsx,.xls" style="font-size:14px;">
+        <input type="file" id="excelFile" accept=".xlsx,.xls" style="font-size:14px; margin-right: 15px;">
+        <button class="btn" style="background: #0284c7; font-size: 13px; padding: 8px 16px; font-weight:600; min-height:36px;" onclick="indirOrnekSablon()">
+            📥 Örnek Excel Şablonu İndir
+        </button>
     </div>
 
     <div id="status" style="font-weight:bold; margin:10px 0; color:#475569;"></div>
@@ -422,6 +425,19 @@
         if (errorCount > 0) msg += ' <span style="color:#ef4444">' + errorCount + ' hata oluştu.</span>';
         statusDiv.innerHTML = '<span style="color:#22c55e;">' + msg + '</span>';
         document.getElementById('uploadBtn').innerText = 'Yükleme Tamamlandı';
+    }
+
+    function indirOrnekSablon() {
+        var headers = ["İlçe", "Köy/Mahalle", "Enlem", "Boylam", "Tuzak No", "İlk Asılma"];
+        var sampleData = [
+            { "İlçe": "Ardeşen", "Köy/Mahalle": "Akdere Köyü", "Enlem": 41.1925, "Boylam": 40.9950, "Tuzak No": "2026-T-1", "İlk Asılma": "01.04.2026" },
+            { "İlçe": "Çayeli", "Köy/Mahalle": "Aşıklar Köyü", "Enlem": 41.0850, "Boylam": 40.7250, "Tuzak No": "2026-T-2", "İlk Asılma": "05.04.2026" },
+            { "İlçe": "Pazar", "Köy/Mahalle": "Sessizdere Köyü", "Enlem": 41.1540, "Boylam": 40.8520, "Tuzak No": "2026-T-3", "İlk Asılma": "10.04.2026" }
+        ];
+        var ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Tuzak Sablonu");
+        XLSX.writeFile(wb, "ornek_tuzak_yukleme_sablonu.xlsx");
     }
 </script>
 </body>
