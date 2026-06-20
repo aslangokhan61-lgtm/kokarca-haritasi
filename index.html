@@ -10667,10 +10667,6 @@
                     toggleMenu();
                     window.open('toplu_salim_yukle.html', '_blank');
                 }));
-                yonetimGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
-                    toggleMenu();
-                    window.open('toplu_survey_yukle.html', '_blank');
-                }));
                 yonetimGrubu.appendChild(menuOgesi('📍', 'Lokasyon Yönetimi', null, function () {
                     acLokasyonModal();
                 }));
@@ -10705,6 +10701,10 @@
                     }));
                     superAdminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
                         toggleMenu(); fotograflariEpostalaVeTemizle();
+                    }));
+                    superAdminGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
+                        toggleMenu();
+                        window.open('toplu_survey_yukle.html', '_blank');
                     }));
                     superAdminGrubu.appendChild(menuOgesi('🗑️', 'Eski Logları Temizle', '#ef4444', function () {
                         eskiLoglariTemizle();
