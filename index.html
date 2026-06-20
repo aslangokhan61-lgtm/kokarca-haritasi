@@ -1552,6 +1552,118 @@
         body.dark-mode #notifBellContainer:hover {
             background: rgba(255,255,255,0.15) !important;
         }
+
+        /* --- SİDEBAR KULLANICI KARTI YENİ STİL SİSTEMİ --- */
+        #userProfileCard {
+            display: none; /* JS ile kontrol edilecek */
+            flex-direction: column;
+            background: linear-gradient(135deg, #1e40af, #1e3a8a);
+            padding: 16px !important;
+            border-radius: 16px !important;
+            margin: 15px !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+            box-sizing: border-box !important;
+            gap: 12px !important;
+            color: white !important;
+            position: relative !important;
+            max-width: none !important;
+            width: calc(100% - 30px) !important;
+            left: auto !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: auto !important;
+        }
+
+        #userProfileCard span {
+            display: block !important;
+            max-width: none !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+
+        #userProfileCard #userNameTxt {
+            font-size: 13.5px !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            line-height: 1.3 !important;
+        }
+
+        #userProfileCard #userDistrictTxt {
+            font-size: 11px !important;
+            color: #10b981 !important; /* Çevrimiçi yeşili */
+            font-weight: 600 !important;
+            line-height: 1.2 !important;
+        }
+
+        #userProfileCard button {
+            align-self: flex-start !important;
+            width: auto !important;
+            margin: 0 !important;
+            display: inline-flex !important;
+            font-family: var(--font) !important;
+        }
+
+        /* Ayarlar butonu */
+        #userProfileCard .profile-settings-btn {
+            background: transparent !important;
+            border: 1px solid rgba(255,255,255,0.25) !important;
+            color: white !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: all 0.2s !important;
+        }
+        #userProfileCard .profile-settings-btn:hover {
+            border-color: white !important;
+            background: rgba(255,255,255,0.05) !important;
+        }
+
+        /* Çıkış butonu */
+        #userProfileCard .profile-logout-btn {
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(255,255,255,0.25) !important;
+            background: transparent !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            padding: 0 !important;
+        }
+        #userProfileCard .profile-logout-btn:hover {
+            border-color: white !important;
+            background: rgba(255,255,255,0.05) !important;
+        }
+
+        /* Bildirim zili container'ı */
+        #userProfileCard #notifBellContainer {
+            position: relative !important;
+            display: none; /* JS ile kontrol edilecek */
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(255,255,255,0.25) !important;
+            background: transparent !important;
+            transition: all 0.2s !important;
+            margin: 0 !important;
+        }
+        #userProfileCard #notifBellContainer:hover {
+            border-color: white !important;
+            background: rgba(255,255,255,0.05) !important;
+        }
     </style>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1577,23 +1689,35 @@
         <span id="aktifModulIcon">🦠</span> <span id="aktifModulAdiTxt">Kahverengi Kokarca (Halyomorpha halys.)</span>
     </div>
 
-    <!-- Floating Active User Profile Card -->
-    <div id="userProfileCard"
-        style="position: absolute; top: 20px; right: 20px; z-index: 1000; display: none; background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border-glass); padding: 8px 18px; border-radius: 20px; box-shadow: var(--shadow); align-items: center; gap: 8px; font-size: 13px;">
-        <span class="profile-label" style="font-weight: 700; color: var(--text-dark);">👤 Giriş Yapan:</span>
-        <span id="userNameTxt" style="font-weight: 700; color: var(--primary);">Gökhan ASLAN</span>
-        <span id="userDistrictTxt" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">(Güneysu -
-            Yönetici)</span>
-        
-        <!-- Bildirim Zili -->
-        <div id="notifBellContainer" style="position: relative; display: none; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.04); transition: background 0.2s;" onclick="toggleNotifPanel(event)">
-            <span id="notifBellIcon" style="font-size: 15px; display: flex; align-items: center; justify-content: center;">🔔</span>
-            <span id="notifBadge" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 9px; display: none; align-items: center; justify-content: center; font-weight: bold; line-height: 1; pointer-events: none;">0</span>
+    <!-- New User Profile Card (Fixed inside Sidebar at the bottom) -->
+    <div id="userProfileCard">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%;">
+            <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+                <span id="userNameTxt" style="font-weight: 700; font-size: 13.5px; color: white; word-wrap: break-word; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3;">GÖKHAN ASLAN</span>
+                <span id="userDistrictTxt" style="font-size: 11px; color: #10b981; font-weight: 600; line-height: 1.2;">Çevrimiçi</span>
+            </div>
+            <!-- Çıkış Butonu -->
+            <button class="profile-logout-btn" onclick="oturumKapat()" title="Çıkış Yap">
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: #f87171; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
         </div>
-
-        <button
-            style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);"
-            onclick="oturumKapat()">Çıkış</button>
+        
+        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+            <!-- Profil Ayarları Butonu -->
+            <button class="profile-settings-btn" onclick="acProfilAyarlariModal()">
+                <span>⚙</span> Ayarlar
+            </button>
+            
+            <!-- Bildirim Zili (Sadece Yöneticiler/Süper Admin) -->
+            <div id="notifBellContainer" onclick="toggleNotifPanel(event)">
+                <span id="notifBellIcon" style="font-size: 12px; display: flex; align-items: center; justify-content: center; color: white;">🔔</span>
+                <span id="notifBadge" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; display: none; align-items: center; justify-content: center; font-weight: bold; line-height: 1; pointer-events: none;">0</span>
+            </div>
+        </div>
     </div>
 
     <!-- Bildirim Dropdown Listesi -->
@@ -1688,6 +1812,20 @@
             <div class="modal-actions" style="margin-top: 24px;">
                 <button class="btn btn-save" style="width: 100%; height: 44px; font-size: 15px; font-weight: 700;"
                     onclick="girisYap()">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profil Bilgileri Modal -->
+    <div id="profilModal" class="modal-overlay" style="z-index: 100002;">
+        <div class="modal-content" style="max-width: 400px; border-top: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <span class="close-btn" onclick="kapatProfilModal()">&times;</span>
+            <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 18px; font-weight: 700; margin-bottom: 20px;">👤 Profil Bilgileri</h3>
+            <div id="profilModalIcerik" style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                <!-- İçerik JS ile doldurulacaktır -->
+            </div>
+            <div style="margin-top: 24px; text-align: right;">
+                <button class="btn btn-cancel" onclick="kapatProfilModal()">Kapat</button>
             </div>
         </div>
     </div>
@@ -10642,9 +10780,17 @@
                     panel.style.width = "auto";
                 } else {
                     panel.style.position = "fixed";
-                    panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
-                    panel.style.left = (rect.right - 330 + window.scrollX) + "px";
+                    panel.style.left = (rect.left + window.scrollX) + "px";
                     panel.style.width = "330px";
+                    
+                    var spaceBelow = window.innerHeight - rect.bottom;
+                    if (spaceBelow < 320) {
+                        panel.style.top = "auto";
+                        panel.style.bottom = (window.innerHeight - rect.top + 8) + "px";
+                    } else {
+                        panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
+                        panel.style.bottom = "auto";
+                    }
                 }
 
                 // Açıldığında listedekileri yerel olarak okundu işaretle
@@ -10741,6 +10887,46 @@
             }
         });
 
+        // --- PROFİL AYARLARI MODAL İŞLEVLERİ ---
+        function acProfilAyarlariModal() {
+            if (!aktifKullanici) return;
+
+            var icerik = document.getElementById("profilModalIcerik");
+            if (icerik) {
+                icerik.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">Ad Soyad:</span>
+                        <strong style="color: var(--text-dark);">${aktifKullanici.adSoyad}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">Kullanıcı Adı:</span>
+                        <strong style="color: var(--text-dark);">${aktifKullanici.kullaniciAdi || '-'}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">Unvan / Görev:</span>
+                        <strong style="color: var(--text-dark);">${aktifKullanici.unvan || '-'}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">İlçe:</span>
+                        <strong style="color: var(--text-dark);">${aktifKullanici.ilce || '-'}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">Telefon:</span>
+                        <strong style="color: var(--text-dark);">${aktifKullanici.telefon || '-'}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <span style="color: var(--text-muted); font-weight: 600;">Sistem Rolü:</span>
+                        <strong style="color: var(--primary);">${aktifKullanici.rol || 'Saha Personeli'}</strong>
+                    </div>
+                `;
+            }
+            document.getElementById("profilModal").classList.add("active");
+        }
+
+        function kapatProfilModal() {
+            document.getElementById("profilModal").classList.remove("active");
+        }
+
         function yerlestirPanelleri() {
             if (!aktifKullanici) return;
             var isMobile = window.innerWidth <= 768;
@@ -10748,34 +10934,18 @@
             var dashCards = document.getElementById("dashboardCards");
             var sideMenu = document.getElementById("sideMenu");
 
-            if (isMobile) {
-                // Mobil Görünüm: Elemanları yan menünün içine taşı ve stilleri ayarla
-                if (profCard) {
-                    if (profCard.parentNode !== sideMenu) {
-                        sideMenu.appendChild(profCard);
-                    }
-                    profCard.style.setProperty("position", "relative", "important");
-                    profCard.style.setProperty("top", "0", "important");
-                    profCard.style.setProperty("right", "auto", "important");
-                    profCard.style.setProperty("left", "0", "important");
-                    profCard.style.margin = "0 15px 15px 15px";
-                    profCard.style.boxShadow = "none";
-                    profCard.style.background = "#f8fafc";
-                    profCard.style.border = "1px solid #e2e8f0";
-                    profCard.style.flexDirection = "column";
-                    profCard.style.alignItems = "flex-start";
-                    profCard.style.gap = "4px";
+            // Profile card is ALWAYS inside the sidebar menu!
+            if (profCard && profCard.parentNode !== sideMenu) {
+                sideMenu.appendChild(profCard);
+            }
+            if (profCard) {
+                // Style attributes are managed in stylesheet. Just show/hide.
+                if (profCard.style.display !== "none") {
                     profCard.style.display = "flex";
-
-                    var logoutBtn = profCard.querySelector("button");
-                    if (logoutBtn) {
-                        logoutBtn.style.marginLeft = "0";
-                        logoutBtn.style.marginTop = "4px";
-                        logoutBtn.style.padding = "6px 12px";
-                        logoutBtn.style.background = "#fee2e2";
-                        logoutBtn.style.borderRadius = "6px";
-                    }
                 }
+            }
+
+            if (isMobile) {
                 if (dashCards) {
                     if (dashCards.parentNode !== sideMenu) {
                         sideMenu.appendChild(dashCards);
@@ -10806,33 +10976,7 @@
                     });
                 }
             } else {
-                // Masaüstü (PC) Görünüm: Elemanları body'ye taşı (yüzen paneller)
-                if (profCard) {
-                    if (profCard.parentNode !== document.body) {
-                        document.body.appendChild(profCard);
-                    }
-                    profCard.style.removeProperty("position");
-                    profCard.style.removeProperty("top");
-                    profCard.style.removeProperty("right");
-                    profCard.style.removeProperty("left");
-                    profCard.style.margin = "";
-                    profCard.style.boxShadow = "";
-                    profCard.style.background = "";
-                    profCard.style.border = "";
-                    profCard.style.flexDirection = "";
-                    profCard.style.alignItems = "";
-                    profCard.style.gap = "";
-                    profCard.style.display = "flex";
-
-                    var logoutBtn = profCard.querySelector("button");
-                    if (logoutBtn) {
-                        logoutBtn.style.marginLeft = "10px";
-                        logoutBtn.style.marginTop = "0";
-                        logoutBtn.style.padding = "4px";
-                        logoutBtn.style.background = "transparent";
-                        logoutBtn.style.borderRadius = "0";
-                    }
-                }
+                // Masaüstü (PC) Görünüm: dashCards yüzen panel olmaya devam eder
                 if (dashCards) {
                     if (dashCards.parentNode !== document.body) {
                         document.body.appendChild(dashCards);
@@ -10896,10 +11040,18 @@
             header.innerHTML = 'Seçenekler <span class="close-btn" onclick="toggleMenu()">&times;</span>';
             sideMenu.appendChild(header);
 
-            // Profil kartı detaylarını güncelle (yerleşimi yerlestirPanelleri yapacak)
+            // Scrollable wrapper for menu items (to keep userProfileCard fixed at the bottom!)
+            var menuItemsContainer = document.createElement("div");
+            menuItemsContainer.id = "menuItemsContainer";
+            menuItemsContainer.style.flex = "1";
+            menuItemsContainer.style.overflowY = "auto";
+            menuItemsContainer.style.overflowX = "hidden";
+            sideMenu.appendChild(menuItemsContainer);
+
+            // Profil kartı detaylarını güncelle
             if (profCard) {
                 document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
-                document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
+                document.getElementById("userDistrictTxt").innerText = aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + " | Çevrimiçi";
             }
 
             // Bildirim zili görünürlüğünü ve dinleme durumunu ayarla
@@ -10939,7 +11091,7 @@
 
                 wrap.appendChild(hdr);
                 wrap.appendChild(body);
-                sideMenu.appendChild(wrap);
+                menuItemsContainer.appendChild(wrap);
                 return body; // öğeler buraya eklenir
             }
 
@@ -11241,21 +11393,21 @@
                 item1.className = "menu-item";
                 item1.onclick = function () { toggleMenu(); setRaporFiltre('Yapışkan'); };
                 item1.innerHTML = '<span>📊</span> Bölge Raporları';
-                sideMenu.appendChild(item1);
+                menuItemsContainer.appendChild(item1);
 
                 var itemHeat = document.createElement("div");
                 itemHeat.className = "menu-item";
                 itemHeat.style.borderLeft = "3px solid #f43f5e";
                 itemHeat.onclick = function () { toggleMenu(); toggleHeatmap(); };
                 itemHeat.innerHTML = '<span>🌡️</span> Isı Haritası Aç/Kapat';
-                sideMenu.appendChild(itemHeat);
+                menuItemsContainer.appendChild(itemHeat);
 
                 var itemWeek = document.createElement("div");
                 itemWeek.className = "menu-item";
                 itemWeek.style.borderLeft = "3px solid #10b981";
                 itemWeek.onclick = function () { acHaftalikRaporlarModal(); };
                 itemWeek.innerHTML = '<span>📅</span> Haftalık Raporlar';
-                sideMenu.appendChild(itemWeek);
+                menuItemsContainer.appendChild(itemWeek);
             }
 
             setTimeout(initMenuFilters, 50);
@@ -11269,7 +11421,7 @@
                 toggleMenu();
                 acKilavuzModal();
             };
-            sideMenu.appendChild(kilavuzMenu);
+            menuItemsContainer.appendChild(kilavuzMenu);
 
             // Ortak Mücadele Dokümanları (Tüm Roller İçin)
             var salimRehberiMenu = document.createElement("div");
@@ -11280,7 +11432,7 @@
                 toggleMenu();
                 window.open('salim_rehberi.html', '_blank');
             };
-            sideMenu.appendChild(salimRehberiMenu);
+            menuItemsContainer.appendChild(salimRehberiMenu);
 
             var uygulamaTalimatiMenu = document.createElement("div");
             uygulamaTalimatiMenu.className = "menu-item";
@@ -11290,7 +11442,7 @@
                 toggleMenu();
                 window.open('uygulama_talimati.html', '_blank');
             };
-            sideMenu.appendChild(uygulamaTalimatiMenu);
+            menuItemsContainer.appendChild(uygulamaTalimatiMenu);
 
             // Yerleşimi ekran genişliğine göre yap (Masaüstü/Mobil)
             yerlestirPanelleri();
