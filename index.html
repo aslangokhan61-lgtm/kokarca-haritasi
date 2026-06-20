@@ -1384,12 +1384,173 @@
             transform: translateX(20px);
         }
         
-        body.dark-mode .slider {
-            background-color: #475569;
-        }
-        
         body.dark-mode input:checked + .slider {
             background-color: var(--primary);
+        }
+
+        /* --- BİLDİRİM VE TOAST SİSTEMİ --- */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 360px;
+            width: calc(100% - 40px);
+            pointer-events: none;
+        }
+
+        .toast-item {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: var(--text-dark);
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: auto;
+        }
+
+        body.dark-mode .toast-item {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast-item.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 2px;
+            color: var(--primary-dark);
+        }
+        body.dark-mode .toast-title {
+            color: var(--primary-light);
+        }
+
+        .toast-desc {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        body.dark-mode .toast-desc {
+            color: #94a3b8;
+        }
+
+        .toast-close {
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-muted);
+            transition: color 0.2s;
+            background: transparent;
+            border: none;
+            padding: 0;
+            line-height: 1;
+            margin-left: 5px;
+        }
+        .toast-close:hover {
+            color: var(--danger);
+        }
+
+        /* Bildirim Öğeleri */
+        .notif-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            gap: 10px;
+        }
+        body.dark-mode .notif-item {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .notif-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        body.dark-mode .notif-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .notif-item.unread {
+            background: rgba(0, 142, 67, 0.05);
+        }
+        body.dark-mode .notif-item.unread {
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .notif-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .notif-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .notif-text {
+            color: var(--text-dark);
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+        body.dark-mode .notif-text {
+            color: #e2e8f0;
+        }
+
+        .notif-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        body.dark-mode .notif-meta {
+            color: #94a3b8;
+        }
+
+        #notifBellContainer:hover {
+            background: rgba(0,0,0,0.08) !important;
+        }
+        body.dark-mode #notifBellContainer {
+            background: rgba(255,255,255,0.08) !important;
+        }
+        body.dark-mode #notifBellContainer:hover {
+            background: rgba(255,255,255,0.15) !important;
         }
     </style>
     <!-- SheetJS for Excel Export -->
@@ -1423,9 +1584,27 @@
         <span id="userNameTxt" style="font-weight: 700; color: var(--primary);">Gökhan ASLAN</span>
         <span id="userDistrictTxt" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">(Güneysu -
             Yönetici)</span>
+        
+        <!-- Bildirim Zili -->
+        <div id="notifBellContainer" style="position: relative; display: none; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.04); transition: background 0.2s;" onclick="toggleNotifPanel(event)">
+            <span id="notifBellIcon" style="font-size: 15px; display: flex; align-items: center; justify-content: center;">🔔</span>
+            <span id="notifBadge" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 9px; display: none; align-items: center; justify-content: center; font-weight: bold; line-height: 1; pointer-events: none;">0</span>
+        </div>
+
         <button
             style="background: transparent; border: none; font-size: 12px; color: var(--danger); font-weight: 700; cursor: pointer; margin-left: 10px; padding: 4px; font-family: var(--font);"
             onclick="oturumKapat()">Çıkış</button>
+    </div>
+
+    <!-- Bildirim Dropdown Listesi -->
+    <div id="notifDropdown" style="position: fixed; width: 330px; background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-glass); box-shadow: var(--shadow); border-radius: var(--radius-lg); display: none; flex-direction: column; overflow: hidden; z-index: 100001;">
+        <div style="padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); font-weight: 600;">
+            <span style="color: var(--text-dark); font-size: 13px; font-weight: 700;">🔔 Bildirimler</span>
+            <span onclick="temizleTumBildirimler(event)" style="font-size: 11px; color: var(--secondary-blue); font-weight: 700; cursor: pointer;">Okundu Yap</span>
+        </div>
+        <div id="notifList" style="overflow-y: auto; max-height: 280px; display: flex; flex-direction: column;">
+            <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12px;">Yeni bildirim yok.</div>
+        </div>
     </div>
 
     <!-- Karanlık Mod Toggle -->
@@ -2348,7 +2527,7 @@
                     <label>Bulunduğu Bitki Türü</label>
                     <select id="tuzakBitkiTuru" class="form-control">
                         <option value="Fındık" selected>🌳 Fındık</option>
-                        <option value="Mandalina">🍊 Mandalina</option>
+                        <option value="Turunçgil">🍊 Turunçgil</option>
                         <option value="Kivi">🥝 Kivi</option>
                         <option value="Elma">🍎 Elma</option>
                         <option value="Mısır">🌽 Mısır</option>
@@ -2415,7 +2594,7 @@
                         <option value="Maviyemiş">🫐 Maviyemiş Bahçesi</option>
                         <option value="Mısır">🌽 Mısır Tarlası</option>
                         <option value="Karalahana">🥬 Karalahana Bahçesi</option>
-                        <option value="Mandalina">🍊 Mandalin Bahçesi</option>
+                        <option value="Turunçgil">🍊 Turunçgil Bahçesi</option>
                         <option value="Üzüm">🍇 Üzüm Bağı</option>
                         <option value="İncir">🌳 İncir Bahçesi</option>
                         <option value="Dut">🌳 Dut Bahçesi</option>
@@ -3647,6 +3826,8 @@
         var seciliRaporFiltre = "Tümü";
         var aktifKullanici = null;
         var tuzakListener = null;
+        var notifListener = null;
+        window.sessionStartTime = Date.now();
         var aktifFiltreler = { il: "Tümü", ilce: "Tümü", koy: "Tümü", yil: String(new Date().getFullYear()) };
         var aktifOturumId = null;
 
@@ -3664,7 +3845,7 @@
             { id: "maviyemis_bahceleri", ad: "Maviyemiş Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_maviyemis_bahceleri", icon: "🫐" },
             { id: "misir_tarlalari", ad: "Mısır Tarlaları", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_misir", icon: "🌽" },
             { id: "karalahana_bahceleri", ad: "Karalahana Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_karalahana", icon: "🥬" },
-            { id: "mandarin_bahceleri", ad: "Mandarin Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_mandarin", icon: "🍊" },
+            { id: "turuncgil_bahceleri", ad: "Turunçgil Bahçeleri", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_turuncgil", icon: "🍊" },
             { id: "uzum_baglari", ad: "Üzüm Bağları", kategori: "Meyve ve Sebze Bahçeleri", koleksiyon: "tuzaklar_uzum", icon: "🍇" }
         ];
         var tumModuller = [];
@@ -4409,6 +4590,7 @@
                     "Maviyemiş": "🫐",
                     "Mısır": "🌽",
                     "Karalahana": "🥬",
+                    "Turunçgil": "🍊",
                     "Mandarin": "🍊",
                     "Mandalina": "🍊",
                     "Üzüm": "🍇",
@@ -5625,7 +5807,7 @@
                     `;
                 }
             } else if (m.kategori === "Meyve ve Sebze Bahçeleri") {
-                var meyveler = ["Fındık", "Mandalina", "Kivi", "Elma", "Mısır", "Karalahana", "Üzüm", "İncir", "Dut", "Kiraz", "Kızılağaç", "Hurma", "Yenidünya", "Muşmula"];
+                var meyveler = ["Fındık", "Turunçgil", "Kivi", "Elma", "Mısır", "Karalahana", "Üzüm", "İncir", "Dut", "Kiraz", "Kızılağaç", "Hurma", "Yenidünya", "Muşmula"];
                 meyveler.forEach(function (meyve) {
                     tipDropdown.innerHTML += '<option value="' + meyve + '">' + meyve + '</option>';
                 });
@@ -9554,6 +9736,10 @@
                     db.collection("tuzaklar").doc(docId).update(guncelleData).then(function () {
                         alert("Kayıt başarıyla güncellendi.");
                         logEkle("Ziyaret Kaydı Kaydedildi", "İlçe: " + data.ilce + ", Köy: " + (data.koy || data.ad) + ", Tip: " + data.tuzakTipi + ", No/Ad: " + data.tuzakNo + ", Tarih: " + secilenTarihStr + ", Not: " + gozlemNotuStr);
+                        
+                        // Bildirim Gönder
+                        var notifMsg = `${aktifKullanici.adSoyad} tarafından ${data.ilce} - ${data.koy || data.ad} konumundaki ${data.tuzakTipi} (${data.tuzakNo || ''}) tuzağına ziyaret kaydı eklendi. Ergin: ${bocekSayisi}, Nimf: ${nimfSayisi}`;
+                        bildirimOlustur("Yeni Ziyaret Kaydı", notifMsg, data.ilce, data.koy || data.ad, docId);
 
                         tuzakVerileri[docId] = Object.assign({}, data, guncelleData);
                         guncelleTuzakKayitlariTablosu(tuzakVerileri[docId]);
@@ -9891,6 +10077,10 @@
                     db.collection("tuzaklar").doc(docId).update(saveData).then(function () {
                         alert("Kayıt başarıyla güncellendi.");
                         logEkle(logTuru + " Güncellendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No/Ad: " + saveData.tuzakNo);
+                        
+                        // Bildirim Gönder
+                        var notifMsg = `${aktifKullanici.adSoyad} tarafından ${saveData.ilce} - ${saveData.koy} konumundaki ${saveData.tuzakTipi} (${saveData.tuzakNo || ''}) güncellendi.`;
+                        bildirimOlustur("Tuzak Güncellendi", notifMsg, saveData.ilce, saveData.koy, docId);
                         kullaniciAktifliginiGuncelle();
                         if (tuzakVerileri[docId]) {
                             Object.assign(tuzakVerileri[docId], saveData);
@@ -9922,9 +10112,14 @@
                     kayitTarihiStr: new Date().toLocaleString('tr-TR')
                 }];
 
-                db.collection("tuzaklar").add(saveData).then(function () {
+                db.collection("tuzaklar").add(saveData).then(function (docRef) {
                     alert("Kayıt başarıyla eklendi.");
                     logEkle(logTuru + " Eklendi", "İlçe: " + saveData.ilce + ", Köy: " + saveData.koy + ", Tip: " + saveData.tuzakTipi + ", No/Ad: " + saveData.tuzakNo);
+                    
+                    // Bildirim Gönder
+                    var newDocId = docRef ? docRef.id : "";
+                    var notifMsg = `${aktifKullanici.adSoyad} tarafından ${saveData.ilce} - ${saveData.koy} konumunda yeni ${saveData.tuzakTipi} (${saveData.tuzakNo || ''}) kuruldu.`;
+                    bildirimOlustur("Yeni Tuzak Kuruldu", notifMsg, saveData.ilce, saveData.koy, newDocId);
                     kullaniciAktifliginiGuncelle();
                     kapatModal();
                 }).catch(function (error) {
@@ -10215,6 +10410,12 @@
                     personelListener();
                     personelListener = null;
                 }
+                if (notifListener) {
+                    notifListener();
+                    notifListener = null;
+                }
+                var panel = document.getElementById("notifDropdown");
+                if (panel) panel.style.display = "none";
 
                 for (var id in markerListesi) {
                     map.removeLayer(markerListesi[id]);
@@ -10226,6 +10427,319 @@
                 alert("Oturum kapatıldı.");
             }
         }
+
+        // --- BİLDİRİM VE TOAST SİSTEMİ FONKSİYONLARI ---
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                if (Notification.permission === "default") {
+                    Notification.requestPermission();
+                }
+            }
+        }
+
+        function showNotifToastAndBrowser(data) {
+            // 1. Tarayıcı Push Bildirimi (Sekme arka plandaysa tetiklenir)
+            if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+                try {
+                    new Notification(data.baslik, {
+                        body: data.mesaj,
+                        icon: "resimler/Dosya_Tarım_ve_Orman_Bakanlığı_logo.svg"
+                    });
+                } catch (e) {
+                    console.error("Tarayıcı bildirim hatası:", e);
+                }
+            }
+
+            // 2. Uygulama İçi Toast Bildirimi (Her zaman gösterilir)
+            var icon = data.modulIcon || "🔔";
+            createToast(data.baslik, data.mesaj, icon);
+        }
+
+        function createToast(title, desc, icon) {
+            var container = document.getElementById("toastContainer");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "toastContainer";
+                container.className = "toast-container";
+                document.body.appendChild(container);
+            }
+
+            var toast = document.createElement("div");
+            toast.className = "toast-item";
+            toast.innerHTML = `
+                <div class="toast-icon">${icon || '🔔'}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-desc">${desc}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.classList.remove('show'); setTimeout(function(){ this.parentElement.remove(); }.bind(this), 300)">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Animasyonla göster
+            setTimeout(function () {
+                toast.classList.add("show");
+            }, 50);
+
+            // 6 saniye sonra otomatik kaldır
+            setTimeout(function () {
+                if (toast && toast.parentNode) {
+                    toast.classList.remove("show");
+                    setTimeout(function () {
+                        if (toast && toast.parentNode) toast.remove();
+                    }, 300);
+                }
+            }, 6000);
+        }
+
+        function bildirimOlustur(baslik, mesaj, ilce, koy, tuzakId) {
+            if (!aktifKullanici) return;
+
+            var userName = (aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            // Gökhan veya Beyza kendisi işlem yaptığında bildirim oluşturma
+            if (userName === 'gokhan.aslan' || userName === 'beyza.feyiz') {
+                return;
+            }
+
+            var modulAd = (typeof aktifModul !== 'undefined' && aktifModul) ? aktifModul.ad : 'Kokarca';
+            var modulIcon = (typeof aktifModul !== 'undefined' && aktifModul) ? (aktifModul.icon || '🦠') : '🦠';
+
+            var data = {
+                baslik: baslik,
+                mesaj: mesaj,
+                modulAd: modulAd,
+                modulIcon: modulIcon,
+                tarih: firebase.firestore.FieldValue.serverTimestamp(),
+                tarihStr: new Date().toLocaleString('tr-TR'),
+                olusturan: aktifKullanici.adSoyad,
+                kullaniciAdi: userName,
+                ilce: ilce || '',
+                koy: koy || '',
+                tuzakId: tuzakId || ''
+            };
+
+            db.rawCollection('bildirimler').add(data).catch(function (e) {
+                console.error("Bildirim Firestore'a eklenirken hata:", e);
+            });
+        }
+
+        function bildirimleriDinle() {
+            if (notifListener) return; // Zaten aktif
+
+            var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            if (userName !== 'gokhan.aslan' && userName !== 'beyza.feyiz') {
+                return;
+            }
+
+            var initTime = window.sessionStartTime || Date.now();
+
+            notifListener = db.rawCollection("bildirimler")
+                .orderBy("tarih", "desc")
+                .limit(20)
+                .onSnapshot(function (querySnapshot) {
+                    var yeniBildirimler = [];
+                    var unreadCount = 0;
+                    var okunanIdler = JSON.parse(localStorage.getItem("okunanBildirimler_" + userName) || "[]");
+
+                    querySnapshot.forEach(function (doc) {
+                        var data = doc.data();
+                        data.id = doc.id;
+                        yeniBildirimler.push(data);
+                        if (okunanIdler.indexOf(doc.id) === -1) {
+                            unreadCount++;
+                        }
+                    });
+
+                    // Yeni eklenenleri kontrol et (realtime toast için)
+                    querySnapshot.docChanges().forEach(function (change) {
+                        if (change.type === "added") {
+                            var data = change.data();
+                            var docTarih = data.tarih ? data.tarih.toDate().getTime() : Date.now();
+                            // Sadece sayfa açıldıktan sonra gelen yeni kayıtları göster
+                            if (docTarih > initTime - 3000) {
+                                showNotifToastAndBrowser(data);
+                            }
+                        }
+                    });
+
+                    guncelleBildirimArayuzu(yeniBildirimler, unreadCount, okunanIdler);
+                }, function (err) {
+                    console.error("Bildirimler dinlenemedi:", err);
+                });
+        }
+
+        function guncelleBildirimArayuzu(yeniBildirimler, unreadCount, okunanIdler) {
+            var badge = document.getElementById("notifBadge");
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.innerText = unreadCount;
+                    badge.style.display = "flex";
+                } else {
+                    badge.style.display = "none";
+                }
+            }
+
+            var notifList = document.getElementById("notifList");
+            if (!notifList) return;
+
+            if (yeniBildirimler.length === 0) {
+                notifList.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12px;">Yeni bildirim yok.</div>`;
+                return;
+            }
+
+            var html = "";
+            yeniBildirimler.forEach(function (data) {
+                var isUnread = okunanIdler.indexOf(data.id) === -1;
+                var unreadClass = isUnread ? "unread" : "";
+                var dotStyle = isUnread ? "" : "display: none;";
+                var tarihDisplay = data.tarihStr || "-";
+                
+                if (data.tarih && typeof data.tarih.toDate === 'function') {
+                    tarihDisplay = data.tarih.toDate().toLocaleString('tr-TR');
+                }
+
+                var tId = data.tuzakId || "";
+                var mIcon = data.modulIcon || "🦠";
+
+                html += `
+                    <div class="notif-item ${unreadClass}" data-id="${data.id}" onclick="gitTuzaga('${tId}', '${data.id}')">
+                        <div class="notif-dot" style="${dotStyle}"></div>
+                        <div class="notif-info">
+                            <div class="notif-text">
+                                <strong>${mIcon} ${data.baslik}:</strong> ${data.mesaj}
+                            </div>
+                            <div class="notif-meta">
+                                <span>👤 ${data.olusturan || 'Saha Personeli'}</span>
+                                <span>🕒 ${tarihDisplay}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            notifList.innerHTML = html;
+        }
+
+        function toggleNotifPanel(e) {
+            if (e) e.stopPropagation();
+            var panel = document.getElementById("notifDropdown");
+            var bell = document.getElementById("notifBellContainer");
+            if (!panel || !bell) return;
+
+            if (panel.style.display === "flex") {
+                panel.style.display = "none";
+            } else {
+                // Konumu zile göre ayarla
+                var rect = bell.getBoundingClientRect();
+                var isMobile = window.innerWidth <= 768;
+
+                panel.style.display = "flex";
+                if (isMobile) {
+                    panel.style.position = "fixed";
+                    panel.style.top = "70px";
+                    panel.style.left = "20px";
+                    panel.style.right = "20px";
+                    panel.style.width = "auto";
+                } else {
+                    panel.style.position = "fixed";
+                    panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
+                    panel.style.left = (rect.right - 330 + window.scrollX) + "px";
+                    panel.style.width = "330px";
+                }
+
+                // Açıldığında listedekileri yerel olarak okundu işaretle
+                var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+                if (userName) {
+                    var okunanIdler = JSON.parse(localStorage.getItem("okunanBildirimler_" + userName) || "[]");
+                    var items = document.querySelectorAll(".notif-item");
+                    items.forEach(function (item) {
+                        var docId = item.getAttribute("data-id");
+                        if (docId && okunanIdler.indexOf(docId) === -1) {
+                            okunanIdler.push(docId);
+                            item.classList.remove("unread");
+                            var dot = item.querySelector(".notif-dot");
+                            if (dot) dot.style.display = "none";
+                        }
+                    });
+                    localStorage.setItem("okunanBildirimler_" + userName, JSON.stringify(okunanIdler));
+                    var badge = document.getElementById("notifBadge");
+                    if (badge) {
+                        badge.innerText = "0";
+                        badge.style.display = "none";
+                    }
+                }
+            }
+        }
+
+        function temizleTumBildirimler(e) {
+            if (e) e.stopPropagation();
+            var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            if (!userName) return;
+
+            var items = document.querySelectorAll(".notif-item");
+            var okunanIdler = JSON.parse(localStorage.getItem("okunanBildirimler_" + userName) || "[]");
+            items.forEach(function (item) {
+                var docId = item.getAttribute("data-id");
+                if (docId && okunanIdler.indexOf(docId) === -1) {
+                    okunanIdler.push(docId);
+                }
+                item.classList.remove("unread");
+                var dot = item.querySelector(".notif-dot");
+                if (dot) dot.style.display = "none";
+            });
+
+            localStorage.setItem("okunanBildirimler_" + userName, JSON.stringify(okunanIdler));
+            var badge = document.getElementById("notifBadge");
+            if (badge) {
+                badge.innerText = "0";
+                badge.style.display = "none";
+            }
+            
+            var panel = document.getElementById("notifDropdown");
+            if (panel) panel.style.display = "none";
+        }
+
+        function gitTuzaga(tuzakId, bildirimId) {
+            if (!tuzakId) return;
+
+            var panel = document.getElementById("notifDropdown");
+            if (panel) panel.style.display = "none";
+
+            // Bu bildirimi okundu işaretle
+            var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            if (userName) {
+                var okunanIdler = JSON.parse(localStorage.getItem("okunanBildirimler_" + userName) || "[]");
+                if (okunanIdler.indexOf(bildirimId) === -1) {
+                    okunanIdler.push(bildirimId);
+                    localStorage.setItem("okunanBildirimler_" + userName, JSON.stringify(okunanIdler));
+                    
+                    var item = document.querySelector(`.notif-item[data-id="${bildirimId}"]`);
+                    if (item) {
+                        item.classList.remove("unread");
+                        var dot = item.querySelector(".notif-dot");
+                        if (dot) dot.style.display = "none";
+                    }
+                }
+            }
+
+            // Haritada tuzağı bul ve oraya uç
+            var marker = markerListesi[tuzakId];
+            if (marker) {
+                map.setView(marker.getLatLng(), 16);
+                marker.openPopup();
+            } else {
+                alert("Tuzak bu modülün haritasında bulunamadı. Lütfen ilgili zararlı/meyve modülüne geçiş yapın.");
+            }
+        }
+
+        // Boşluğa tıklandığında bildirim panelini kapat
+        document.addEventListener("click", function (e) {
+            var panel = document.getElementById("notifDropdown");
+            var bell = document.getElementById("notifBellContainer");
+            if (panel && panel.style.display === "flex" && !panel.contains(e.target) && bell && !bell.contains(e.target)) {
+                panel.style.display = "none";
+            }
+        });
 
         function yerlestirPanelleri() {
             if (!aktifKullanici) return;
@@ -10386,6 +10900,22 @@
             if (profCard) {
                 document.getElementById("userNameTxt").innerText = aktifKullanici.adSoyad;
                 document.getElementById("userDistrictTxt").innerText = "(" + aktifKullanici.ilce + " - " + (isAdmin() ? aktifKullanici.rol : "Personel") + ")";
+            }
+
+            // Bildirim zili görünürlüğünü ve dinleme durumunu ayarla
+            var userName = (aktifKullanici && aktifKullanici.kullaniciAdi) ? aktifKullanici.kullaniciAdi.toLowerCase() : '';
+            var isSpecialUser = (userName === 'gokhan.aslan' || userName === 'beyza.feyiz');
+            var bellEl = document.getElementById("notifBellContainer");
+            if (isSpecialUser) {
+                if (bellEl) bellEl.style.display = "inline-flex";
+                requestNotificationPermission();
+                bildirimleriDinle();
+            } else {
+                if (bellEl) bellEl.style.display = "none";
+                if (notifListener) {
+                    notifListener();
+                    notifListener = null;
+                }
             }
 
             // ── Yardımcı: Accordion Grup Oluşturucu ──
@@ -10671,8 +11201,8 @@
                     acLokasyonModal();
                 }));
 
-                // ── 4. SİSTEM YÖNETİMİ grubu (kapalı başlar, tüm yöneticilere) ──
-                if (aktifKullanici && isAdmin()) {
+                // ── 4. SİSTEM YÖNETİMİ grubu (kapalı başlar, yalnızca SÜPER ADMİNLER görebilir) ──
+                if (aktifKullanici && isSuperAdminUser()) {
                     var adminGrubu = menuGrubuOlustur('Sistem Yönetimi', '🔐', '#db2777', false);
 
                     adminGrubu.appendChild(menuOgesi('📜', 'Log Kayıtları', '#db2777', function () {
@@ -10687,26 +11217,20 @@
                     adminGrubu.appendChild(menuOgesi('👤', 'Personel Performansı', '#3b82f6', function () {
                         acPersonelPerformansModal();
                     }));
-                }
-
-                // ── 5. SÜPER ADMİN ÖZEL grubu (kapalı başlar, sadece Süper Adminlere) ──
-                if (aktifKullanici && isSuperAdminUser()) {
-                    var superAdminGrubu = menuGrubuOlustur('Süper Admin Özel', '👑', '#ea580c', false);
-
-                    superAdminGrubu.appendChild(menuOgesi('⚙️', 'Sistem Parametreleri', '#ea580c', function () {
+                    adminGrubu.appendChild(menuOgesi('⚙️', 'Sistem Parametreleri', '#ea580c', function () {
                         acSistemParametreleriModal();
                     }));
-                    superAdminGrubu.appendChild(menuOgesi('💾', 'Veritabanı Yedeği', '#059669', function () {
+                    adminGrubu.appendChild(menuOgesi('💾', 'Veritabanı Yedeği', '#059669', function () {
                         toggleMenu(); veritabaniYedekIndir();
                     }));
-                    superAdminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
+                    adminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
                         toggleMenu(); fotograflariEpostalaVeTemizle();
                     }));
-                    superAdminGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
+                    adminGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
                         toggleMenu();
                         window.open('toplu_survey_yukle.html', '_blank');
                     }));
-                    superAdminGrubu.appendChild(menuOgesi('🗑️', 'Eski Logları Temizle', '#ef4444', function () {
+                    adminGrubu.appendChild(menuOgesi('🗑️', 'Eski Logları Temizle', '#ef4444', function () {
                         eskiLoglariTemizle();
                     }));
                 }
