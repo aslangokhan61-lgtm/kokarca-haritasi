@@ -71,6 +71,10 @@ service cloud.firestore {
       allow delete: if true; // Süper adminin eski logları temizlemesi için izin verildi
     }
 
+    match /bildirimler/{docId} {
+      allow read, write: if true;
+    }
+
     match /oturumlar/{oturumId} {
       allow read: if true;
       allow create, update: if true;
