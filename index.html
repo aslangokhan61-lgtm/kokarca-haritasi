@@ -1830,6 +1830,40 @@
         </div>
     </div>
 
+    <!-- Genel İstatistikler Modalı -->
+    <div id="istatistikModal" class="modal-overlay" style="z-index: 100003;">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid var(--primary); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <span class="close-btn" onclick="kapatIstatistikModal()">&times;</span>
+            <h3 style="margin-top: 0; color: var(--primary-dark); font-size: 18px; font-weight: 700; margin-bottom: 20px;">📊 Genel İstatistik Kartları</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-glass); border-radius: 14px; padding: 16px; text-align: center;">
+                    <div id="modalDashTuzakSayi" style="font-size: 28px; font-weight: 900; color: var(--primary);">0</div>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Toplam Tuzak</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-glass); border-radius: 14px; padding: 16px; text-align: center;">
+                    <div id="modalDashBocekSayi" style="font-size: 28px; font-weight: 900; color: #ef4444;">0</div>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Toplam Böcek</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-glass); border-radius: 14px; padding: 16px; text-align: center;">
+                    <div id="modalDashEnYogun" style="font-size: 15px; font-weight: 900; color: #d97706; min-height: 38px; display: flex; align-items: center; justify-content: center;">-</div>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">En Yoğun İlçe</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-glass); border-radius: 14px; padding: 16px; text-align: center;">
+                    <div id="modalDashOrt" style="font-size: 28px; font-weight: 900; color: #7c3aed;">0</div>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Ort. Böcek/Tuzak</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-save" onclick="yeniPenceredeAcIstatistikler()" style="background: linear-gradient(135deg, var(--secondary-blue), #1e40af); color: white; display: flex; align-items: center; gap: 6px; font-weight: 700; height: 36px; padding: 0 16px; border-radius: 8px;">
+                    <span>📂</span> Yeni Pencerede Aç
+                </button>
+                <button class="btn btn-cancel" onclick="kapatIstatistikModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hamburger Menu Button -->
     <div class="menu-btn" onclick="toggleMenu()">
         <svg viewBox="0 0 24 24">
@@ -10927,6 +10961,21 @@
             document.getElementById("profilModal").classList.remove("active");
         }
 
+        // --- GENEL İSTATİSTİKLER MODAL İŞLEVLERİ ---
+        function acIstatistikModal() {
+            toggleMenu();
+            guncelleDashboard();
+            document.getElementById("istatistikModal").classList.add("active");
+        }
+
+        function kapatIstatistikModal() {
+            document.getElementById("istatistikModal").classList.remove("active");
+        }
+
+        function yeniPenceredeAcIstatistikler() {
+            window.open('istatistikler.html', '_blank');
+        }
+
         function yerlestirPanelleri() {
             if (!aktifKullanici) return;
             var isMobile = window.innerWidth <= 768;
@@ -10939,72 +10988,11 @@
                 sideMenu.appendChild(profCard);
             }
             if (profCard) {
-                // Style attributes are managed in stylesheet. Just show/hide.
-                if (profCard.style.display !== "none") {
-                    profCard.style.display = "flex";
-                }
+                profCard.style.display = "flex";
             }
 
-            if (isMobile) {
-                if (dashCards) {
-                    if (dashCards.parentNode !== sideMenu) {
-                        sideMenu.appendChild(dashCards);
-                    }
-                    dashCards.style.setProperty("position", "relative", "important");
-                    dashCards.style.setProperty("bottom", "auto", "important");
-                    dashCards.style.setProperty("top", "0", "important");
-                    dashCards.style.setProperty("left", "auto", "important");
-                    dashCards.style.setProperty("transform", "none", "important");
-                    dashCards.style.margin = "0 15px 15px 15px";
-                    dashCards.style.width = "auto";
-
-                    var toplamTuzak = window.filteredTuzakSayisi !== undefined ? window.filteredTuzakSayisi : 0;
-
-                    if (toplamTuzak > 0) {
-                        dashCards.style.display = "grid";
-                    } else {
-                        dashCards.style.display = "none";
-                    }
-                    dashCards.style.gridTemplateColumns = "1fr 1fr";
-
-                    var children = dashCards.querySelectorAll("div");
-                    children.forEach(function (child) {
-                        if (child.id && child.id.startsWith("dash")) return;
-                        child.style.minWidth = "0";
-                        child.style.padding = "8px";
-                        child.style.borderRadius = "8px";
-                    });
-                }
-            } else {
-                // Masaüstü (PC) Görünüm: dashCards yüzen panel olmaya devam eder
-                if (dashCards) {
-                    if (dashCards.parentNode !== document.body) {
-                        document.body.appendChild(dashCards);
-                    }
-                    dashCards.style.removeProperty("position");
-                    dashCards.style.removeProperty("bottom");
-                    dashCards.style.removeProperty("top");
-                    dashCards.style.removeProperty("left");
-                    dashCards.style.removeProperty("transform");
-                    dashCards.style.margin = "";
-                    dashCards.style.width = "";
-
-                    var toplamTuzak = window.filteredTuzakSayisi !== undefined ? window.filteredTuzakSayisi : 0;
-
-                    if (toplamTuzak > 0) {
-                        dashCards.style.display = "flex";
-                    } else {
-                        dashCards.style.display = "none";
-                    }
-
-                    var children = dashCards.querySelectorAll("div");
-                    children.forEach(function (child) {
-                        if (child.id && child.id.startsWith("dash")) return;
-                        child.style.minWidth = "110px";
-                        child.style.padding = "12px 18px";
-                        child.style.borderRadius = "14px";
-                    });
-                }
+            if (dashCards) {
+                dashCards.style.display = "none";
             }
         }
         window.addEventListener('resize', yerlestirPanelleri);
@@ -11027,11 +11015,10 @@
             // Build dynamic side menu
             var sideMenu = document.getElementById("sideMenu");
 
-            // Stash user profile and dashboard cards before clearing the menu
+            // Stash user profile card before clearing the menu
             var profCard = document.getElementById("userProfileCard");
             var dashCards = document.getElementById("dashboardCards");
             if (profCard && profCard.parentNode === sideMenu) document.body.appendChild(profCard);
-            if (dashCards && dashCards.parentNode === sideMenu) document.body.appendChild(dashCards);
 
             sideMenu.innerHTML = "";
 
@@ -11180,14 +11167,7 @@
                 }
             });
 
-            // Yeni Modül Ekleme Düğmesi (Yalnızca Yöneticiler için)
-            if (isAdmin()) {
-                var modYonetim = menuGrubuOlustur("Modül Yönetimi", "⚙️", "#6366f1", false);
-                modYonetim.appendChild(menuOgesi("➕", "Yeni Kayıt Modülü Ekle", "#6366f1", function () {
-                    toggleMenu();
-                    acYeniModulModal();
-                }));
-            }
+
 
             // --- HARİTA ARAÇLARI (TÜM KULLANICILAR İÇİN) ---
             var mapTools = menuGrubuOlustur('Harita Araçları', '🛠️', '#059669', false);
@@ -11338,8 +11318,13 @@
                 yonetimGrubu.appendChild(menuOgesi('👥', 'Personel Yönetimi', null, function () {
                     acPersonelModal();
                 }));
-                yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme (Metin)', null, function () {
-                    acTopluYuklemeModal();
+                yonetimGrubu.appendChild(menuOgesi('➕', 'Yeni Kayıt Modülü Ekle', null, function () {
+                    toggleMenu();
+                    acYeniModulModal();
+                }));
+                yonetimGrubu.appendChild(menuOgesi('🟢', 'Sürvey Yükleme (Excel)', null, function () {
+                    toggleMenu();
+                    window.open('toplu_survey_yukle.html', '_blank');
                 }));
                 yonetimGrubu.appendChild(menuOgesi('📊', 'Toplu Tuzak Yükleme (Excel)', null, function () {
                     toggleMenu();
@@ -11349,8 +11334,14 @@
                     toggleMenu();
                     window.open('toplu_salim_yukle.html', '_blank');
                 }));
+                yonetimGrubu.appendChild(menuOgesi('🏺', 'Toplu Tuzak Yükleme (Metin)', null, function () {
+                    acTopluYuklemeModal();
+                }));
                 yonetimGrubu.appendChild(menuOgesi('📍', 'Lokasyon Yönetimi', null, function () {
                     acLokasyonModal();
+                }));
+                yonetimGrubu.appendChild(menuOgesi('📊', 'Genel İstatistikler', null, function () {
+                    acIstatistikModal();
                 }));
 
                 // ── 4. SİSTEM YÖNETİMİ grubu (kapalı başlar, yalnızca SÜPER ADMİNLER görebilir) ──
@@ -11378,10 +11369,7 @@
                     adminGrubu.appendChild(menuOgesi('✉️', 'Fotoğrafları E-Postala & Temizle', '#ea580c', function () {
                         toggleMenu(); fotograflariEpostalaVeTemizle();
                     }));
-                    adminGrubu.appendChild(menuOgesi('🟢', 'Survey', null, function () {
-                        toggleMenu();
-                        window.open('toplu_survey_yukle.html', '_blank');
-                    }));
+
                     adminGrubu.appendChild(menuOgesi('🗑️', 'Eski Logları Temizle', '#ef4444', function () {
                         eskiLoglariTemizle();
                     }));
@@ -12696,14 +12684,19 @@
             el = document.getElementById('dashOrt');
             if (el) el.innerText = ort;
 
+            // Bind values to Genel İstatistikler Modal elements
+            el = document.getElementById('modalDashTuzakSayi');
+            if (el) el.innerText = toplamTuzak;
+            el = document.getElementById('modalDashBocekSayi');
+            if (el) el.innerText = toplamBocek;
+            el = document.getElementById('modalDashEnYogun');
+            if (el) el.innerText = enYogunIlce;
+            el = document.getElementById('modalDashOrt');
+            if (el) el.innerText = ort;
+
             var dash = document.getElementById('dashboardCards');
             if (dash) {
-                if (toplamTuzak > 0) {
-                    var isMobile = window.innerWidth <= 768;
-                    dash.style.display = isMobile ? 'grid' : 'flex';
-                } else {
-                    dash.style.display = 'none';
-                }
+                dash.style.display = 'none';
             }
 
             if (!window.otomatikRaporKontrolEdildi && toplamTuzak > 0) {
