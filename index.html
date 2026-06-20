@@ -2101,6 +2101,7 @@
                             <th style="padding: 12px; text-align: left; font-size: 13px;">Kullanıcı</th>
                             <th style="padding: 12px; text-align: left; font-size: 13px;">İlçe</th>
                             <th style="padding: 12px; text-align: left; font-size: 13px;">Giriş Zamanı</th>
+                            <th style="padding: 12px; text-align: left; font-size: 13px;">Çıkış Zamanı</th>
                             <th style="padding: 12px; text-align: center; font-size: 13px;">Süre</th>
                             <th style="padding: 12px; text-align: center; font-size: 13px;">Durum</th>
                         </tr>
@@ -3191,7 +3192,11 @@
                 <span class="close-btn" style="color: #64748b; cursor: pointer; font-size: 24px; line-height: 1;" onclick="kapatSistemParametreleriModal()">&times;</span>
             </div>
             <div style="background: linear-gradient(135deg, rgba(234, 88, 12, 0.08), rgba(249, 115, 22, 0.08)); border: 1px solid rgba(234, 88, 12, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 12px; color: #ea580c;">
-                🛠️ Bu ekrandan sistem genelindeki kritik parametreleri güncelleyebilirsiniz. Yapılan değişiklikler tüm saha personeli için anında geçerli olacaktır.
+                🛠️ Bu ekrandan her kayıt modülü için aktif takip sezonunu ve konum doğrulama limitini ayrı ayrı ayarlayabilirsiniz.
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:13px; display: block; margin-bottom: 6px;">Uygulanacak Kayıt Modülü</label>
+                <select id="spModulSelect" class="form-control" onchange="degiskenModulParametreleriniYukle()" style="width: 100%; height: 38px; border-radius: 6px; border: 1px solid var(--border-glass); font-weight: 600; padding: 0 10px;"></select>
             </div>
             <div class="form-group">
                 <label style="font-weight:700; font-size:13px;">Aktif Sezon Başlangıcı (Gün.Ay)</label>
@@ -3986,6 +3991,11 @@
 
         // Global Variables
         var sistemParametreleri = {
+            "genel": {
+                sezonBaslangic: "01.04",
+                sezonBitis: "31.10",
+                konumLimitMetre: 50
+            },
             sezonBaslangic: "01.04",
             sezonBitis: "31.10",
             konumLimitMetre: 50
@@ -4414,16 +4424,37 @@
                 }
             }
 
-            db.collection("ayarlar").doc("sistem_parametreleri").get().then(function (doc) {
-                if (doc.exists) {
-                    var data = doc.data();
-                    if (data) {
-                        sistemParametreleri.sezonBaslangic = data.sezonBaslangic || "01.04";
-                        sistemParametreleri.sezonBitis = data.sezonBitis || "31.10";
-                        sistemParametreleri.konumLimitMetre = parseInt(data.konumLimitMetre) || 50;
-                        localStorage.setItem("sistemParametreleri", JSON.stringify(sistemParametreleri));
-                    }
+            db.collection("ayarlar").get().then(function (querySnapshot) {
+                if (!sistemParametreleri["genel"]) {
+                    sistemParametreleri["genel"] = {
+                        sezonBaslangic: "01.04",
+                        sezonBitis: "31.10",
+                        konumLimitMetre: 50
+                    };
                 }
+
+                querySnapshot.forEach(function (doc) {
+                    var docId = doc.id;
+                    if (docId === "sistem_parametreleri") {
+                        sistemParametreleri["genel"] = {
+                            sezonBaslangic: doc.data().sezonBaslangic || "01.04",
+                            sezonBitis: doc.data().sezonBitis || "31.10",
+                            konumLimitMetre: parseInt(doc.data().konumLimitMetre) || 50
+                        };
+                        sistemParametreleri.sezonBaslangic = doc.data().sezonBaslangic || "01.04";
+                        sistemParametreleri.sezonBitis = doc.data().sezonBitis || "31.10";
+                        sistemParametreleri.konumLimitMetre = parseInt(doc.data().konumLimitMetre) || 50;
+                    } else if (docId.startsWith("sistem_parametreleri_")) {
+                        var modId = docId.replace("sistem_parametreleri_", "");
+                        sistemParametreleri[modId] = {
+                            sezonBaslangic: doc.data().sezonBaslangic || "01.04",
+                            sezonBitis: doc.data().sezonBitis || "31.10",
+                            konumLimitMetre: parseInt(doc.data().konumLimitMetre) || 50
+                        };
+                    }
+                });
+
+                localStorage.setItem("sistemParametreleri", JSON.stringify(sistemParametreleri));
                 if (callback) callback();
             }).catch(function (err) {
                 console.warn("Sistem parametreleri yüklenirken hata oluştu (çevrimdışı olabilir):", err);
@@ -4437,11 +4468,34 @@
                 return;
             }
             toggleMenu();
-            document.getElementById("spSezonBaslangic").value = sistemParametreleri.sezonBaslangic || "01.04";
-            document.getElementById("spSezonBitis").value = sistemParametreleri.sezonBitis || "31.10";
-            document.getElementById("spKonumLimitMetre").value = sistemParametreleri.konumLimitMetre || 50;
+
+            var select = document.getElementById("spModulSelect");
+            if (select) {
+                select.innerHTML = '<option value="genel">Genel Varsayılan Parametreler</option>';
+                tumModuller.forEach(function (m) {
+                    var option = document.createElement("option");
+                    option.value = m.id;
+                    option.innerText = m.ad || m.id;
+                    select.appendChild(option);
+                });
+                select.value = "genel";
+            }
+
+            degiskenModulParametreleriniYukle();
 
             document.getElementById("sistemParametreleriModal").classList.add("active");
+        }
+
+        function degiskenModulParametreleriniYukle() {
+            var seciliId = document.getElementById("spModulSelect").value;
+            var veri = sistemParametreleri[seciliId] || sistemParametreleri["genel"] || {
+                sezonBaslangic: "01.04",
+                sezonBitis: "31.10",
+                konumLimitMetre: 50
+            };
+            document.getElementById("spSezonBaslangic").value = veri.sezonBaslangic || "01.04";
+            document.getElementById("spSezonBitis").value = veri.sezonBitis || "31.10";
+            document.getElementById("spKonumLimitMetre").value = veri.konumLimitMetre || 50;
         }
 
         function kapatSistemParametreleriModal() {
@@ -4454,6 +4508,7 @@
                 return;
             }
 
+            var seciliId = document.getElementById("spModulSelect").value;
             var baslangic = document.getElementById("spSezonBaslangic").value.trim();
             var bitis = document.getElementById("spSezonBitis").value.trim();
             var limitVal = parseInt(document.getElementById("spKonumLimitMetre").value);
@@ -4479,14 +4534,19 @@
                 guncelleyen: aktifKullanici.adSoyad
             };
 
-            db.collection("ayarlar").doc("sistem_parametreleri").set(guncelParam).then(function () {
-                sistemParametreleri.sezonBaslangic = baslangic;
-                sistemParametreleri.sezonBitis = bitis;
-                sistemParametreleri.konumLimitMetre = limitVal;
+            var docId = (seciliId === "genel") ? "sistem_parametreleri" : "sistem_parametreleri_" + seciliId;
+
+            db.collection("ayarlar").doc(docId).set(guncelParam).then(function () {
+                sistemParametreleri[seciliId] = guncelParam;
+                if (seciliId === "genel") {
+                    sistemParametreleri.sezonBaslangic = baslangic;
+                    sistemParametreleri.sezonBitis = bitis;
+                    sistemParametreleri.konumLimitMetre = limitVal;
+                }
                 localStorage.setItem("sistemParametreleri", JSON.stringify(sistemParametreleri));
                 
-                alert("Sistem parametreleri başarıyla güncellendi.");
-                logEkle("Sistem Parametreleri Güncellendi", "Başlangıç: " + baslangic + ", Bitiş: " + bitis + ", Konum Limiti: " + limitVal + "m");
+                alert("Parametreler başarıyla güncellendi.");
+                logEkle("Sistem Parametreleri Güncellendi", "Modül: " + seciliId + ", Başlangıç: " + baslangic + ", Bitiş: " + bitis + ", Konum Limiti: " + limitVal + "m");
                 kapatSistemParametreleriModal();
             }).catch(function (error) {
                 alert("Parametreler kaydedilirken hata oluştu: " + error.message);
@@ -9988,7 +10048,15 @@
                             var userLat = position.coords.latitude;
                             var userLng = position.coords.longitude;
                             var distance = hesaplaMesafe(userLat, userLng, parseFloat(data.lat), parseFloat(data.lng));
-                            var limitMetre = (sistemParametreleri && sistemParametreleri.konumLimitMetre) ? sistemParametreleri.konumLimitMetre : 50;
+                            var currentModId = (typeof aktifModul !== 'undefined' && aktifModul && aktifModul.id) ? aktifModul.id : "kahverengi_kokarca";
+                            var limitMetre = 50;
+                            if (sistemParametreleri && sistemParametreleri[currentModId] && sistemParametreleri[currentModId].konumLimitMetre !== undefined) {
+                                limitMetre = sistemParametreleri[currentModId].konumLimitMetre;
+                            } else if (sistemParametreleri && sistemParametreleri["genel"] && sistemParametreleri["genel"].konumLimitMetre !== undefined) {
+                                limitMetre = sistemParametreleri["genel"].konumLimitMetre;
+                            } else if (sistemParametreleri && sistemParametreleri.konumLimitMetre !== undefined) {
+                                limitMetre = sistemParametreleri.konumLimitMetre;
+                            }
 
                             if (distance > limitMetre) {
                                 var roundedDist = Math.round(distance);
@@ -11912,7 +11980,7 @@
         function guncelleOturumGecmisiTablosu() {
             var tbody = document.getElementById("oturumGecmisiTabloGovde");
             var toplamTxt = document.getElementById("oturumToplamTxt");
-            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding: 20px; color: var(--text-muted);'>Yükleniyor...</td></tr>";
 
             var filtreGun = parseInt(document.getElementById("oturumFiltreGun").value) || 3;
             var baslangic = new Date();
@@ -11928,7 +11996,7 @@
                     tbody.innerHTML = "";
 
                     if (querySnapshot.empty) {
-                        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--text-muted);'>Bu tarih aralığında oturum kaydı bulunamadı.</td></tr>";
+                        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding: 20px; color: var(--text-muted);'>Bu tarih aralığında oturum kaydı bulunamadı.</td></tr>";
                         if (toplamTxt) toplamTxt.innerText = "0 oturum";
                         return;
                     }
@@ -11945,6 +12013,18 @@
                         var girisStr = oturum.girisZamaniStr || "-";
                         if (girisStr === "-" && oturum.girisZamani && typeof oturum.girisZamani.toDate === 'function') {
                             girisStr = oturum.girisZamani.toDate().toLocaleString('tr-TR');
+                        }
+
+                        // Çıkış zamanı
+                        var cikisStr = "-";
+                        if (oturum.aktif) {
+                            cikisStr = "<span style='color:#10b981; font-weight:600;'>Aktif Oturum</span>";
+                        } else if (oturum.cikisZamaniStr) {
+                            cikisStr = oturum.cikisZamaniStr;
+                        } else if (oturum.cikisZamani && typeof oturum.cikisZamani.toDate === 'function') {
+                            cikisStr = oturum.cikisZamani.toDate().toLocaleString('tr-TR');
+                        } else if (oturum.sonAktiflik && typeof oturum.sonAktiflik.toDate === 'function') {
+                            cikisStr = oturum.sonAktiflik.toDate().toLocaleString('tr-TR') + " (Aktiflik)";
                         }
 
                         // Süre hesapla
@@ -12004,6 +12084,7 @@
                             "<td style='padding: 10px; font-size:13px; font-weight:600;'>" + (oturum.kullanici || "Bilinmiyor") + "<br><span style='font-size:10px; color:var(--text-muted); font-weight:400;'>" + (oturum.rol || "") + "</span></td>" +
                             "<td style='padding: 10px; font-size:12px; color:var(--text-muted);'>" + (oturum.ilce || "-") + "</td>" +
                             "<td style='padding: 10px; font-size:12px; color:var(--text-dark); white-space:nowrap;'>" + girisStr + "</td>" +
+                            "<td style='padding: 10px; font-size:12px; color:var(--text-dark); white-space:nowrap;'>" + cikisStr + "</td>" +
                             "<td style='padding: 10px; text-align:center; font-size:13px; font-weight:700; color:" + (oturum.aktif ? "var(--primary)" : "var(--text-dark)") + ";'>" + sureStr + "</td>" +
                             "<td style='padding: 10px; text-align:center;'>" + durumHtml + "</td>";
                         tbody.appendChild(tr);
@@ -12012,7 +12093,7 @@
                     if (toplamTxt) toplamTxt.innerText = oturumSayisi + " oturum kaydı";
                 })
                 .catch(function (err) {
-                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
+                    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding: 20px; color: var(--danger);'>Hata: " + err.message + "</td></tr>";
                 });
         }
 
