@@ -366,14 +366,17 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
                         <button id="correctExcelBtn" class="btn" disabled>
-                            🛠️ Koordinatları Düzelt & Excel İndir
+                            🛠️ Sadece Koordinatları Düzelt & İndir
                         </button>
                         <button id="syncDbBtn" class="btn btn-blue" disabled>
                             🚀 Sayımları Veritabanına Eşitle
                         </button>
                     </div>
+                    <button id="writeAllToExcelBtn" class="btn" style="background: #0284c7; width: 100%; font-size: 14.5px; font-weight: 700; border-radius: 10px; margin-top: 5px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);" disabled>
+                        📝 Tüm Verileri (Koordinat + Sayım) Excel'e Yaz & İndir
+                    </button>
 
                     <div class="progress-container" id="progressBarContainer">
                         <div class="progress-bar" id="progressBar"></div>
@@ -956,6 +959,7 @@
             // Enable Buttons
             document.getElementById("correctExcelBtn").disabled = false;
             document.getElementById("syncDbBtn").disabled = false;
+            document.getElementById("writeAllToExcelBtn").disabled = false;
             
             showStatus(`Excel dosyası başarıyla yüklendi. Toplam ${matchedResults.length} satırdan veritabanı ile eşleşenler listelendi.`, "success");
         }
@@ -1141,7 +1145,6 @@
                             };
                         });
 
-                        // Update Firestore
                         await docRef.update({
                             kayitlar: sanitizedVisits,
                             bocekSayisi: latestVisit.bocekSayisi !== undefined ? latestVisit.bocekSayisi : 0,
@@ -1169,14 +1172,145 @@
             document.getElementById("syncDbBtn").disabled = false;
             document.getElementById("correctExcelBtn").disabled = false;
             
-            // Reload DB traps in background
             fetchDbTraps();
         });
 
-        // OPTION 3: DIRECT EXPORT FROM DATABASE
+        // OPTION 1B: WRITE ALL DATA (GPS + COUNTS) TO UPLOADED EXCEL TEMPLATE
+        document.getElementById("writeAllToExcelBtn").addEventListener("click", function() {
+            if (!workbook || matchedResults.length === 0) return;
+
+            showStatus("Tüm veriler (koordinat ve sayımlar) Excel dosyasına yazılıyor...", "blue");
+            showLog("⚙️ Excel tüm veri yazma işlemi başladı...");
+
+            var sheetName = workbook.SheetNames.find(n => n.includes("2026")) || workbook.SheetNames[0];
+            var ws = workbook.Sheets[sheetName];
+
+            var range = XLSX.utils.decode_range(ws['!ref']);
+            var gpsColIndex = -1;
+            var dateColMap = {}; // mapping dateStr -> colIndex
+
+            // Scan headers to locate columns
+            for (let c = range.s.c; c <= range.e.c; c++) {
+                for (let r = 0; r <= 30; r++) {
+                    let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                    if (ws[ref] && ws[ref].v) {
+                        let valStr = normalizeString(ws[ref].v);
+                        if (valStr === "gps" || valStr === "koordinat") {
+                            gpsColIndex = c;
+                        } else if (isDateCell(ws[ref].v)) {
+                            let dateStr = parseTurkishMonthDate(ws[ref].v) || String(ws[ref].v).trim();
+                            dateColMap[dateStr] = c;
+                        }
+                    }
+                }
+            }
+
+            if (gpsColIndex === -1) {
+                showLog("🚨 Hata: GPS Sütun indeksi bulunamadı.");
+                showStatus("Excel'de 'GPS' sütunu bulunamadı!", "danger");
+                return;
+            }
+
+            showLog(`📍 Bulunan GPS Sütun İndeksi: Kolon ${XLSX.utils.encode_col(gpsColIndex)}`);
+            showLog(`📅 Bulunan Tarih Sütun Haritası: ${JSON.stringify(Object.keys(dateColMap))}`);
+
+            var updatedCount = 0;
+
+            // Update cells
+            matchedResults.forEach(res => {
+                if (res.status === "success" && res.matchedTrap) {
+                    var rIdx = res.rowIndex - 1;
+
+                    // 1. Update GPS Cell
+                    var gpsCellRef = XLSX.utils.encode_cell({ r: rIdx, c: gpsColIndex });
+                    var correctGps = `${res.matchedTrap.lat}, ${res.matchedTrap.lng}`;
+                    ws[gpsCellRef] = { t: 's', v: correctGps };
+
+                    // 2. Update Date columns from database visits
+                    Object.keys(dateColMap).forEach(dateStr => {
+                        let cIdx = dateColMap[dateStr];
+                        let dateCellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
+                        
+                        // Find visit in database trap records
+                        var dbVisit = res.matchedTrap.kayitlar ? res.matchedTrap.kayitlar.find(v => v.tarih.trim() === dateStr.trim()) : null;
+                        if (dbVisit) {
+                            if (dbVisit.gozlemNotu && dbVisit.gozlemNotu.toLowerCase().includes("asildi")) {
+                                ws[dateCellRef] = { t: 's', v: "Tuzaklar Asıldı" };
+                            } else {
+                                ws[dateCellRef] = { t: 'n', v: dbVisit.bocekSayisi };
+                            }
+                        } else {
+                            ws[dateCellRef] = { t: 's', v: "" };
+                        }
+                    });
+
+                    updatedCount++;
+                }
+            });
+
+            showLog(`✅ Excel dosyasında toplam ${updatedCount} satırın koordinat ve sayım verileri veritabanından güncellendi.`);
+            
+            // Download file
+            showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
+            XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
+            showStatus("🎉 Güncel Verilerle Doldurulmuş Excel Dosyası İndirildi!", "success");
+            showLog("💾 Dosya başarıyla indirildi.");
+        });
+
+        // Helper to generate simple excel format
+        function generateSimpleExcel(traps, exportStatus) {
+            var dateSet = new Set();
+            traps.forEach(t => {
+                if (t.kayitlar) {
+                    t.kayitlar.forEach(v => {
+                        if (v.tarih && /^\d{2}\.\d{2}\.\d{4}$/.test(v.tarih)) {
+                            dateSet.add(v.tarih.trim());
+                        }
+                    });
+                }
+            });
+
+            var sortedDates = Array.from(dateSet).sort((a, b) => {
+                let pA = a.split('.');
+                let pB = b.split('.');
+                return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
+            });
+
+            var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "KONUKÇU", ...sortedDates];
+            var rows = [headers];
+
+            traps.forEach(t => {
+                var gpsStr = `${t.lat}, ${t.lng}`;
+                var row = ["Rize", t.ilce, t.koy || t.ad, gpsStr, t.tuzakBitkiTuru || "Fındık"];
+                
+                sortedDates.forEach(date => {
+                    var v = t.kayitlar ? t.kayitlar.find(visit => visit.tarih.trim() === date) : null;
+                    if (v) {
+                        if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
+                            row.push("Tuzaklar Asıldı");
+                        } else {
+                            row.push(v.bocekSayisi);
+                        }
+                    } else {
+                        row.push(""); 
+                    }
+                });
+                rows.push(row);
+            });
+
+            var ws = XLSX.utils.aoa_to_sheet(rows);
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "2026 Sürvey Verileri");
+
+            XLSX.writeFile(wb, "2026_SURVEY_VERITABANI_KAYITLARI.xlsx");
+            
+            exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Başarılı! Toplam ${traps.length} adet tuzağın sayımları güncel Excel olarak indirildi.</span>`;
+        }
+
+        // OPTION 3: DIRECT EXPORT FROM DATABASE (Uses official Ministry template if available)
         document.getElementById("directExportBtn").addEventListener("click", async function() {
             var exportStatus = document.getElementById("exportStatusTxt");
-            exportStatus.innerHTML = '<span style="color:#2563eb;">Veriler sorgulanıyor, Excel şablonu oluşturuluyor...</span>';
+            exportStatus.innerHTML = '<span style="color:#2563eb;">Şablon yükleniyor ve veriler dolduruluyor...</span>';
             document.getElementById("directExportBtn").disabled = true;
 
             try {
@@ -1185,9 +1319,7 @@
                 var traps = [];
                 snapshot.forEach(doc => {
                     var data = doc.data();
-                    // Keep 2026 survey traps. Sürvey has Rize geographic region, excludes Merkez and Güneysu
                     if (data.il === "Rize" && data.ilce !== "Merkez" && data.ilce !== "Güneysu") {
-                        // Sürvey tuzakNos generally have SURVEY or are parsed as survey
                         if (data.tuzakNo && (data.tuzakNo.includes("SURVEY") || data.tuzakNo.startsWith("2026-"))) {
                             traps.push(data);
                         } else if (data.kayitlar && data.kayitlar.some(v => v.tarih.includes("2026"))) {
@@ -1202,7 +1334,7 @@
                     return;
                 }
 
-                // Compile and sort dates
+                // Compile and sort dates for simple fallback
                 var dateSet = new Set();
                 traps.forEach(t => {
                     if (t.kayitlar) {
@@ -1213,45 +1345,148 @@
                         });
                     }
                 });
-
                 var sortedDates = Array.from(dateSet).sort((a, b) => {
                     let pA = a.split('.');
                     let pB = b.split('.');
                     return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
                 });
 
-                // Excel AOA structure
-                var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "KONUKÇU", ...sortedDates];
-                var rows = [headers];
-
-                // Populate trap rows
-                traps.forEach(t => {
-                    var gpsStr = `${t.lat}, ${t.lng}`;
-                    var row = ["Rize", t.ilce, t.koy || t.ad, gpsStr, t.tuzakBitkiTuru || "Fındık"];
-                    
-                    sortedDates.forEach(date => {
-                        var v = t.kayitlar ? t.kayitlar.find(visit => visit.tarih.trim() === date) : null;
-                        if (v) {
-                            // If first visit note is tuzak asıldı, write it, otherwise write bugCount
-                            if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
-                                row.push("Tuzaklar Asıldı");
-                            } else {
-                                row.push(v.bocekSayisi);
-                            }
-                        } else {
-                            row.push(""); // empty
-                        }
-                    });
-                    rows.push(row);
-                });
-
-                var ws = XLSX.utils.aoa_to_sheet(rows);
-                var wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "2026 Sürvey Verileri");
-
-                XLSX.writeFile(wb, "2026_SURVEY_VERITABANI_KAYITLARI.xlsx");
+                // Try to load the official ministry template via fetch
+                var useTemplate = false;
+                var wb = null;
                 
-                exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Başarılı! Toplam ${traps.length} adet tuzağın sayımları güncel Excel olarak indirildi.</span>`;
+                try {
+                    var response = await fetch('veri/2026%20SURVEY%20KAYIT%20FORMU.xlsx');
+                    if (response.ok) {
+                        var arrayBuffer = await response.arrayBuffer();
+                        wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+                        useTemplate = true;
+                        showLog("✅ Bakanlık Excel Şablonu sunucudan başarıyla yüklendi. Veriler dolduruluyor...");
+                    }
+                } catch(e) {
+                    console.warn("Şablon yükleme CORS/erişim engeline takıldı:", e);
+                }
+
+                if (useTemplate && wb) {
+                    // Update template workbook in memory
+                    var sheetName = wb.SheetNames.find(n => n.includes("2026")) || wb.SheetNames[0];
+                    var ws = wb.Sheets[sheetName];
+                    var range = XLSX.utils.decode_range(ws['!ref']);
+                    
+                    // Scan headers to locate columns
+                    var ilceColIndex = -1;
+                    var koyColIndex = -1;
+                    var gpsColIndex = -1;
+                    var plantColIndex = -1;
+                    var dateColMap = {}; // mapping dateStr -> colIndex
+
+                    // Scan first 30 rows for headers
+                    for (let c = range.s.c; c <= range.e.c; c++) {
+                        for (let r = 0; r <= 30; r++) {
+                            let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                            if (ws[ref] && ws[ref].v) {
+                                let valStr = normalizeString(ws[ref].v);
+                                if (valStr === "ilce" || valStr === "ilçe") ilceColIndex = c;
+                                else if (valStr === "lokasyon" || valStr.includes("koy") || valStr.includes("köy") || valStr === "mahalle") koyColIndex = c;
+                                else if (valStr === "gps" || valStr === "koordinat") gpsColIndex = c;
+                                else if (valStr === "konukcu" || valStr === "konukçu") plantColIndex = c;
+                                else if (isDateCell(ws[ref].v)) {
+                                    let dateStr = parseTurkishMonthDate(ws[ref].v) || String(ws[ref].v).trim();
+                                    dateColMap[dateStr] = c;
+                                }
+                            }
+                        }
+                    }
+
+                    if (ilceColIndex === -1 || koyColIndex === -1 || gpsColIndex === -1) {
+                        throw new Error("Şablonda İLÇE, LOKASYON veya GPS sütunları bulunamadı.");
+                    }
+
+                    // Find headerRowIndex
+                    var headerRowIndex = 25; // default common row in this file
+                    for (let r = 0; r <= 30; r++) {
+                        let ref1 = XLSX.utils.encode_cell({ r: r, c: ilceColIndex });
+                        let ref2 = XLSX.utils.encode_cell({ r: r, c: koyColIndex });
+                        if (ws[ref1] && ws[ref2]) {
+                            headerRowIndex = r;
+                            break;
+                        }
+                    }
+
+                    var updatedRowsCount = 0;
+
+                    for (let r = headerRowIndex + 1; r <= range.e.r; r++) {
+                        let ilceCellRef = XLSX.utils.encode_cell({ r: r, c: ilceColIndex });
+                        let koyCellRef = XLSX.utils.encode_cell({ r: r, c: koyColIndex });
+                        let plantCellRef = plantColIndex !== -1 ? XLSX.utils.encode_cell({ r: r, c: plantColIndex }) : null;
+
+                        if (!ws[ilceCellRef] || !ws[koyCellRef]) continue;
+
+                        let excelIlce = String(ws[ilceCellRef].v).trim();
+                        let excelKoy = String(ws[koyCellRef].v).trim();
+                        let excelPlant = plantCellRef && ws[plantCellRef] ? String(ws[plantCellRef].v).trim() : "";
+
+                        if (!excelIlce || !excelKoy) continue;
+
+                        let matchedKoy = findMatchingKoy(excelIlce, excelKoy);
+                        let formattedPlant = formatHostPlant(excelPlant);
+
+                        // Find trap
+                        let matchedTrap = traps.find(t => {
+                            let normDbIlce = normalizeString(t.ilce);
+                            let normExcelIlce = normalizeString(excelIlce);
+                            if (normDbIlce !== normExcelIlce) return false;
+
+                            let normDbKoy = normalizeString(t.koy || t.ad);
+                            let normExcelKoy = normalizeString(matchedKoy || excelKoy);
+                            if (normDbKoy !== normExcelKoy) return false;
+
+                            if (formattedPlant !== "Belirtilmedi") {
+                                return normalizeString(t.tuzakBitkiTuru) === normalizeString(formattedPlant);
+                            }
+                            return true;
+                        });
+
+                        // Fallback match
+                        if (!matchedTrap && matchedKoy) {
+                            matchedTrap = traps.find(t => {
+                                return normalizeString(t.ilce) === normalizeString(excelIlce) &&
+                                       normalizeString(t.koy || t.ad) === normalizeString(matchedKoy);
+                            });
+                        }
+
+                        if (matchedTrap) {
+                            // Update GPS cell
+                            let gpsCellRef = XLSX.utils.encode_cell({ r: r, c: gpsColIndex });
+                            ws[gpsCellRef] = { t: 's', v: `${matchedTrap.lat}, ${matchedTrap.lng}` };
+
+                            // Update Dates cells
+                            Object.keys(dateColMap).forEach(dateStr => {
+                                let cIndex = dateColMap[dateStr];
+                                let dateCellRef = XLSX.utils.encode_cell({ r: r, c: cIndex });
+                                let v = matchedTrap.kayitlar ? matchedTrap.kayitlar.find(visit => visit.tarih.trim() === dateStr) : null;
+                                if (v) {
+                                    if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
+                                        ws[dateCellRef] = { t: 's', v: "Tuzaklar Asıldı" };
+                                    } else {
+                                        ws[dateCellRef] = { t: 'n', v: v.bocekSayisi };
+                                    }
+                                } else {
+                                    ws[dateCellRef] = { t: 's', v: "" };
+                                }
+                            });
+                            updatedRowsCount++;
+                        }
+                    }
+
+                    XLSX.writeFile(wb, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
+                    exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Bakanlık şablonu veritabanındaki ${updatedRowsCount} adet sürvey tuzağının güncel koordinatları ve sayımları ile doldurularak başarıyla indirildi.</span>`;
+                } else {
+                    // Fallback to simple format if template load fails
+                    showLog("⚠️ Bakanlık şablonu doğrudan yüklenemedi (Yerel dosya kısıtlaması). Basit formatta dosya oluşturuluyor...");
+                    generateSimpleExcel(traps, exportStatus);
+                }
+
             } catch (err) {
                 exportStatus.innerHTML = `<span style="color:#dc2626;">İndirme hatası: ${err.message}</span>`;
             }
