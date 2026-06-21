@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Code Searcher</title>
+</head>
+<body>
+    <h2>Code Searcher</h2>
+    <input type="text" id="query" value="excelRaporuIndir" style="width: 300px; padding: 6px;" />
+    <button onclick="search()">Search</button>
+    <pre id="output">Results will appear here...</pre>
+
+    <script>
+        async function search() {
+            var q = document.getElementById('query').value;
+            var out = "Searching for: " + q + "\n\n";
+            try {
+                const response = await fetch('index.html');
+                const text = await response.text();
+                const lines = text.split('\n');
+                let matchCount = 0;
+                lines.forEach((line, idx) => {
+                    if (line.toLowerCase().includes(q.toLowerCase())) {
+                        matchCount++;
+                        out += `Line ${idx + 1}: ${line.trim()}\n`;
+                    }
+                });
+                out += `\nFound ${matchCount} matches.\n`;
+            } catch(e) {
+                out += "Error: " + e.message + "\n";
+            }
+            document.getElementById('output').innerText = out;
+        }
+        search();
+    </script>
+</body>
+</html>

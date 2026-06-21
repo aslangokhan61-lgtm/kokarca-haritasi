@@ -1319,7 +1319,7 @@
                 var traps = [];
                 snapshot.forEach(doc => {
                     var data = doc.data();
-                    if (data.il === "Rize" && data.ilce !== "Merkez" && data.ilce !== "Güneysu") {
+                    if (data.il === "Rize" && data.tuzakTipi === "Yapışkan") {
                         if (data.tuzakNo && (data.tuzakNo.includes("SURVEY") || data.tuzakNo.startsWith("2026-"))) {
                             traps.push(data);
                         } else if (data.kayitlar && data.kayitlar.some(v => v.tarih.includes("2026"))) {
