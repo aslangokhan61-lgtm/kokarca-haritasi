@@ -2701,6 +2701,7 @@
                     <select id="tuzakBitkiTuru" class="form-control">
                         <option value="Fındık" selected>🌳 Fındık</option>
                         <option value="Turunçgil">🍊 Turunçgil</option>
+                        <option value="Mandalina">🍊 Mandalina</option>
                         <option value="Kivi">🥝 Kivi</option>
                         <option value="Elma">🍎 Elma</option>
                         <option value="Mısır">🌽 Mısır</option>
@@ -2709,7 +2710,10 @@
                         <option value="İncir">🌳 İncir</option>
                         <option value="Dut">🌳 Dut</option>
                         <option value="Kiraz">🍒 Kiraz</option>
+                        <option value="Erik">🍑 Erik</option>
+                        <option value="Armut">🍐 Armut</option>
                         <option value="Kızılağaç">🌳 Kızılağaç</option>
+                        <option value="Kestane">🌰 Kestane</option>
                         <option value="Hurma">🍊 Trabzon Hurması</option>
                         <option value="Yenidünya">🍊 Yenidünya</option>
                         <option value="Muşmula">🤎 Muşmula</option>
@@ -2763,16 +2767,20 @@
                     <label>Bahçe Türü (Ürün)</label>
                     <select id="bahceUrunTuru" class="form-control">
                         <option value="Elma">🍎 Elma Bahçesi</option>
+                        <option value="Armut">🍐 Armut Bahçesi</option>
+                        <option value="Erik">🍑 Erik Bahçesi</option>
                         <option value="Kivi" selected>🥝 Kivi Bahçesi</option>
                         <option value="Maviyemiş">🫐 Maviyemiş Bahçesi</option>
                         <option value="Mısır">🌽 Mısır Tarlası</option>
                         <option value="Karalahana">🥬 Karalahana Bahçesi</option>
                         <option value="Turunçgil">🍊 Turunçgil Bahçesi</option>
+                        <option value="Mandalina">🍊 Mandalina Bahçesi</option>
                         <option value="Üzüm">🍇 Üzüm Bağı</option>
                         <option value="İncir">🌳 İncir Bahçesi</option>
                         <option value="Dut">🌳 Dut Bahçesi</option>
                         <option value="Kiraz">🍒 Kiraz Bahçesi</option>
                         <option value="Kızılağaç">🌳 Kızılağaç Bahçesi</option>
+                        <option value="Kestane">🌰 Kestane Bahçesi</option>
                         <option value="Hurma">🍊 Trabzon Hurması Bahçesi</option>
                         <option value="Yenidünya">🍊 Yenidünya Bahçesi</option>
                         <option value="Muşmula">🤎 Muşmula Bahçesi</option>
@@ -4829,7 +4837,10 @@
                     "İncir": "🌳",
                     "Dut": "🌳",
                     "Kiraz": "🍒",
+                    "Erik": "🍑",
+                    "Armut": "🍐",
                     "Kızılağaç": "🌳",
+                    "Kestane": "🌰",
                     "Hurma": "🍊",
                     "Yenidünya": "🍊",
                     "Muşmula": "🤎",
@@ -5226,6 +5237,10 @@
 
                     if (gData.fotograf) {
                         popupIcerik += "<div style='margin: 8px 0; text-align: center;'><img src='" + gData.fotograf + "' style='max-height: 80px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; max-width: 100%;' onclick='acTamResimModal(\"" + gData.fotograf + "\")' title='Görseli büyütmek için tıklayın'></div>";
+                    }
+
+                    if (gData.rakim !== undefined && gData.rakim !== null && gData.rakim !== "") {
+                        popupIcerik += "<b>Rakım:</b> " + gData.rakim + " m<br>";
                     }
 
                     popupIcerik += "<hr style='margin:5px 0;'/>";
@@ -6039,7 +6054,7 @@
                     `;
                 }
             } else if (m.kategori === "Meyve ve Sebze Bahçeleri") {
-                var meyveler = ["Fındık", "Turunçgil", "Kivi", "Elma", "Mısır", "Karalahana", "Üzüm", "İncir", "Dut", "Kiraz", "Kızılağaç", "Hurma", "Yenidünya", "Muşmula"];
+                var meyveler = ["Fındık", "Turunçgil", "Mandalina", "Kivi", "Elma", "Mısır", "Karalahana", "Üzüm", "İncir", "Dut", "Kiraz", "Erik", "Armut", "Kızılağaç", "Kestane", "Hurma", "Yenidünya", "Muşmula"];
                 meyveler.forEach(function (meyve) {
                     tipDropdown.innerHTML += '<option value="' + meyve + '">' + meyve + '</option>';
                 });
@@ -7325,7 +7340,8 @@
                     tupSayisi: data.tupSayisi || 0,
                     ariYumurtaPaketSayisi: data.ariYumurtaPaketSayisi || 0,
                     ariParazitlenmeDurumu: data.ariParazitlenmeDurumu || '-',
-                    kislakHaneSayisi: data.kislakHaneSayisi || 0
+                    kislakHaneSayisi: data.kislakHaneSayisi || 0,
+                    rakim: (data.rakim !== undefined && data.rakim !== null && data.rakim !== "") ? data.rakim : '-'
                 });
             }
 
@@ -7353,7 +7369,7 @@
             if (kat === "Tarımsal Hastalık ve Zararlılar") {
                 s1Data.push([
                     'Sıra No', 'İlçe', 'Köy/Mahalle', 'Tuzak No/Salım No', 'Tuzak Çeşidi',
-                    'Ondalık Koordinat', 'DMS Koordinat', 'Bulunduğu Bitki Türü',
+                    'Ondalık Koordinat', 'DMS Koordinat', 'Rakım (m)', 'Bulunduğu Bitki Türü',
                     'Feromon Etki Alanı (da)', 'Feromon İlk Asılı Tarih',
                     'Salınan Tüp Sayısı', 'Tespit Edilen Yumurta Paket Sayısı',
                     'Parazitlenme Durumu', 'Uygulama Yapılan Hane Sayısı'
@@ -7369,6 +7385,7 @@
                         ts.tuzakTipi,
                         ts.ondalik,
                         ts.dms,
+                        ts.rakim,
                         (!isSamuray && !isKislak) ? ts.tuzakBitkiTuru : '-',
                         (!isSamuray && !isKislak) ? ts.tuzakEtkiAlani : '-',
                         (!isSamuray && !isKislak) ? ts.tuzakİlkAsiliTarih : '-',
@@ -7380,7 +7397,7 @@
                 });
             } else if (kat === "Meyve ve Sebze Bahçeleri") {
                 sheet1Name = "Bahçe Listesi";
-                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Bahçe Alanı (m²)', 'Ağaç/Bitki Sayısı', 'Ondalık Koordinat', 'DMS Koordinat']);
+                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Bahçe Sahibi/Adı', 'Ürün Türü', 'Bahçe Alanı (m²)', 'Ağaç/Bitki Sayısı', 'Ondalık Koordinat', 'DMS Koordinat', 'Rakım (m)']);
                 tuzakSatirlari.forEach(function (ts, index) {
                     s1Data.push([
                         index + 1,
@@ -7391,12 +7408,13 @@
                         ts.bahceAlani,
                         ts.agacSayisi,
                         ts.ondalik,
-                        ts.dms
+                        ts.dms,
+                        ts.rakim
                     ]);
                 });
             } else if (kat === "Örtüaltı Yetiştiriciliği") {
                 sheet1Name = "Sera Listesi";
-                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Sera Alanı (m²)', 'Yetiştirilen Ürün', 'Ondalık Koordinat', 'DMS Koordinat']);
+                s1Data.push(['Sıra No', 'İlçe', 'Köy/Mahalle', 'Sera Adı/Sahibi', 'Sera Tipi', 'Sera Alanı (m²)', 'Yetiştirilen Ürün', 'Ondalık Koordinat', 'DMS Koordinat', 'Rakım (m)']);
                 tuzakSatirlari.forEach(function (ts, index) {
                     s1Data.push([
                         index + 1,
@@ -7407,7 +7425,8 @@
                         ts.seraAlani,
                         ts.yetiştirilenUrun,
                         ts.ondalik,
-                        ts.dms
+                        ts.dms,
+                        ts.rakim
                     ]);
                 });
             }
@@ -9659,6 +9678,7 @@
             var yeniKayitNimfGrup = document.getElementById("yeniKayitNimfGrup");
             var tipStr = data.tuzakTipi || "-";
             var koyStr = data.koy || data.ad || "-";
+            var rakimVal = (data.rakim !== undefined && data.rakim !== null && data.rakim !== "") ? `${data.rakim} m` : "Belirtilmedi";
 
             var isArı = (tipStr === "Samuray Arısı Salımı");
             var isKislak = (tipStr === "Kışlak Mücadelesi");
@@ -9712,6 +9732,7 @@
                         <div><b>Köy:</b> ${koyStr}</div>
                         <div><b>Tuzak Tipi:</b> ${resolvedTip}</div>
                         <div><b>${labelName}:</b> ${labelVal}</div>
+                        <div><b>Rakım:</b> ${rakimVal}</div>
                         ${ekSatirlar}
                     </div>
                 `;
@@ -9726,6 +9747,7 @@
                         <div><b>Ürün/Bahçe Türü:</b> ${data.tuzakTipi || "-"}</div>
                         <div><b>Bahçe Sahibi/Adı:</b> ${data.tuzakNo || "-"}</div>
                         <div><b>Bahçe Alanı (m²):</b> ${data.bahceAlani !== undefined ? data.bahceAlani : "-"}</div>
+                        <div><b>Rakım:</b> ${rakimVal}</div>
                     </div>
                 `;
             } else if (kat === "Örtüaltı Yetiştiriciliği") {
@@ -9739,6 +9761,7 @@
                         <div><b>Sera Tipi:</b> ${data.tuzakTipi || "-"}</div>
                         <div><b>Sera Adı/Sahibi:</b> ${data.tuzakNo || "-"}</div>
                         <div><b>Yetiştirilen Ürün:</b> ${data.yetiştirilenUrun || "-"}</div>
+                        <div><b>Rakım:</b> ${rakimVal}</div>
                     </div>
                 `;
             }
@@ -10198,8 +10221,23 @@
             }, { enableHighAccuracy: true, maximumAge: 0 });
         }
 
+        async function getElevation(lat, lng) {
+            try {
+                var response = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+                if (response.ok) {
+                    var resData = await response.json();
+                    if (resData && resData.elevation && resData.elevation.length > 0) {
+                        return Math.round(resData.elevation[0]);
+                    }
+                }
+            } catch (e) {
+                console.warn("Elevation API error:", e);
+            }
+            return null;
+        }
+
         // Save/Update database records
-        function kaydet() {
+        async function kaydet() {
             var il = document.getElementById('il').value;
             var ilce = document.getElementById('ilce').value;
             var koy = document.getElementById('koy').value.trim();
@@ -10286,6 +10324,16 @@
             if (aktifKullanici && !isKullaniciMuaf()) {
                 saveData.il = "Rize";
                 saveData.ilce = aktifKullanici.ilce;
+            }
+
+            // Rakım bilgisini otomatik çek
+            try {
+                var rakim = await getElevation(saveData.lat, saveData.lng);
+                if (rakim !== null) {
+                    saveData.rakim = rakim;
+                }
+            } catch (err) {
+                console.warn("Rakım çekilemedi:", err);
             }
 
             if (docId) {

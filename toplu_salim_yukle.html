@@ -347,6 +347,11 @@
                 
                 var lat = formatCoordinate(rawX);
                 var lng = formatCoordinate(rawY);
+                if (lat < lng) {
+                    var temp = lat;
+                    lat = lng;
+                    lng = temp;
+                }
                 var tupSayisi = parseInt(rawTup) || 1;
                 
                 var seciliYil = document.getElementById("salimYilSelect").value;
@@ -516,6 +521,30 @@
             statusDiv.innerHTML = '📤 ' + yeniKayitlar.length + ' yeni kayıt yüklenecek' +
                                   (ciftSayisi > 0 ? ', <strong>' + ciftSayisi + '</strong> çift atlandı.' : '.');
             await new Promise(function(res) { setTimeout(res, 700); });
+
+            // Rakım bilgilerini otomatik çek
+            statusDiv.innerHTML = '🏔️ Rakım bilgileri alınıyor...';
+            try {
+                var batchSize = 50;
+                for (var k = 0; k < yeniKayitlar.length; k += batchSize) {
+                    var chunk = yeniKayitlar.slice(k, k + batchSize);
+                    var lats = chunk.map(t => t.lat).join(',');
+                    var lngs = chunk.map(t => t.lng).join(',');
+                    var elevResponse = await fetch('https://api.open-meteo.com/v1/elevation?latitude=' + lats + '&longitude=' + lngs);
+                    if (elevResponse.ok) {
+                        var elevData = await elevResponse.json();
+                        if (elevData && elevData.elevation) {
+                            for (var m = 0; m < chunk.length; m++) {
+                                if (elevData.elevation[m] !== undefined && elevData.elevation[m] !== null) {
+                                    yeniKayitlar[k + m].rakim = Math.round(elevData.elevation[m]);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Rakım toplu çekme hatası:', err);
+            }
 
             // ── ADIM 3: Yeni kayıtları yükle ─────────────────────────────
             var total = yeniKayitlar.length;

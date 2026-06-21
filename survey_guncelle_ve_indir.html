@@ -715,8 +715,12 @@
             let s = plantStr.trim().toLowerCase();
             if (s.includes("kivi")) return "Kivi";
             if (s.includes("findik")) return "Fındık";
-            if (s.includes("turuncgil") || s.includes("mandalina") || s.includes("mandarin")) return "Turunçgil";
+            if (s.includes("mandalina") || s.includes("mandarin")) return "Mandalina";
+            if (s.includes("turuncgil")) return "Turunçgil";
             if (s.includes("elma")) return "Elma";
+            if (s.includes("erik")) return "Erik";
+            if (s.includes("armut")) return "Armut";
+            if (s.includes("kestane")) return "Kestane";
             if (s.includes("misir")) return "Mısır";
             if (s.includes("karalahana")) return "Karalahana";
             if (s.includes("uzum")) return "Üzüm";
@@ -725,6 +729,8 @@
             if (s.includes("kiraz")) return "Kiraz";
             if (s.includes("kizilagac") || s.includes("kızılağaç")) return "Kızılağaç";
             if (s.includes("hurma")) return "Hurma";
+            if (s.includes("yenidunya") || s.includes("yenidünya")) return "Yenidünya";
+            if (s.includes("musmula") || s.includes("muşmula")) return "Muşmula";
             return plantStr.charAt(0).toUpperCase() + plantStr.slice(1);
         }
 
@@ -1276,12 +1282,13 @@
                 return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
             });
 
-            var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "KONUKÇU", ...sortedDates];
+            var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "RAKIM", "KONUKÇU", ...sortedDates];
             var rows = [headers];
 
             traps.forEach(t => {
                 var gpsStr = `${t.lat}, ${t.lng}`;
-                var row = ["Rize", t.ilce, t.koy || t.ad, gpsStr, t.tuzakBitkiTuru || "Fındık"];
+                var rakimVal = (t.rakim !== undefined && t.rakim !== null && t.rakim !== "") ? t.rakim : "-";
+                var row = ["Rize", t.ilce, t.koy || t.ad, gpsStr, rakimVal, t.tuzakBitkiTuru || "Fındık"];
                 
                 sortedDates.forEach(date => {
                     var v = t.kayitlar ? t.kayitlar.find(visit => visit.tarih.trim() === date) : null;
@@ -1378,6 +1385,7 @@
                     var koyColIndex = -1;
                     var gpsColIndex = -1;
                     var plantColIndex = -1;
+                    var rakimColIndex = -1;
                     var dateColMap = {}; // mapping dateStr -> colIndex
 
                     // Scan first 30 rows for headers
@@ -1390,6 +1398,7 @@
                                 else if (valStr === "lokasyon" || valStr.includes("koy") || valStr.includes("köy") || valStr === "mahalle") koyColIndex = c;
                                 else if (valStr === "gps" || valStr === "koordinat") gpsColIndex = c;
                                 else if (valStr === "konukcu" || valStr === "konukçu") plantColIndex = c;
+                                else if (valStr === "rakim" || valStr === "rakım" || valStr === "irtifa") rakimColIndex = c;
                                 else if (isDateCell(ws[ref].v)) {
                                     let dateStr = parseTurkishMonthDate(ws[ref].v) || String(ws[ref].v).trim();
                                     dateColMap[dateStr] = c;
@@ -1459,6 +1468,13 @@
                             // Update GPS cell
                             let gpsCellRef = XLSX.utils.encode_cell({ r: r, c: gpsColIndex });
                             ws[gpsCellRef] = { t: 's', v: `${matchedTrap.lat}, ${matchedTrap.lng}` };
+
+                            // Update Rakım cell if column exists
+                            if (rakimColIndex !== -1) {
+                                let rakimCellRef = XLSX.utils.encode_cell({ r: r, c: rakimColIndex });
+                                let rakimVal = (matchedTrap.rakim !== undefined && matchedTrap.rakim !== null && matchedTrap.rakim !== "") ? matchedTrap.rakim : "-";
+                                ws[rakimCellRef] = { t: 's', v: String(rakimVal) };
+                            }
 
                             // Update Dates cells
                             Object.keys(dateColMap).forEach(dateStr => {

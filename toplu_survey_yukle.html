@@ -485,8 +485,12 @@
             let s = plantStr.trim().toLowerCase();
             if (s.includes("kivi")) return "Kivi";
             if (s.includes("findik")) return "Fındık";
-            if (s.includes("turuncgil") || s.includes("mandalina") || s.includes("mandarin")) return "Turunçgil";
+            if (s.includes("mandalina") || s.includes("mandarin")) return "Mandalina";
+            if (s.includes("turuncgil")) return "Turunçgil";
             if (s.includes("elma")) return "Elma";
+            if (s.includes("erik")) return "Erik";
+            if (s.includes("armut")) return "Armut";
+            if (s.includes("kestane")) return "Kestane";
             if (s.includes("misir")) return "Mısır";
             if (s.includes("karalahana")) return "Karalahana";
             if (s.includes("uzum")) return "Üzüm";
@@ -928,6 +932,30 @@
             statusDiv.innerHTML = '📤 ' + yeniKayitlar.length + ' yeni kayıt yüklenecek' +
                                   (ciftSayisi > 0 ? ', <strong>' + ciftSayisi + '</strong> çift atlandı.' : '.');
             await new Promise(function(res) { setTimeout(res, 700); });
+
+            // Yeni kayıtlar için rakım bilgilerini toplu çek
+            statusDiv.innerHTML = '🏔️ Yeni kayıtlar için rakım bilgileri alınıyor...';
+            try {
+                var batchSize = 50;
+                for (let k = 0; k < yeniKayitlar.length; k += batchSize) {
+                    var chunk = yeniKayitlar.slice(k, k + batchSize);
+                    var lats = chunk.map(t => t.lat).join(',');
+                    var lngs = chunk.map(t => t.lng).join(',');
+                    var elevResponse = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`);
+                    if (elevResponse.ok) {
+                        var elevData = await elevResponse.json();
+                        if (elevData && elevData.elevation) {
+                            for (let m = 0; m < chunk.length; m++) {
+                                if (elevData.elevation[m] !== undefined && elevData.elevation[m] !== null) {
+                                    yeniKayitlar[k + m].rakim = Math.round(elevData.elevation[m]);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Rakım toplu çekme hatası:", err);
+            }
             
             var total = yeniKayitlar.length;
             var successCount = 0;
