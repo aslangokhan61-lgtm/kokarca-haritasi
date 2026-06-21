@@ -1263,7 +1263,7 @@
             traps.forEach(t => {
                 if (t.kayitlar) {
                     t.kayitlar.forEach(v => {
-                        if (v.tarih && /^\d{2}\.\d{2}\.\d{4}$/.test(v.tarih)) {
+                        if (v.tarih && /^\d{2}\.\d{2}\.2026$/.test(v.tarih.trim())) {
                             dateSet.add(v.tarih.trim());
                         }
                     });
@@ -1339,7 +1339,7 @@
                 traps.forEach(t => {
                     if (t.kayitlar) {
                         t.kayitlar.forEach(v => {
-                            if (v.tarih && /^\d{2}\.\d{2}\.\d{4}$/.test(v.tarih)) {
+                            if (v.tarih && /^\d{2}\.\d{2}\.2026$/.test(v.tarih.trim())) {
                                 dateSet.add(v.tarih.trim());
                             }
                         });
