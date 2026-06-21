@@ -602,14 +602,114 @@
         var dateColumns = [];
         var matchedResults = [];
 
-        // LOAD DATABASE TRAPS ON PAGE START
+        // --- CUSTOM DISTRICT & VILLAGE SORTING ORDERS ---
+        const districtOrder = [
+            "Merkez",
+            "Ardeşen",
+            "Çayeli",
+            "Derepazarı",
+            "Fındıklı",
+            "Güneysu",
+            "İyidere",
+            "Pazar",
+            "Çamlıhemşin",
+            "Hemşin",
+            "İkizdere",
+            "Kalkandere"
+        ];
+
+        const customVillageOrder = {
+            "Merkez": ["PEKMEZLİ", "İSLAMPAŞA", "ÇİFTEKAVAK"],
+            "Ardeşen": ["YENİYOL", "ŞENYURT", "IŞIKLI"],
+            "Çayeli": ["KÜÇÜKTAŞHANE MAH.", "YENİPAZAR MAH.", "KEMER KÖYÜ"],
+            "Derepazarı": ["YANIKTAŞ MAH.", "MERKEZ MAH.", "UZUNKAYA KÖYÜ"],
+            "Fındıklı": ["SÜMER", "ÇAĞLAYAN", "YENİMAHALLE"],
+            "Güneysu": ["BİRLİK", "KIBLEDAĞI", "ULUCAMİ"],
+            "İyidere": ["FETHİYE", "KÖŞKLÜ", "HAZAR"],
+            "Pazar": ["MERDİVENLİ MAH.", "KİRAZLİK MAH.", "KOCAKÖPRÜ MAH."]
+        };
+
+        function getDistrictSortIndex(districtName) {
+            if (!districtName) return 9999;
+            const normalized = normalizeString(districtName);
+            for (let i = 0; i < districtOrder.length; i++) {
+                let normTarget = normalizeString(districtOrder[i]);
+                if (normalized.includes(normTarget) || normTarget.includes(normalized)) {
+                    return i;
+                }
+            }
+            return 9999;
+        }
+
+        function getVillageSortIndex(district, villageName) {
+            if (!villageName) return 9999;
+            const orderList = customVillageOrder[district];
+            if (!orderList) return 9999;
+            
+            const normalizedVillage = normalizeString(villageName);
+            for (let i = 0; i < orderList.length; i++) {
+                let normTarget = normalizeString(orderList[i]);
+                if (normalizedVillage.includes(normTarget) || normTarget.includes(normalizedVillage)) {
+                    return i;
+                }
+            }
+            return 9999;
+        }
+
+        function sortItemsByDistrictAndVillage(a, b, getDistrictFn, getVillageFn) {
+            const distA = getDistrictFn(a);
+            const distB = getDistrictFn(b);
+            const idxA = getDistrictSortIndex(distA);
+            const idxB = getDistrictSortIndex(distB);
+            
+            if (idxA !== idxB) {
+                return idxA - idxB;
+            }
+            
+            const vilA = getVillageFn(a);
+            const vilB = getVillageFn(b);
+            const vIdxA = getVillageSortIndex(distA, vilA);
+            const vIdxB = getVillageSortIndex(distB, vilB);
+            
+            if (vIdxA !== vIdxB) {
+                return vIdxA - vIdxB;
+            }
+            
+            return (vilA || "").localeCompare(vilB || "", "tr");
+        }
+
+        function isTestRow(ilce, koy, cells) {
+            var checkStr = (String(ilce || "") + " " + String(koy || "")).toLowerCase();
+            if (checkStr.includes("deneme") || checkStr.includes("test")) {
+                return true;
+            }
+            if (cells && Array.isArray(cells)) {
+                for (let i = 0; i < cells.length; i++) {
+                    let cell = cells[i];
+                    if (cell && cell.v !== undefined && cell.v !== null) {
+                        let val = String(cell.v).toLowerCase();
+                        if (val.includes("deneme") || val.includes("test")) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // LOAD DATABASE TRAPS ON PAGE START (Filters out trial & test traps)
         async function fetchDbTraps() {
             try {
                 showStatus("Veritabanından sürvey tuzakları yükleniyor...", "blue");
                 var snapshot = await db.collection("tuzaklar").get();
                 dbTraps = [];
                 snapshot.forEach(doc => {
-                    dbTraps.push({ id: doc.id, ...doc.data() });
+                    var data = doc.data();
+                    var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                    if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                        return; // skip trial and test traps
+                    }
+                    dbTraps.push({ id: doc.id, ...data });
                 });
                 showLog(`✅ Veritabanından toplam ${dbTraps.length} adet kayıt yüklendi.`);
                 showStatus("Hazır. Lütfen hatalı koordinat içeren sürvey Excel dosyasını seçin.");
@@ -905,6 +1005,16 @@
 
                 if (!normKoy || !normGps) return; // skip rows without village or coordinates
 
+                // Skip deneme/test rows
+                var isTest = false;
+                Object.values(row).forEach(val => {
+                    let sVal = String(val || "").toLowerCase();
+                    if (sVal.includes("deneme") || sVal.includes("test")) {
+                        isTest = true;
+                    }
+                });
+                if (isTest) return;
+
                 let matchedKoy = findMatchingKoy(currentIlce, normKoy);
                 let formattedPlant = formatHostPlant(hostPlant);
 
@@ -986,6 +1096,16 @@
                 });
             });
 
+            // Sort matched results using the custom order (Merkez first etc.)
+            matchedResults.sort((a, b) => {
+                return sortItemsByDistrictAndVillage(
+                    a,
+                    b,
+                    item => item.ilce,
+                    item => item.koyExcel
+                );
+            });
+
             showLog(`📊 Eşleştirme Bitti: Toplam ${matchedResults.length} satır analiz edildi.`);
             
             // Render Table
@@ -1045,7 +1165,7 @@
             else el.style.color = "";
         }
 
-        // OPTION 1: CORRECT EXCEL GPS VALUES
+        // OPTION 1: CORRECT EXCEL GPS VALUES (Filters out trials, sorts and updates coords)
         document.getElementById("correctExcelBtn").addEventListener("click", function() {
             if (!workbook || matchedResults.length === 0) return;
 
@@ -1055,55 +1175,19 @@
             var sheetName = workbook.SheetNames.find(n => n.includes("2026")) || workbook.SheetNames[0];
             var ws = workbook.Sheets[sheetName];
 
-            // In SheetJS, ws contains cells like A1, B1 etc.
-            // We need to locate the GPS column in the sheet.
-            // Let's scan headers to find the column key/index for GPS
-            var range = XLSX.utils.decode_range(ws['!ref']);
-            var gpsColIndex = -1;
-
-            // We look at the header row to find the key containing "gps" or "koordinat" or "enlem"
-            // Let's scan row cells in ws
-            for (let c = range.s.c; c <= range.e.c; c++) {
-                let cellRef = XLSX.utils.encode_cell({ r: 25, c: c }); // scan common header areas (row 25-27)
-                // Let's scan all rows from row 0 to 30 to find where "GPS" string is located
-                for (let r = 0; r <= 30; r++) {
-                    let ref = XLSX.utils.encode_cell({ r: r, c: c });
-                    if (ws[ref] && normalizeString(ws[ref].v).includes("gps") || normalizeString(ws[ref].v).includes("koordinat")) {
-                        gpsColIndex = c;
-                        break;
-                    }
-                }
-                if (gpsColIndex !== -1) break;
+            try {
+                var res = processWorksheetInPlace(ws, "coords_only", dbTraps);
+                showLog(`✅ Excel dosyasında toplam ${res.updatedRows} satırın koordinatları düzeltildi ve dosya sıralandı.`);
+                
+                // Download file
+                showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
+                XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_DUZELTILMIS.xlsx");
+                showStatus("🎉 Koordinatları Düzeltilmiş Excel Dosyası İndirildi!", "success");
+                showLog("💾 Düzeltilmiş dosya başarıyla indirildi.");
+            } catch (err) {
+                showLog(`🚨 Excel Düzeltme Hatası: ${err.message}`);
+                showStatus("Excel dosyası güncellenirken hata oluştu!", "danger");
             }
-
-            if (gpsColIndex === -1) {
-                // If not found by scan, let's look at the consolidated headers mapping
-                showLog("🚨 Uyarı: GPS Sütun indeksi hücre taramasında bulunamadı. Lütfen kontrol ediniz.");
-                showStatus("Excel'de 'GPS' sütunu bulunamadı!", "danger");
-                return;
-            }
-
-            showLog(`📍 Bulunan GPS Sütun İndeksi: Kolon ${XLSX.utils.encode_col(gpsColIndex)}`);
-
-            var correctedCount = 0;
-
-            // Update cells
-            matchedResults.forEach(res => {
-                if (res.status === "success" && res.matchedTrap) {
-                    var cellRef = XLSX.utils.encode_cell({ r: res.rowIndex - 1, c: gpsColIndex });
-                    var correctVal = `${res.matchedTrap.lat}, ${res.matchedTrap.lng}`;
-                    ws[cellRef] = { t: 's', v: correctVal };
-                    correctedCount++;
-                }
-            });
-
-            showLog(`✅ Excel dosyasında toplam ${correctedCount} satırın koordinatları düzeltildi.`);
-            
-            // Download file
-            showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
-            XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_DUZELTILMIS.xlsx");
-            showStatus("🎉 Koordinatları Düzeltilmiş Excel Dosyası İndirildi!", "success");
-            showLog("💾 Düzeltilmiş dosya başarıyla indirildi.");
         });
 
         // OPTION 2: SYNC EXCEL VISITS TO FIRESTORE
@@ -1220,93 +1304,225 @@
             var sheetName = workbook.SheetNames.find(n => n.includes("2026")) || workbook.SheetNames[0];
             var ws = workbook.Sheets[sheetName];
 
-            var range = XLSX.utils.decode_range(ws['!ref']);
-            var gpsColIndex = -1;
-            var rakimColIndex = -1;
-            var dateColMap = {}; // mapping dateStr -> colIndex
+            try {
+                var res = processWorksheetInPlace(ws, "all_data", dbTraps);
+                showLog(`✅ Excel dosyasında toplam ${res.updatedRows} satırın koordinat ve sayım verileri veritabanından güncellendi ve dosya sıralandı.`);
+                
+                // Download file
+                showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
+                XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
+                showStatus("🎉 Güncel Verilerle Doldurulmuş Excel Dosyası İndirildi!", "success");
+                showLog("💾 Dosya başarıyla indirildi.");
+            } catch (err) {
+                showLog(`🚨 Excel Güncelleme Hatası: ${err.message}`);
+                showStatus("Excel dosyası güncellenirken hata oluştu!", "danger");
+            }
+        });
 
-            // Scan headers to locate columns
-            for (let c = range.s.c; c <= range.e.c; c++) {
-                for (let r = 0; r <= 30; r++) {
+        // Worksheet processing helper (In-place sort, filter, and fill)
+        function processWorksheetInPlace(ws, mode, sourceTraps) {
+            var range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // Find Header Row Index and column mappings
+            var headerRowIndex = -1;
+            var ilceColIndex = -1;
+            var koyColIndex = -1;
+            var gpsColIndex = -1;
+            var plantColIndex = -1;
+            var rakimColIndex = -1;
+            var dateColMap = {};
+
+            for (let r = 0; r <= 30; r++) {
+                let rowHasIlce = false;
+                let rowHasLokasyon = false;
+                for (let c = range.s.c; c <= range.e.c; c++) {
                     let ref = XLSX.utils.encode_cell({ r: r, c: c });
                     let cell = ws[ref];
                     if (cell && (cell.v !== undefined && cell.v !== null)) {
                         let valStr = normalizeString(cell.w || cell.v);
+                        if (valStr.includes("ilce") || valStr.includes("ilçe")) {
+                            rowHasIlce = true;
+                            ilceColIndex = c;
+                        }
+                        if (valStr.includes("lokasyon") || valStr.includes("koy") || valStr.includes("köy") || valStr.includes("mahalle")) {
+                            rowHasLokasyon = true;
+                            koyColIndex = c;
+                        }
                         if (valStr.includes("gps") || valStr.includes("koordinat")) {
                             gpsColIndex = c;
-                        } else if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) {
+                        }
+                        if (valStr.includes("konukcu") || valStr.includes("konukçu") || valStr.includes("bitki")) {
+                            plantColIndex = c;
+                        }
+                        if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) {
                             rakimColIndex = c;
-                        } else {
-                            let cellDate = getExcelCellDate(cell);
-                            if (cellDate) {
-                                dateColMap[cellDate] = c;
-                            }
+                        }
+                        let cellDate = getExcelCellDate(cell);
+                        if (cellDate) {
+                            dateColMap[cellDate] = c;
                         }
                     }
                 }
-            }
-
-            if (gpsColIndex === -1) {
-                showLog("🚨 Hata: GPS Sütun indeksi bulunamadı.");
-                showStatus("Excel'de 'GPS' sütunu bulunamadı!", "danger");
-                return;
-            }
-
-            showLog(`📍 Bulunan GPS Sütun İndeksi: Kolon ${XLSX.utils.encode_col(gpsColIndex)}`);
-            if (rakimColIndex !== -1) {
-                showLog(`🏔️ Bulunan Rakım Sütun İndeksi: Kolon ${XLSX.utils.encode_col(rakimColIndex)}`);
-            }
-            showLog(`📅 Bulunan Tarih Sütun Haritası: ${JSON.stringify(Object.keys(dateColMap))}`);
-
-            var updatedCount = 0;
-
-            // Update cells
-            matchedResults.forEach(res => {
-                if (res.status === "success" && res.matchedTrap) {
-                    var rIdx = res.rowIndex - 1;
-
-                    // 1. Update GPS Cell
-                    var gpsCellRef = XLSX.utils.encode_cell({ r: rIdx, c: gpsColIndex });
-                    var correctGps = `${res.matchedTrap.lat}, ${res.matchedTrap.lng}`;
-                    ws[gpsCellRef] = { t: 's', v: correctGps };
-
-                    // 2. Update Rakım Cell
-                    if (rakimColIndex !== -1) {
-                        var rakimCellRef = XLSX.utils.encode_cell({ r: rIdx, c: rakimColIndex });
-                        var rakimVal = (res.matchedTrap.rakim !== undefined && res.matchedTrap.rakim !== null && res.matchedTrap.rakim !== "") ? res.matchedTrap.rakim : "-";
-                        ws[rakimCellRef] = { t: 's', v: String(rakimVal) };
-                    }
-
-                    // 3. Update Date columns from database visits
-                    Object.keys(dateColMap).forEach(dateStr => {
-                        let cIdx = dateColMap[dateStr];
-                        let dateCellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
-                        
-                        // Find visit in database trap records
-                        var dbVisit = res.matchedTrap.kayitlar ? res.matchedTrap.kayitlar.find(v => v.tarih.trim() === dateStr.trim()) : null;
-                        if (dbVisit) {
-                            if (dbVisit.gozlemNotu && dbVisit.gozlemNotu.toLowerCase().includes("asildi")) {
-                                ws[dateCellRef] = { t: 's', v: "Tuzaklar Asıldı" };
-                            } else {
-                                ws[dateCellRef] = { t: 'n', v: dbVisit.bocekSayisi };
-                            }
-                        } else {
-                            ws[dateCellRef] = { t: 's', v: "" };
-                        }
-                    });
-
-                    updatedCount++;
+                if (rowHasIlce && rowHasLokasyon) {
+                    headerRowIndex = r;
                 }
+            }
+
+            if (ilceColIndex === -1 || koyColIndex === -1 || gpsColIndex === -1) {
+                throw new Error("Sütunlar (İLÇE, LOKASYON veya GPS) tespit edilemedi.");
+            }
+
+            showLog(`🔍 Başlık Satırı: ${headerRowIndex + 1}, İlçe Sütunu: ${XLSX.utils.encode_col(ilceColIndex)}, Köy Sütunu: ${XLSX.utils.encode_col(koyColIndex)}, GPS: ${XLSX.utils.encode_col(gpsColIndex)}`);
+
+            // Parse data rows
+            var dataRows = [];
+            for (let r = headerRowIndex + 1; r <= range.e.r; r++) {
+                let ilceCellRef = XLSX.utils.encode_cell({ r: r, c: ilceColIndex });
+                let koyCellRef = XLSX.utils.encode_cell({ r: r, c: koyColIndex });
+                
+                let ilceVal = "";
+                let koyVal = "";
+                if (ws[ilceCellRef] && ws[ilceCellRef].v !== undefined) {
+                    ilceVal = String(ws[ilceCellRef].v).trim();
+                }
+                if (ws[koyCellRef] && ws[koyCellRef].v !== undefined) {
+                    koyVal = String(ws[koyCellRef].v).trim();
+                }
+                
+                if (!ilceVal && !koyVal) continue;
+                
+                let rowCells = [];
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                    rowCells.push(ws[ref] || null);
+                }
+                
+                dataRows.push({
+                    ilce: ilceVal,
+                    koy: koyVal,
+                    cells: rowCells
+                });
+            }
+
+            // Filter out test/deneme rows
+            var filteredCount = 0;
+            dataRows = dataRows.filter(row => {
+                if (isTestRow(row.ilce, row.koy, row.cells)) {
+                    filteredCount++;
+                    return false;
+                }
+                return true;
+            });
+            if (filteredCount > 0) {
+                showLog(`🗑️ Excel dosyasından ${filteredCount} adet deneme/test satırı filtrelenerek çıkartıldı.`);
+            }
+
+            // Sort rows
+            dataRows.sort((a, b) => {
+                return sortItemsByDistrictAndVillage(
+                    a, 
+                    b, 
+                    item => item.ilce, 
+                    item => item.koy
+                );
             });
 
-            showLog(`✅ Excel dosyasında toplam ${updatedCount} satırın koordinat ve sayım verileri veritabanından güncellendi.`);
-            
-            // Download file
-            showStatus("Dosya oluşturuluyor ve indiriliyor...", "blue");
-            XLSX.writeFile(workbook, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
-            showStatus("🎉 Güncel Verilerle Doldurulmuş Excel Dosyası İndirildi!", "success");
-            showLog("💾 Dosya başarıyla indirildi.");
-        });
+            // Clear old data rows in worksheet
+            for (let r = headerRowIndex + 1; r <= range.e.r; r++) {
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                    delete ws[ref];
+                }
+            }
+
+            // Update row coordinates/data and write to ws
+            var updatedRowsCount = 0;
+            dataRows.forEach((row, idx) => {
+                let r = headerRowIndex + 1 + idx;
+                
+                // Get values
+                let excelIlce = row.ilce;
+                let excelKoy = row.koy;
+                let excelPlant = "";
+                if (plantColIndex !== -1 && row.cells[plantColIndex]) {
+                    excelPlant = String(row.cells[plantColIndex].v || "").trim();
+                }
+
+                let matchedKoy = findMatchingKoy(excelIlce, excelKoy);
+                let formattedPlant = formatHostPlant(excelPlant);
+
+                // Find trap
+                let matchedTrap = sourceTraps.find(t => {
+                    let normDbIlce = normalizeString(t.ilce);
+                    let normExcelIlce = normalizeString(excelIlce);
+                    if (normDbIlce !== normExcelIlce) return false;
+
+                    let normDbKoy = normalizeString(t.koy || t.ad);
+                    let normExcelKoy = normalizeString(matchedKoy || excelKoy);
+                    if (normDbKoy !== normExcelKoy) return false;
+
+                    if (formattedPlant !== "Belirtilmedi") {
+                        return normalizeString(t.tuzakBitkiTuru) === normalizeString(formattedPlant);
+                    }
+                    return true;
+                });
+
+                if (!matchedTrap && matchedKoy) {
+                    matchedTrap = sourceTraps.find(t => {
+                        return normalizeString(t.ilce) === normalizeString(excelIlce) &&
+                               normalizeString(t.koy || t.ad) === normalizeString(matchedKoy);
+                    });
+                }
+
+                if (matchedTrap) {
+                    if (mode === "coords_only" || mode === "all_data") {
+                        // Update GPS cell in row.cells
+                        row.cells[gpsColIndex] = { t: 's', v: `${matchedTrap.lat}, ${matchedTrap.lng}` };
+                    }
+
+                    if (mode === "all_data") {
+                        // Update Rakım cell in row.cells if column exists
+                        if (rakimColIndex !== -1) {
+                            let rakimVal = (matchedTrap.rakim !== undefined && matchedTrap.rakim !== null && matchedTrap.rakim !== "") ? matchedTrap.rakim : "-";
+                            row.cells[rakimColIndex] = { t: 's', v: String(rakimVal) };
+                        }
+
+                        // Update Dates cells in row.cells
+                        Object.keys(dateColMap).forEach(dateStr => {
+                            let cIndex = dateColMap[dateStr];
+                            let v = matchedTrap.kayitlar ? matchedTrap.kayitlar.find(visit => visit.tarih.trim() === dateStr) : null;
+                            if (v) {
+                                if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
+                                    row.cells[cIndex] = { t: 's', v: "Tuzaklar Asıldı" };
+                                } else {
+                                    row.cells[cIndex] = { t: 'n', v: v.bocekSayisi };
+                                }
+                            } else {
+                                row.cells[cIndex] = { t: 's', v: "" };
+                            }
+                        });
+                    }
+                    updatedRowsCount++;
+                }
+
+                // Write cells back to ws
+                row.cells.forEach((cell, cIdx) => {
+                    if (cell !== null) {
+                        let ref = XLSX.utils.encode_cell({ r: r, c: cIdx });
+                        ws[ref] = cell;
+                    }
+                });
+            });
+
+            // Update range and !ref
+            range.e.r = headerRowIndex + dataRows.length;
+            ws['!ref'] = XLSX.utils.encode_range(range);
+
+            return {
+                totalRows: dataRows.length,
+                updatedRows: updatedRowsCount
+            };
+        }
 
         // Helper to generate simple excel format
         function generateSimpleExcel(traps, exportStatus) {
@@ -1329,6 +1545,16 @@
 
             var headers = ["İL", "İLÇE", "LOKASYON", "GPS", "RAKIM", "KONUKÇU", ...sortedDates];
             var rows = [headers];
+
+            // Sort traps in the custom district/village order
+            traps.sort((a, b) => {
+                return sortItemsByDistrictAndVillage(
+                    a,
+                    b,
+                    item => item.ilce,
+                    item => item.koy || item.ad
+                );
+            });
 
             traps.forEach(t => {
                 var gpsStr = `${t.lat}, ${t.lng}`;
@@ -1372,6 +1598,12 @@
                 snapshot.forEach(doc => {
                     var data = doc.data();
                     if (data.il === "Rize" && data.tuzakTipi === "Yapışkan") {
+                        // Skip trial and test traps
+                        var checkStr = (String(data.tuzakNo || "") + " " + String(data.koy || "") + " " + String(data.ad || "")).toLowerCase();
+                        if (checkStr.indexOf("deneme") !== -1 || checkStr.indexOf("test") !== -1) {
+                            return; // skip trial and test traps
+                        }
+
                         if (data.tuzakNo && (data.tuzakNo.includes("SURVEY") || data.tuzakNo.startsWith("2026-"))) {
                             traps.push(data);
                         } else if (data.kayitlar && data.kayitlar.some(v => v.tarih.includes("2026"))) {
@@ -1385,23 +1617,6 @@
                     document.getElementById("directExportBtn").disabled = false;
                     return;
                 }
-
-                // Compile and sort dates for simple fallback
-                var dateSet = new Set();
-                traps.forEach(t => {
-                    if (t.kayitlar) {
-                        t.kayitlar.forEach(v => {
-                            if (v.tarih && /^\d{2}\.\d{2}\.2026$/.test(v.tarih.trim())) {
-                                dateSet.add(v.tarih.trim());
-                            }
-                        });
-                    }
-                });
-                var sortedDates = Array.from(dateSet).sort((a, b) => {
-                    let pA = a.split('.');
-                    let pB = b.split('.');
-                    return new Date(pA[2], pA[1]-1, pA[0]) - new Date(pB[2], pB[1]-1, pB[0]);
-                });
 
                 // Try to load the official ministry template via fetch
                 var useTemplate = false;
@@ -1420,131 +1635,19 @@
                 }
 
                 if (useTemplate && wb) {
-                    // Update template workbook in memory
                     var sheetName = wb.SheetNames.find(n => n.includes("2026")) || wb.SheetNames[0];
                     var ws = wb.Sheets[sheetName];
-                    var range = XLSX.utils.decode_range(ws['!ref']);
                     
-                    // Scan headers to locate columns
-                    var ilceColIndex = -1;
-                    var koyColIndex = -1;
-                    var gpsColIndex = -1;
-                    var plantColIndex = -1;
-                    var rakimColIndex = -1;
-                    var dateColMap = {}; // mapping dateStr -> colIndex
-
-                    // Scan first 30 rows for headers
-                    for (let c = range.s.c; c <= range.e.c; c++) {
-                        for (let r = 0; r <= 30; r++) {
-                            let ref = XLSX.utils.encode_cell({ r: r, c: c });
-                            let cell = ws[ref];
-                            if (cell && (cell.v !== undefined && cell.v !== null)) {
-                                let valStr = normalizeString(cell.w || cell.v);
-                                if (valStr.includes("ilce") || valStr.includes("ilçe")) ilceColIndex = c;
-                                else if (valStr.includes("lokasyon") || valStr.includes("koy") || valStr.includes("köy") || valStr.includes("mahalle")) koyColIndex = c;
-                                else if (valStr.includes("gps") || valStr.includes("koordinat")) gpsColIndex = c;
-                                else if (valStr.includes("konukcu") || valStr.includes("konukçu") || valStr.includes("bitki")) plantColIndex = c;
-                                else if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) rakimColIndex = c;
-                                else {
-                                    let cellDate = getExcelCellDate(cell);
-                                    if (cellDate) {
-                                        dateColMap[cellDate] = c;
-                                    }
-                                }
-                            }
-                        }
+                    try {
+                        var res = processWorksheetInPlace(ws, "all_data", traps);
+                        XLSX.writeFile(wb, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
+                        exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Bakanlık şablonu veritabanındaki ${res.updatedRows} adet sürvey tuzağının güncel koordinatları ve sayımları ile doldurulup sıralanarak başarıyla indirildi.</span>`;
+                    } catch (err) {
+                        showLog(`🚨 Şablon Düzeltme Hatası: ${err.message}`);
+                        // Fallback
+                        showLog("⚠️ Şablon güncellenemedi, basit formatta oluşturuluyor...");
+                        generateSimpleExcel(traps, exportStatus);
                     }
-
-                    if (ilceColIndex === -1 || koyColIndex === -1 || gpsColIndex === -1) {
-                        throw new Error("Şablonda İLÇE, LOKASYON veya GPS sütunları bulunamadı.");
-                    }
-
-                    // Find headerRowIndex
-                    var headerRowIndex = 25; // default common row in this file
-                    for (let r = 0; r <= 30; r++) {
-                        let ref1 = XLSX.utils.encode_cell({ r: r, c: ilceColIndex });
-                        let ref2 = XLSX.utils.encode_cell({ r: r, c: koyColIndex });
-                        if (ws[ref1] && ws[ref2]) {
-                            headerRowIndex = r;
-                            break;
-                        }
-                    }
-
-                    var updatedRowsCount = 0;
-
-                    for (let r = headerRowIndex + 1; r <= range.e.r; r++) {
-                        let ilceCellRef = XLSX.utils.encode_cell({ r: r, c: ilceColIndex });
-                        let koyCellRef = XLSX.utils.encode_cell({ r: r, c: koyColIndex });
-                        let plantCellRef = plantColIndex !== -1 ? XLSX.utils.encode_cell({ r: r, c: plantColIndex }) : null;
-
-                        if (!ws[ilceCellRef] || !ws[koyCellRef]) continue;
-
-                        let excelIlce = String(ws[ilceCellRef].v).trim();
-                        let excelKoy = String(ws[koyCellRef].v).trim();
-                        let excelPlant = plantCellRef && ws[plantCellRef] ? String(ws[plantCellRef].v).trim() : "";
-
-                        if (!excelIlce || !excelKoy) continue;
-
-                        let matchedKoy = findMatchingKoy(excelIlce, excelKoy);
-                        let formattedPlant = formatHostPlant(excelPlant);
-
-                        // Find trap
-                        let matchedTrap = traps.find(t => {
-                            let normDbIlce = normalizeString(t.ilce);
-                            let normExcelIlce = normalizeString(excelIlce);
-                            if (normDbIlce !== normExcelIlce) return false;
-
-                            let normDbKoy = normalizeString(t.koy || t.ad);
-                            let normExcelKoy = normalizeString(matchedKoy || excelKoy);
-                            if (normDbKoy !== normExcelKoy) return false;
-
-                            if (formattedPlant !== "Belirtilmedi") {
-                                return normalizeString(t.tuzakBitkiTuru) === normalizeString(formattedPlant);
-                            }
-                            return true;
-                        });
-
-                        // Fallback match
-                        if (!matchedTrap && matchedKoy) {
-                            matchedTrap = traps.find(t => {
-                                return normalizeString(t.ilce) === normalizeString(excelIlce) &&
-                                       normalizeString(t.koy || t.ad) === normalizeString(matchedKoy);
-                            });
-                        }
-
-                        if (matchedTrap) {
-                            // Update GPS cell
-                            let gpsCellRef = XLSX.utils.encode_cell({ r: r, c: gpsColIndex });
-                            ws[gpsCellRef] = { t: 's', v: `${matchedTrap.lat}, ${matchedTrap.lng}` };
-
-                            // Update Rakım cell if column exists
-                            if (rakimColIndex !== -1) {
-                                let rakimCellRef = XLSX.utils.encode_cell({ r: r, c: rakimColIndex });
-                                let rakimVal = (matchedTrap.rakim !== undefined && matchedTrap.rakim !== null && matchedTrap.rakim !== "") ? matchedTrap.rakim : "-";
-                                ws[rakimCellRef] = { t: 's', v: String(rakimVal) };
-                            }
-
-                            // Update Dates cells
-                            Object.keys(dateColMap).forEach(dateStr => {
-                                let cIndex = dateColMap[dateStr];
-                                let dateCellRef = XLSX.utils.encode_cell({ r: r, c: cIndex });
-                                let v = matchedTrap.kayitlar ? matchedTrap.kayitlar.find(visit => visit.tarih.trim() === dateStr) : null;
-                                if (v) {
-                                    if (v.gozlemNotu && v.gozlemNotu.toLowerCase().includes("asildi")) {
-                                        ws[dateCellRef] = { t: 's', v: "Tuzaklar Asıldı" };
-                                    } else {
-                                        ws[dateCellRef] = { t: 'n', v: v.bocekSayisi };
-                                    }
-                                } else {
-                                    ws[dateCellRef] = { t: 's', v: "" };
-                                }
-                            });
-                            updatedRowsCount++;
-                        }
-                    }
-
-                    XLSX.writeFile(wb, "2026_SURVEY_KAYIT_FORMU_GUNCEL.xlsx");
-                    exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Bakanlık şablonu veritabanındaki ${updatedRowsCount} adet sürvey tuzağının güncel koordinatları ve sayımları ile doldurularak başarıyla indirildi.</span>`;
                 } else {
                     // Fallback to simple format if template load fails
                     showLog("⚠️ Bakanlık şablonu doğrudan yüklenemedi (Yerel dosya kısıtlaması/CORS). Basit formatta dosya oluşturuluyor...");
