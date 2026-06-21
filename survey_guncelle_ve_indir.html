@@ -1335,6 +1335,13 @@
             for (let r = 0; r <= 30; r++) {
                 let rowHasIlce = false;
                 let rowHasLokasyon = false;
+                let tempIlceCol = -1;
+                let tempKoyCol = -1;
+                let tempGpsCol = -1;
+                let tempPlantCol = -1;
+                let tempRakimCol = -1;
+                let tempDateColMap = {};
+
                 for (let c = range.s.c; c <= range.e.c; c++) {
                     let ref = XLSX.utils.encode_cell({ r: r, c: c });
                     let cell = ws[ref];
@@ -1342,29 +1349,62 @@
                         let valStr = normalizeString(cell.w || cell.v);
                         if (valStr.includes("ilce") || valStr.includes("ilçe")) {
                             rowHasIlce = true;
-                            ilceColIndex = c;
+                            tempIlceCol = c;
                         }
                         if (valStr.includes("lokasyon") || valStr.includes("koy") || valStr.includes("köy") || valStr.includes("mahalle")) {
                             rowHasLokasyon = true;
-                            koyColIndex = c;
+                            tempKoyCol = c;
                         }
                         if (valStr.includes("gps") || valStr.includes("koordinat")) {
-                            gpsColIndex = c;
+                            tempGpsCol = c;
                         }
                         if (valStr.includes("konukcu") || valStr.includes("konukçu") || valStr.includes("bitki")) {
-                            plantColIndex = c;
+                            tempPlantCol = c;
                         }
                         if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) {
-                            rakimColIndex = c;
+                            tempRakimCol = c;
                         }
                         let cellDate = getExcelCellDate(cell);
                         if (cellDate) {
-                            dateColMap[cellDate] = c;
+                            tempDateColMap[cellDate] = c;
                         }
                     }
                 }
                 if (rowHasIlce && rowHasLokasyon) {
                     headerRowIndex = r;
+                    ilceColIndex = tempIlceCol;
+                    koyColIndex = tempKoyCol;
+                    if (tempGpsCol !== -1) gpsColIndex = tempGpsCol;
+                    if (tempPlantCol !== -1) plantColIndex = tempPlantCol;
+                    if (tempRakimCol !== -1) rakimColIndex = tempRakimCol;
+                    dateColMap = tempDateColMap;
+                    break; // STOP SCANNING!
+                }
+            }
+
+            if (headerRowIndex !== -1) {
+                // Scan adjacent rows to fill any missing column indices
+                for (let r = Math.max(0, headerRowIndex - 1); r <= Math.min(30, headerRowIndex + 1); r++) {
+                    for (let c = range.s.c; c <= range.e.c; c++) {
+                        let ref = XLSX.utils.encode_cell({ r: r, c: c });
+                        let cell = ws[ref];
+                        if (cell && (cell.v !== undefined && cell.v !== null)) {
+                            let valStr = normalizeString(cell.w || cell.v);
+                            if (gpsColIndex === -1 && (valStr.includes("gps") || valStr.includes("koordinat"))) {
+                                gpsColIndex = c;
+                            }
+                            if (plantColIndex === -1 && (valStr.includes("konukcu") || valStr.includes("konukçu") || valStr.includes("bitki"))) {
+                                plantColIndex = c;
+                            }
+                            if (rakimColIndex === -1 && (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa"))) {
+                                rakimColIndex = c;
+                            }
+                            let cellDate = getExcelCellDate(cell);
+                            if (cellDate && !dateColMap[cellDate]) {
+                                dateColMap[cellDate] = c;
+                            }
+                        }
+                    }
                 }
             }
 
