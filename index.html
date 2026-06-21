@@ -5043,7 +5043,8 @@
                             kislakHaneSayisi: data.kislakHaneSayisi || 0,
                             polygonKoordinatlar: data.polygonKoordinatlar || null,
                             alanBuyuklugu: data.alanBuyuklugu || 0,
-                            alanAdi: data.alanAdi || ""
+                            alanAdi: data.alanAdi || "",
+                            rakim: data.rakim !== undefined ? data.rakim : ""
                         };
                     }
 
@@ -6224,7 +6225,8 @@
                     yetiştirilenUrun: data.yetiştirilenUrun || "",
                     tuzakBitkiTuru: data.tuzakBitkiTuru || "",
                     tuzakEtkiAlani: data.tuzakEtkiAlani || 0,
-                    kislakHaneSayisi: data.kislakHaneSayisi || 0
+                    kislakHaneSayisi: data.kislakHaneSayisi || 0,
+                    rakim: data.rakim !== undefined ? data.rakim : ""
                 };
             });
             return tempTuzakVerileri;
