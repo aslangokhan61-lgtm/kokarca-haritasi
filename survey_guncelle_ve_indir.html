@@ -1356,7 +1356,7 @@
                 var wb = null;
                 
                 try {
-                    var response = await fetch('veri/2026%20SURVEY%20KAYIT%20FORMU.xlsx');
+                    var response = await fetch('belgeler/2026%20SURVEY%20KAYIT%20FORMU.xlsx');
                     if (response.ok) {
                         var arrayBuffer = await response.arrayBuffer();
                         wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
