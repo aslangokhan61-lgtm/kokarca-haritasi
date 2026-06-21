@@ -772,16 +772,40 @@
             return "";
         }
 
+        function getExcelCellValue(cell) {
+            if (!cell) return "";
+            if (cell.w !== undefined && cell.w !== null && cell.w !== "") {
+                return String(cell.w).trim();
+            }
+            if (cell.v !== undefined && cell.v !== null) {
+                return String(cell.v).trim();
+            }
+            return "";
+        }
+
+        function getExcelCellDate(cell) {
+            let val = getExcelCellValue(cell);
+            if (!val) return "";
+            let formatted = parseTurkishMonthDate(val);
+            if (formatted) return formatted;
+            if (/^\d{2}\.\d{2}\.\d{4}$/.test(val)) return val;
+            if (cell && cell.t === 'n' && !isNaN(cell.v) && parseFloat(cell.v) > 40000 && parseFloat(cell.v) < 50000) {
+                return excelDateToStr(cell.v);
+            }
+            return "";
+        }
+
         function isDateCell(val) {
             let s = String(val).trim();
             return /^\d{2}\.\d{2}\.\d{4}$/.test(s) || 
-                   /^\d{1,2}\s+(Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Ocak|Şubat|Mart|Kasım|Aralık)\s+202\d$/i.test(s);
+                   /^\d{1,2}\s+(Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Ocak|Şubat|Mart|Kasım|Aralık)\s+202\d$/i.test(s) ||
+                   (!isNaN(s) && parseFloat(s) > 40000 && parseFloat(s) < 50000);
         }
 
         // PROCESS EXCEL FILE
         function processExcelSheet(sheetName) {
             var ws = workbook.Sheets[sheetName];
-            var rawArrays = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+            var rawArrays = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false });
             
             // Find Header Row Index
             var headerRowIndex = rawArrays.findIndex(row => {
@@ -812,7 +836,11 @@
                 for (var colIdx = 0; colIdx < row1.length; colIdx++) {
                     var cell = String(row1[colIdx] || "").trim();
                     if (isDateCell(cell)) {
-                        consolidatedHeaders.push(parseTurkishMonthDate(cell) || cell);
+                        let parsed = parseTurkishMonthDate(cell) || cell;
+                        if (!isNaN(parsed) && parseFloat(parsed) > 40000 && parseFloat(parsed) < 50000) {
+                            parsed = excelDateToStr(parsed);
+                        }
+                        consolidatedHeaders.push(parsed);
                     } else if (cell) {
                         consolidatedHeaders.push(cell);
                     } else {
@@ -831,8 +859,9 @@
                     if (cell2) {
                         if (isDateCell(cell2)) {
                             parsedDate = parseTurkishMonthDate(cell2) || cell2;
-                        } else if (!isNaN(cell2) && parseFloat(cell2) > 40000 && parseFloat(cell2) < 50000) {
-                            parsedDate = excelDateToStr(cell2);
+                            if (!isNaN(parsedDate) && parseFloat(parsedDate) > 40000 && parseFloat(parsedDate) < 50000) {
+                                parsedDate = excelDateToStr(parsedDate);
+                            }
                         }
                     }
                     
@@ -1193,19 +1222,25 @@
 
             var range = XLSX.utils.decode_range(ws['!ref']);
             var gpsColIndex = -1;
+            var rakimColIndex = -1;
             var dateColMap = {}; // mapping dateStr -> colIndex
 
             // Scan headers to locate columns
             for (let c = range.s.c; c <= range.e.c; c++) {
                 for (let r = 0; r <= 30; r++) {
                     let ref = XLSX.utils.encode_cell({ r: r, c: c });
-                    if (ws[ref] && ws[ref].v) {
-                        let valStr = normalizeString(ws[ref].v);
-                        if (valStr === "gps" || valStr === "koordinat") {
+                    let cell = ws[ref];
+                    if (cell && (cell.v !== undefined && cell.v !== null)) {
+                        let valStr = normalizeString(cell.w || cell.v);
+                        if (valStr.includes("gps") || valStr.includes("koordinat")) {
                             gpsColIndex = c;
-                        } else if (isDateCell(ws[ref].v)) {
-                            let dateStr = parseTurkishMonthDate(ws[ref].v) || String(ws[ref].v).trim();
-                            dateColMap[dateStr] = c;
+                        } else if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) {
+                            rakimColIndex = c;
+                        } else {
+                            let cellDate = getExcelCellDate(cell);
+                            if (cellDate) {
+                                dateColMap[cellDate] = c;
+                            }
                         }
                     }
                 }
@@ -1218,6 +1253,9 @@
             }
 
             showLog(`📍 Bulunan GPS Sütun İndeksi: Kolon ${XLSX.utils.encode_col(gpsColIndex)}`);
+            if (rakimColIndex !== -1) {
+                showLog(`🏔️ Bulunan Rakım Sütun İndeksi: Kolon ${XLSX.utils.encode_col(rakimColIndex)}`);
+            }
             showLog(`📅 Bulunan Tarih Sütun Haritası: ${JSON.stringify(Object.keys(dateColMap))}`);
 
             var updatedCount = 0;
@@ -1232,7 +1270,14 @@
                     var correctGps = `${res.matchedTrap.lat}, ${res.matchedTrap.lng}`;
                     ws[gpsCellRef] = { t: 's', v: correctGps };
 
-                    // 2. Update Date columns from database visits
+                    // 2. Update Rakım Cell
+                    if (rakimColIndex !== -1) {
+                        var rakimCellRef = XLSX.utils.encode_cell({ r: rIdx, c: rakimColIndex });
+                        var rakimVal = (res.matchedTrap.rakim !== undefined && res.matchedTrap.rakim !== null && res.matchedTrap.rakim !== "") ? res.matchedTrap.rakim : "-";
+                        ws[rakimCellRef] = { t: 's', v: String(rakimVal) };
+                    }
+
+                    // 3. Update Date columns from database visits
                     Object.keys(dateColMap).forEach(dateStr => {
                         let cIdx = dateColMap[dateStr];
                         let dateCellRef = XLSX.utils.encode_cell({ r: rIdx, c: cIdx });
@@ -1392,16 +1437,19 @@
                     for (let c = range.s.c; c <= range.e.c; c++) {
                         for (let r = 0; r <= 30; r++) {
                             let ref = XLSX.utils.encode_cell({ r: r, c: c });
-                            if (ws[ref] && ws[ref].v) {
-                                let valStr = normalizeString(ws[ref].v);
-                                if (valStr === "ilce" || valStr === "ilçe") ilceColIndex = c;
-                                else if (valStr === "lokasyon" || valStr.includes("koy") || valStr.includes("köy") || valStr === "mahalle") koyColIndex = c;
-                                else if (valStr === "gps" || valStr === "koordinat") gpsColIndex = c;
-                                else if (valStr === "konukcu" || valStr === "konukçu") plantColIndex = c;
-                                else if (valStr === "rakim" || valStr === "rakım" || valStr === "irtifa") rakimColIndex = c;
-                                else if (isDateCell(ws[ref].v)) {
-                                    let dateStr = parseTurkishMonthDate(ws[ref].v) || String(ws[ref].v).trim();
-                                    dateColMap[dateStr] = c;
+                            let cell = ws[ref];
+                            if (cell && (cell.v !== undefined && cell.v !== null)) {
+                                let valStr = normalizeString(cell.w || cell.v);
+                                if (valStr.includes("ilce") || valStr.includes("ilçe")) ilceColIndex = c;
+                                else if (valStr.includes("lokasyon") || valStr.includes("koy") || valStr.includes("köy") || valStr.includes("mahalle")) koyColIndex = c;
+                                else if (valStr.includes("gps") || valStr.includes("koordinat")) gpsColIndex = c;
+                                else if (valStr.includes("konukcu") || valStr.includes("konukçu") || valStr.includes("bitki")) plantColIndex = c;
+                                else if (valStr.includes("rakim") || valStr.includes("rakım") || valStr.includes("irtifa")) rakimColIndex = c;
+                                else {
+                                    let cellDate = getExcelCellDate(cell);
+                                    if (cellDate) {
+                                        dateColMap[cellDate] = c;
+                                    }
                                 }
                             }
                         }
@@ -1499,8 +1547,9 @@
                     exportStatus.innerHTML = `<span style="color:#16a34a;">🎉 Bakanlık şablonu veritabanındaki ${updatedRowsCount} adet sürvey tuzağının güncel koordinatları ve sayımları ile doldurularak başarıyla indirildi.</span>`;
                 } else {
                     // Fallback to simple format if template load fails
-                    showLog("⚠️ Bakanlık şablonu doğrudan yüklenemedi (Yerel dosya kısıtlaması). Basit formatta dosya oluşturuluyor...");
+                    showLog("⚠️ Bakanlık şablonu doğrudan yüklenemedi (Yerel dosya kısıtlaması/CORS). Basit formatta dosya oluşturuluyor...");
                     generateSimpleExcel(traps, exportStatus);
+                    exportStatus.innerHTML += `<br><span style="color:#d97706; font-size:12px; font-weight:bold; display:block; margin-top:8px;">⚠️ UYARI: Tarayıcı güvenlik kuralları (CORS) nedeniyle Bakanlık Şablonu doğrudan yüklenemedi ve basit Excel dosyası oluşturuldu. Süslemeli Bakanlık formatında çıktı almak için lütfen sol taraftaki alandan "2026 SURVEY KAYIT FORMU.xlsx" dosyasını el ile seçin ve en alttaki mavi "Tüm Verileri Excel'e Yaz & İndir" butonunu kullanın.</span>`;
                 }
 
             } catch (err) {
