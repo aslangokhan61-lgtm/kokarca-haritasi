@@ -111,7 +111,7 @@
             <ul style="margin: 5px 0 0 20px; padding: 0;">
                 <li>Dosyadaki <strong>DMS Derece-Dakika-Saniye</strong> enlem boylam verileri otomatik olarak Leaflet uyumlu <strong>Ondalık Dereceye (DD)</strong> dönüştürülecektir.</li>
                 <li>İlçe ve Köy/Mahalle adları veritabanı yapısına uydurulacaktır (Örn: <em>SELAMET</em> -> <em>Selamet Mahallesi</em>). Eşleşmeyen köyler/mahalleler kırmızı uyarı ile gösterilecek ve atlanacaktır.</li>
-                <li><strong>Merkez</strong> ve <strong>Güneysu</strong> ilçeleri sürvey kapsamı dışında tutularak sisteme <strong>yüklenmeyecektir</strong>. Diğer tüm ilçelerdeki sürvey noktaları <strong>Yapışkan Tuzak</strong> olarak kaydedilecektir.</li>
+                <li>Sürvey kapsamındaki tüm ilçelerdeki (Merkez ve Güneysu dahil) sürvey noktaları <strong>Yapışkan Tuzak</strong> olarak kaydedilecektir.</li>
                 <li>2026 yılı Nisan-Ekim dönemini kapsayan tüm tarih bazlı sayımlar ve gözlemler, tuzakların geçmiş <strong>Ziyaret Kayıtları (Visits)</strong> olarak yüklenecektir.</li>
             </ul>
         </div>
@@ -356,12 +356,18 @@
                 .trim();
         }
 
-        // Case-insensitive, space-insensitive cell key resolver
-        function getRowValue(row, searchStr) {
+        // Case-insensitive, space-insensitive cell key resolver (supports multiple candidate keys)
+        function getRowValue(row, searchKeys) {
             if (!row) return undefined;
-            let normSearch = normalizeString(searchStr);
-            let foundKey = Object.keys(row).find(k => normalizeString(k).includes(normSearch));
-            return foundKey ? row[foundKey] : undefined;
+            if (!Array.isArray(searchKeys)) {
+                searchKeys = [searchKeys];
+            }
+            for (let i = 0; i < searchKeys.length; i++) {
+                let normSearch = normalizeString(searchKeys[i]);
+                let foundKey = Object.keys(row).find(k => normalizeString(k).includes(normSearch));
+                if (foundKey) return row[foundKey];
+            }
+            return undefined;
         }
 
         // Logger for browser debugging
@@ -413,24 +419,35 @@
             return ""; // No match found in standard database
         }
 
-        // DMS COORDINATES TO DECIMAL DEGREES CONVERTER
+        // DMS COORDINATES TO DECIMAL DEGREES CONVERTER (With Auto-Swap & Decimal Comma Fixes)
         function parseDmsToDd(dmsString) {
             if (!dmsString) return { lat: 0, lng: 0 };
-            let str = String(dmsString).trim();
+            let str = String(dmsString).trim().replace(/\s+/g, ' ');
             
             function dmsToDecimal(part) {
-                let clean = part.replace(/[KkDdNNsSeE]/g, '').trim();
-                // Match deg°min'sec"
-                let matches = clean.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d\.,]+)\s*"?/);
+                if (!part) return 0;
+                // Strip double quotes, convert comma decimals in seconds to period, strip letters, clear trailing commas/periods
+                let clean = part.replace(/"/g, '')
+                                .replace(/,/g, '.')
+                                .replace(/[KkDdNNsSeE]/g, '')
+                                .trim();
+                
+                // If clean ends with a period (due to replacement of trailing comma), strip it
+                if (clean.endsWith('.')) {
+                    clean = clean.substring(0, clean.length - 1);
+                }
+                
+                // Match deg°min'sec
+                let matches = clean.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d\.]+)/);
                 if (matches) {
                     let deg = parseFloat(matches[1]);
                     let min = parseFloat(matches[2]);
-                    let sec = parseFloat(matches[3].replace(',', '.'));
+                    let sec = parseFloat(matches[3]);
                     return deg + (min / 60) + (sec / 3600);
                 }
                 
                 // Fallback splitting by non-numeric characters
-                let numbers = clean.replace(/[^0-9\.,]+/g, ' ').trim().split(/\s+/).map(num => parseFloat(num.replace(',', '.')));
+                let numbers = clean.replace(/[^0-9\.]+/g, ' ').trim().split(/\s+/).map(num => parseFloat(num));
                 if (numbers.length >= 3) {
                     return numbers[0] + (numbers[1] / 60) + (numbers[2] / 3600);
                 } else if (numbers.length === 1 && !isNaN(numbers[0])) {
@@ -440,31 +457,22 @@
             }
             
             let parts = [];
-            if (str.includes(',')) {
+            if (str.includes(' ')) {
+                parts = str.split(' ');
+            } else if (str.includes(',')) {
                 parts = str.split(',');
-            } else {
-                parts = str.split(/\s{2,}/);
-            }
-            
-            if (parts.length < 2) {
-                // Fallback split by coordinate direction letters
-                let splitIdx = str.search(/[Kk]/);
-                if (splitIdx !== -1) {
-                    parts.push(str.substring(0, splitIdx + 1));
-                    parts.push(str.substring(splitIdx + 1));
-                } else {
-                    let mid = Math.floor(str.length / 2);
-                    let spaceIdx = str.indexOf(' ', mid - 5);
-                    if (spaceIdx !== -1) {
-                        parts.push(str.substring(0, spaceIdx));
-                        parts.push(str.substring(spaceIdx));
-                    }
-                }
             }
             
             if (parts.length >= 2) {
                 let lat = dmsToDecimal(parts[0]);
                 let lng = dmsToDecimal(parts[1]);
+                
+                // Auto-swap if they are in the wrong order (in Rize, Latitude is ALWAYS greater than Longitude)
+                if (lat < lng) {
+                    let temp = lat;
+                    lat = lng;
+                    lng = temp;
+                }
                 return { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)) };
             }
             
@@ -556,8 +564,14 @@
             
             // Find the index of the row containing ILCE and LOKASYON
             var headerRowIndex1 = rawArrays.findIndex(row => {
-                let hasIlce = row.some(cell => normalizeString(cell).includes("ilce"));
-                let hasLokasyon = row.some(cell => normalizeString(cell).includes("lokasyon"));
+                let hasIlce = row.some(cell => {
+                    let n = normalizeString(cell);
+                    return n.includes("ilce") || n.includes("ilçe");
+                });
+                let hasLokasyon = row.some(cell => {
+                    let n = normalizeString(cell);
+                    return n.includes("lokasyon") || n.includes("koy") || n.includes("köy") || n.includes("mahalle") || n.includes("mahal");
+                });
                 return hasIlce && hasLokasyon;
             });
             
@@ -665,12 +679,12 @@
             };
             
             rawRows.forEach(function(row, idx) {
-                // Robust key mapping using case-insensitive normalized matching
-                let ilVal = getRowValue(row, "il");
-                let ilceVal = getRowValue(row, "ilce");
-                let koyExcel = getRowValue(row, "lokasyon");
-                let gpsRaw = getRowValue(row, "gps");
-                let hostPlant = getRowValue(row, "konukcu");
+                // Robust key mapping using case-insensitive normalized matching with candidate arrays
+                let ilVal = getRowValue(row, ["il", "sehir"]);
+                let ilceVal = getRowValue(row, ["ilce", "ilçe"]);
+                let koyExcel = getRowValue(row, ["lokasyon", "koy", "mahalle", "köy", "mahal"]);
+                let gpsRaw = getRowValue(row, ["gps", "koordinat", "enlem", "boylam"]);
+                let hostPlant = getRowValue(row, ["konukcu", "konukçu", "bitki", "konakci"]);
                 
                 // Propagate merged parent values if empty
                 if (ilVal) currentIl = String(ilVal).trim();
@@ -694,11 +708,7 @@
                     return;
                 }
                 
-                let normIlce = normalizeString(currentIlce);
-                if (normIlce === "merkez" || normIlce === "guneysu") {
-                    skippedReasonCounts.excludedDistrict++;
-                    return;
-                }
+                // Merkez ve Güneysu dahil tüm ilçeler sürvey kapsamına alınmıştır
 
                 // 1. Coordinates DMS -> DD
                 let coords = parseDmsToDd(normGps);
@@ -780,8 +790,30 @@
                 });
             });
 
+            // Filter duplicates within the uploaded sheet (same district, village, and coordinates rounded to 4 decimal places)
+            var uniqueTraps = [];
+            var seenKeys = new Set();
+            var duplicateCount = 0;
+            
+            parsedTraps.forEach(function(trap) {
+                var key = ((trap.ilce || '') + '|' + (trap.koy || '') + '|' +
+                           (trap.lat ? parseFloat(trap.lat).toFixed(4) : '') + '|' +
+                           (trap.lng ? parseFloat(trap.lng).toFixed(4) : '')).toLowerCase().trim();
+                if (seenKeys.has(key)) {
+                    duplicateCount++;
+                } else {
+                    seenKeys.add(key);
+                    uniqueTraps.push(trap);
+                }
+            });
+            
+            parsedTraps = uniqueTraps;
+
             logDebug("✅ Çözümleme Tamamlandı. Yüklenebilir Toplam Kayıt: " + parsedTraps.length);
             logDebug("📊 Filtreleme Özetleri: " + JSON.stringify(skippedReasonCounts));
+            if (duplicateCount > 0) {
+                logDebug("📊 Çift Kayıt Süzgeci: " + duplicateCount + " adet mükerrer kayıt elendi.");
+            }
             
             renderPreview();
         }
@@ -853,11 +885,56 @@
             var progressBar = document.getElementById('progressBar');
             var statusDiv = document.getElementById('status');
             
-            var total = validRecords.length;
+            // ── ADIM 1: Mevcut Sürvey (Yapışkan) kayıtlarını çek ──────────────
+            statusDiv.innerHTML = '🔍 Mevcut sürvey kayıtları kontrol ediliyor...';
+            var mevcutAnahtarlar = new Set();
+            try {
+                var mevcutSnapshot = await db.collection('tuzaklar')
+                    .where('tuzakTipi', '==', 'Yapışkan')
+                    .get();
+                mevcutSnapshot.forEach(function(doc) {
+                    var d = doc.data();
+                    var key = ((d.ilce || '') + '|' + (d.koy || '') + '|' +
+                               (d.lat ? parseFloat(d.lat).toFixed(4) : '') + '|' +
+                               (d.lng ? parseFloat(d.lng).toFixed(4) : '')).toLowerCase().trim();
+                    mevcutAnahtarlar.add(key);
+                });
+            } catch(err) {
+                console.warn('Mevcut kayıt sorgusu başarısız:', err);
+            }
+            
+            // ── ADIM 2: Yeni kayıtları filtrele ──────────────────────────
+            var yeniKayitlar = [];
+            var ciftSayisi = 0;
+            validRecords.forEach(function(r) {
+                var key = ((r.ilce || '') + '|' + (r.koy || '') + '|' +
+                           (r.lat ? parseFloat(r.lat).toFixed(4) : '') + '|' +
+                           (r.lng ? parseFloat(r.lng).toFixed(4) : '')).toLowerCase().trim();
+                if (mevcutAnahtarlar.has(key)) {
+                    ciftSayisi++;
+                } else {
+                    yeniKayitlar.push(r);
+                }
+            });
+            
+            if (yeniKayitlar.length === 0) {
+                statusDiv.innerHTML = '<span style="color:#f59e0b;">⚠️ Tüm ' + ciftSayisi + ' sürvey kaydı zaten veritabanında mevcut! Çift kayıt yüklenmedi.</span>';
+                document.getElementById('progressBox').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('excelFile').disabled = false;
+                return;
+            }
+            
+            statusDiv.innerHTML = '📤 ' + yeniKayitlar.length + ' yeni kayıt yüklenecek' +
+                                  (ciftSayisi > 0 ? ', <strong>' + ciftSayisi + '</strong> çift atlandı.' : '.');
+            await new Promise(function(res) { setTimeout(res, 700); });
+            
+            var total = yeniKayitlar.length;
             var successCount = 0;
+            var errorCount = 0;
             
             for (let i = 0; i < total; i++) {
-                var record = {...validRecords[i]};
+                var record = {...yeniKayitlar[i]};
                 // Clean temporary properties before saving to Firestore
                 delete record.koyExcel;
                 delete record.matchedKoy;
@@ -867,13 +944,18 @@
                     successCount++;
                     var percentage = Math.round((successCount / total) * 100);
                     progressBar.style.width = percentage + "%";
-                    statusDiv.innerHTML = `Yükleniyor: ${successCount}/${total} kayıt aktarıldı...`;
+                    statusDiv.innerHTML = `Yükleniyor: ${successCount}/${total} kayıt aktarıldı...` +
+                        (ciftSayisi > 0 ? ` <span style="color:#94a3b8">(${ciftSayisi} çift atlandı)</span>` : '');
                 } catch(err) {
+                    errorCount++;
                     console.error("Firebase yazma hatası:", err);
                 }
             }
             
-            statusDiv.innerHTML = `<span style="color: #16a34a; font-size: 15px;">🎉 Başarılı! ${successCount} adet 2026 yılı sürvey tuzağı ve tarih bazlı ziyaret kayıtları sisteme yüklendi. Kokarca Haritası'nı açıp kontrol edebilirsiniz.</span>`;
+            var msg = `🎉 Başarılı! <strong>${successCount}</strong> adet yeni 2026 yılı sürvey tuzağı ve tarih bazlı ziyaret kayıtları sisteme yüklendi.`;
+            if (ciftSayisi > 0) msg += ` <span style="color:#94a3b8">${ciftSayisi} çift kayıt atlandı.</span>`;
+            if (errorCount > 0) msg += ` <span style="color:#ef4444">${errorCount} hata oluştu.</span>`;
+            statusDiv.innerHTML = `<span style="color: #16a34a; font-size: 15px;">${msg}</span>`;
             document.getElementById('uploadBtn').innerText = "Yükleme Tamamlandı";
         }
 

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All XLSX Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h2>Rize Kokarca Excel Analiz Aracı</h2>
+    <input type="file" id="upload" multiple />
+    <pre id="output">Lütfen analiz etmek istediğiniz Excel dosyalarını seçin (birden fazla seçebilirsiniz)...</pre>
+
+    <script>
+        document.getElementById('upload').addEventListener('change', function(e) {
+            var files = e.target.files;
+            if (files.length === 0) return;
+            
+            var out = "";
+            var loadedCount = 0;
+            
+            Array.from(files).forEach(function(file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    try {
+                        var data = new Uint8Array(ev.target.result);
+                        var workbook = XLSX.read(data, {type: 'array'});
+                        
+                        out += "=========================================\n";
+                        out += "DOSYA ADI: " + file.name + "\n";
+                        out += "Boyut: " + file.size + " bytes\n";
+                        out += "Sayfalar: " + workbook.SheetNames.join(', ') + "\n";
+                        out += "=========================================\n\n";
+                        
+                        workbook.SheetNames.forEach(function(sheetName) {
+                            var worksheet = workbook.Sheets[sheetName];
+                            var rows = XLSX.utils.sheet_to_json(worksheet);
+                            
+                            out += "Sayfa: '" + sheetName + "' - Toplam Satır: " + rows.length + "\n";
+                            
+                            // İlçe grupları
+                            var ilceGruplari = {};
+                            rows.forEach(function(row, idx) {
+                                var keys = Object.keys(row);
+                                var ilce = "";
+                                keys.forEach(function(k) {
+                                    var n = k.trim().toLowerCase();
+                                    if (n.includes('ilce') || n.includes('ilçe')) {
+                                        ilce = String(row[k]).trim();
+                                    }
+                                });
+                                if (!ilce) {
+                                    // excel başlıklarında yoksa
+                                    ilce = row["İlçe"] || row["ilce"] || row["İlçesi"] || "";
+                                }
+                                if (ilce) {
+                                    if (!ilceGruplari[ilce]) ilceGruplari[ilce] = [];
+                                    ilceGruplari[ilce].push({row: row, index: idx + 2});
+                                }
+                            });
+                            
+                            if (Object.keys(ilceGruplari).length > 0) {
+                                out += "İlçelere Göre Dağılım:\n";
+                                Object.keys(ilceGruplari).forEach(function(ilce) {
+                                    out += "  - " + ilce + ": " + ilceGruplari[ilce].length + " satır\n";
+                                });
+                                
+                                // Derepazarı detayları
+                                if (ilceGruplari["Derepazarı"]) {
+                                    out += "  Derepazarı Satırları:\n";
+                                    ilceGruplari["Derepazarı"].forEach(function(item) {
+                                        out += "    Satır " + item.index + ": " + JSON.stringify(item.row) + "\n";
+                                    });
+                                }
+                                if (ilceGruplari["derepazarı"]) {
+                                    out += "  derepazarı Satırları:\n";
+                                    ilceGruplari["derepazarı"].forEach(function(item) {
+                                        out += "    Satır " + item.index + ": " + JSON.stringify(item.row) + "\n";
+                                    });
+                                }
+                            } else {
+                                out += "  İlçe bilgisi bulunamadı. İlk 3 satır önizlemesi:\n";
+                                rows.slice(0, 3).forEach(function(row, idx) {
+                                    out += "    " + (idx + 2) + ": " + JSON.stringify(row) + "\n";
+                                });
+                            }
+                            out += "\n";
+                        });
+                        
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            document.getElementById('output').innerText = out;
+                        }
+                    } catch(err) {
+                        out += "Hata (" + file.name + "): " + err.message + "\n\n";
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            document.getElementById('output').innerText = out;
+                        }
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        });
+    </script>
+</body>
+</html>

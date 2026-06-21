@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Reader Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h2>Rize Kokarca Excel & JSON Reader</h2>
+    <pre id="output">Loading files, please wait...</pre>
+
+    <script>
+        async function run() {
+            var out = "";
+            try {
+                // 1. Parse lokasyonlar.xlsx
+                out += "=== READING veri/lokasyonlar.xlsx ===\n";
+                const responseXlsx = await fetch('veri/lokasyonlar.xlsx');
+                if (!responseXlsx.ok) throw new Error("lokasyonlar.xlsx fetch failed: " + responseXlsx.statusText);
+                const arrayBuffer = await responseXlsx.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+                out += "Sheets: " + workbook.SheetNames.join(', ') + "\n";
+                
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet);
+                    out += `Sheet: ${sheetName} - Total Rows: ${rows.length}\n`;
+                    
+                    // Group by İlçe
+                    const ilceGroups = {};
+                    rows.forEach((row, idx) => {
+                        const ilce = row["İlçe"] || row["ilce"] || row["İlçesi"] || "";
+                        const koy = row["Köy/Mahalle"] || row["Köy"] || row["Mahalle"] || "";
+                        if (ilce) {
+                            if (!ilceGroups[ilce]) ilceGroups[ilce] = [];
+                            ilceGroups[ilce].push({row, index: idx + 2});
+                        }
+                    });
+                    
+                    out += "Districts found in sheet:\n";
+                    Object.keys(ilceGroups).forEach(ilce => {
+                        out += `  - ${ilce}: ${ilceGroups[ilce].length} rows\n`;
+                    });
+                    
+                    // Detail of Derepazarı
+                    if (ilceGroups["Derepazarı"]) {
+                        out += "  Derepazarı Details:\n";
+                        ilceGroups["Derepazarı"].forEach(item => {
+                            out += `    Row ${item.index}: ${JSON.stringify(item.row)}\n`;
+                        });
+                    }
+                });
+                
+                out += "\n";
+            } catch (e) {
+                out += "Error reading lokasyonlar.xlsx: " + e.message + "\n\n";
+            }
+
+            try {
+                // 2. Parse 2026 SURVEY KAYIT FORMU.xlsx
+                out += "=== READING veri/2026 SURVEY KAYIT FORMU.xlsx ===\n";
+                const responseSurvey = await fetch('veri/2026 SURVEY KAYIT FORMU.xlsx');
+                if (!responseSurvey.ok) throw new Error("2026 SURVEY KAYIT FORMU.xlsx fetch failed: " + responseSurvey.statusText);
+                const arrayBuffer = await responseSurvey.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+                out += "Sheets: " + workbook.SheetNames.join(', ') + "\n";
+                
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet);
+                    out += `Sheet: ${sheetName} - Total Rows: ${rows.length}\n`;
+                    
+                    // Group by İlçe
+                    const ilceGroups = {};
+                    rows.forEach((row, idx) => {
+                        let ilce = "";
+                        let koy = "";
+                        Object.keys(row).forEach(k => {
+                            const n = k.trim().toLowerCase();
+                            if (n.includes('ilce') || n.includes('ilçe')) ilce = String(row[k]).trim();
+                            if (n.includes('koy') || n.includes('mahalle') || n.includes('köy')) koy = String(row[k]).trim();
+                        });
+                        if (!ilce) ilce = row["İlçe"] || row["ilce"] || row["İlçesi"] || "";
+                        if (ilce) {
+                            if (!ilceGroups[ilce]) ilceGroups[ilce] = [];
+                            ilceGroups[ilce].push({row, index: idx + 2});
+                        }
+                    });
+                    
+                    out += "Districts found in sheet:\n";
+                    Object.keys(ilceGroups).forEach(ilce => {
+                        out += `  - ${ilce}: ${ilceGroups[ilce].length} rows\n`;
+                    });
+                    
+                    // Detail of Derepazarı
+                    if (ilceGroups["Derepazarı"]) {
+                        out += "  Derepazarı Details:\n";
+                        ilceGroups["Derepazarı"].forEach(item => {
+                            out += `    Row ${item.index}: ${JSON.stringify(item.row)}\n`;
+                        });
+                    }
+                });
+                
+                out += "\n";
+            } catch (e) {
+                out += "Error reading 2026 SURVEY KAYIT FORMU.xlsx: " + e.message + "\n\n";
+            }
+
+            try {
+                // 3. Parse lokasyonlar.json
+                out += "=== READING veri/lokasyonlar.json ===\n";
+                const responseJson = await fetch('veri/lokasyonlar.json');
+                if (!responseJson.ok) throw new Error("lokasyonlar.json fetch failed: " + responseJson.statusText);
+                const data = await responseJson.json();
+                out += "Rize Districts in JSON: " + Object.keys(data.Rize).join(', ') + "\n";
+                out += "Derepazarı villages count: " + data.Rize.Derepazarı.length + "\n";
+                out += "Derepazarı villages: " + data.Rize.Derepazarı.join(', ') + "\n";
+            } catch (e) {
+                out += "Error reading lokasyonlar.json: " + e.message + "\n\n";
+            }
+
+            document.getElementById('output').innerText = out;
+        }
+        run();
+    </script>
+</body>
+</html>

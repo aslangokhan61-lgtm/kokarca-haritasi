@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>XLSX Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h2>RİZE Parazitoit salım lokasyonları Excel Okuyucu</h2>
+    <input type="file" id="upload" />
+    <pre id="output">Lütfen RİZE Parazitoit salım lokasyonları.xlsx dosyasını seçin...</pre>
+
+    <script>
+        document.getElementById('upload').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, {type: 'array'});
+                var firstSheet = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheet];
+                var rows = XLSX.utils.sheet_to_json(worksheet);
+                
+                var out = "Toplam Satır Sayısı: " + rows.length + "\n\n";
+                
+                // Gruplama
+                var ilceGruplari = {};
+                rows.forEach(function(row, index) {
+                    // Excel başlıklarına göre eşleme
+                    var keys = Object.keys(row);
+                    var r = {};
+                    keys.forEach(k => {
+                        var normKey = k.trim().toLowerCase();
+                        if (normKey.includes('ilce')) r.ilce = row[k];
+                        if (normKey.includes('koy') || normKey.includes('mahalle')) r.koy = row[k];
+                        if (normKey.includes('koordinat') || normKey.includes('enlem') || normKey.includes('boylam') || normKey.includes('lat') || normKey.includes('lng') || normKey.includes('x') || normKey.includes('y')) {
+                            // Bazı tablolarda koordinat tek kolondur, bazılarında iki
+                            r[k] = row[k];
+                        }
+                    });
+                    
+                    var ilce = row["İlçe"] || row["ilce"] || r.ilce || "Bilinmeyen";
+                    var koy = row["Köy/Mahalle"] || row["Köy"] || row["Mahalle"] || r.koy || "Bilinmeyen";
+                    
+                    if (!ilceGruplari[ilce]) {
+                        ilceGruplari[ilce] = [];
+                    }
+                    ilceGruplari[ilce].push({index: index + 2, row: row, ilce: ilce, koy: koy}); // index + 2 Excel'deki satır numarasını tahmin etmek için (1 tabanlı + başlık)
+                });
+                
+                out += "İlçelere Göre Satır Sayıları:\n";
+                Object.keys(ilceGruplari).forEach(function(ilce) {
+                    out += "- " + ilce + ": " + ilceGruplari[ilce].length + " adet\n";
+                });
+                
+                out += "\n--- Derepazarı Satırları Detayı ---\n";
+                if (ilceGruplari["Derepazarı"]) {
+                    ilceGruplari["Derepazarı"].forEach(function(item) {
+                        out += "Satır " + item.index + ": " + JSON.stringify(item.row) + "\n";
+                    });
+                } else {
+                    out += "Derepazarı bulunamadı!\n";
+                }
+                
+                out += "\n--- Tüm Satırlar Detayı ---\n";
+                rows.forEach(function(row, idx) {
+                    out += (idx + 2) + ": " + JSON.stringify(row) + "\n";
+                });
+                
+                document.getElementById('output').innerText = out;
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>
