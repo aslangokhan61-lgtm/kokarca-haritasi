@@ -6488,6 +6488,7 @@
             var seciliIlce = filtreler.ilce;
             var seciliYil = filtreler.yil;
 
+            var grouped = {};
             for (var gKey in yerelVeriler) {
                 var data = yerelVeriler[gKey];
 
@@ -6498,6 +6499,7 @@
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
                 if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
+                var il = data.il || "Rize";
                 var ilce = data.ilce || "-";
                 var koy = data.koy || data.ad || "-";
                 var salimTarihi = data.tuzakİlkAsiliTarih || data.tarih || "-";
@@ -6505,15 +6507,28 @@
                 var lat = data.lat !== undefined ? parseFloat(data.lat) : 0;
                 var lng = data.lng !== undefined ? parseFloat(data.lng) : 0;
 
-                rows.push({
-                    il: data.il || "Rize",
-                    ilce: ilce,
-                    koy: koy,
-                    salimTarihi: salimTarihi,
-                    tupAdeti: tupAdeti,
-                    lat: lat,
-                    lng: lng
-                });
+                // Koordinatları normalize ederek gruplayalım (4 ondalık basamak hassasiyetle)
+                var latFixed = lat.toFixed(4);
+                var lngFixed = lng.toFixed(4);
+                var groupKey = (ilce + "|" + koy + "|" + salimTarihi + "|" + latFixed + "|" + lngFixed).toLowerCase().trim();
+
+                if (grouped[groupKey]) {
+                    grouped[groupKey].tupAdeti += tupAdeti;
+                } else {
+                    grouped[groupKey] = {
+                        il: il,
+                        ilce: ilce,
+                        koy: koy,
+                        salimTarihi: salimTarihi,
+                        tupAdeti: tupAdeti,
+                        lat: lat,
+                        lng: lng
+                    };
+                }
+            }
+
+            for (var key in grouped) {
+                rows.push(grouped[key]);
             }
 
             rows.sort(function (a, b) {
@@ -8731,6 +8746,7 @@
             var seciliIlce = filtreler.ilce;
             var seciliYil = filtreler.yil;
 
+            var grouped = {};
             for (var gKey in yerelVeriler) {
                 var data = yerelVeriler[gKey];
                 if (seciliIlce && data.ilce !== seciliIlce) continue;
@@ -8740,15 +8756,36 @@
                 var recordDate = data.tuzakİlkAsiliTarih || data.tarih || "";
                 if (seciliYil !== "Tümü" && !checkYearMatch(data, seciliYil)) continue;
 
-                rows.push({
-                    il: data.il || "Rize",
-                    ilce: data.ilce || "-",
-                    koy: data.koy || data.ad || "-",
-                    salimTarihi: data.tuzakİlkAsiliTarih || data.tarih || "-",
-                    tupAdeti: parseInt(data.tupSayisi) || 0,
-                    lat: data.lat !== undefined ? parseFloat(data.lat) : 0,
-                    lng: data.lng !== undefined ? parseFloat(data.lng) : 0
-                });
+                var il = data.il || "Rize";
+                var ilce = data.ilce || "-";
+                var koy = data.koy || data.ad || "-";
+                var salimTarihi = data.tuzakİlkAsiliTarih || data.tarih || "-";
+                var tupAdeti = parseInt(data.tupSayisi) || 0;
+                var lat = data.lat !== undefined ? parseFloat(data.lat) : 0;
+                var lng = data.lng !== undefined ? parseFloat(data.lng) : 0;
+
+                // Koordinatları normalize ederek gruplayalım (4 ondalık basamak hassasiyetle)
+                var latFixed = lat.toFixed(4);
+                var lngFixed = lng.toFixed(4);
+                var groupKey = (ilce + "|" + koy + "|" + salimTarihi + "|" + latFixed + "|" + lngFixed).toLowerCase().trim();
+
+                if (grouped[groupKey]) {
+                    grouped[groupKey].tupAdeti += tupAdeti;
+                } else {
+                    grouped[groupKey] = {
+                        il: il,
+                        ilce: ilce,
+                        koy: koy,
+                        salimTarihi: salimTarihi,
+                        tupAdeti: tupAdeti,
+                        lat: lat,
+                        lng: lng
+                    };
+                }
+            }
+
+            for (var key in grouped) {
+                rows.push(grouped[key]);
             }
 
             rows.sort(function (a, b) {

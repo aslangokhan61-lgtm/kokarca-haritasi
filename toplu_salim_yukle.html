@@ -507,6 +507,7 @@
                     ciftSayisi++;
                 } else {
                     yeniKayitlar.push(r);
+                    mevcutAnahtarlar.add(key); // Dosya içi mükerrer kayıtları önlemek için listeye ekle
                 }
             });
 
